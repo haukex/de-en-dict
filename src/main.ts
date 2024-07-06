@@ -7,7 +7,7 @@ async function loadDict() {
   const URL = 'https://bl0.zero-g.net/db/de-en.txt'
   const CACHE_NAME = 'Blict'
   try {
-    const cachedResponse = await caches.match(URL)
+    const cachedResponse = await window.caches.match(URL)
     if (cachedResponse) {
       console.debug('Cache hit on '+URL)
       return cachedResponse
@@ -16,11 +16,12 @@ async function loadDict() {
     const networkResponse = await fetch(URL)
     if (networkResponse.ok) {
       console.debug('Cache store '+URL)
-      const cache = await caches.open(CACHE_NAME)
+      const cache = await window.caches.open(CACHE_NAME)
       cache.put(URL, networkResponse.clone())
     }
     return networkResponse
   } catch (error) {
+    console.error(error)
     return Response.error()
   }
 }
