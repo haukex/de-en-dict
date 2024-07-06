@@ -6,12 +6,12 @@ const MAX_RESULTS = 200
 async function loadDict() {
   const URL = 'https://bl0.zero-g.net/db/de-en.txt'
   const CACHE_NAME = 'Blict'
-  const cachedResponse = await caches.match(URL)
-  if (cachedResponse) {
-    console.debug('Cache hit on '+URL)
-    return cachedResponse
-  }
   try {
+    const cachedResponse = await caches.match(URL)
+    if (cachedResponse) {
+      console.debug('Cache hit on '+URL)
+      return cachedResponse
+    }
     console.log('Cache miss on '+URL)
     const networkResponse = await fetch(URL)
     if (networkResponse.ok) {
@@ -29,10 +29,14 @@ window.addEventListener('DOMContentLoaded', async () => {
   const search_term = document.getElementById('search_term') as HTMLInputElement
   const result_rows = document.getElementById('result_rows') as HTMLElement
   const result_count = document.getElementById('result_count') as HTMLElement
+  const load_fail = document.getElementById('dict-load-fail') as HTMLElement
   const no_results = result_rows.children[0] as HTMLElement  // should be a tr
 
   const dictResp = await loadDict()
-  if ( !dictResp || !dictResp.ok ) throw new Error('Could not load dictionary.')  //TODO: inform user
+  if ( !dictResp || !dictResp.ok ) {
+    load_fail.classList.remove('d-none')
+    throw new Error('Could not load dictionary.')
+  }
 
   // these two replaces fix some oversights that I guess happened on conversion from CP1252 to UTF-8 (?)
   const dictLines = (await dictResp.text()).replaceAll('\u0092','\u2019').replaceAll('\u0096','\u2013')
@@ -63,13 +67,13 @@ window.addEventListener('DOMContentLoaded', async () => {
       })
     })
     if (!matches.length) {
-      result_count.innerText = 'No matches found.'
+      result_count.innerText = `No matches found (dictionary holds ${dictLines.length} entries).`
       result_rows.appendChild(no_results)
     }
     else if (displayCount!=matches.length)
-      result_count.innerText = `Found ${matches.length} matches, showing the first ${displayCount}`
+      result_count.innerText = `Found ${matches.length} matches, showing the first ${displayCount}.`
     else
-      result_count.innerText = `Showing all ${matches.length} matches`
+      result_count.innerText = `Showing all ${matches.length} matches.`
   }
 
   search_term.addEventListener('change', do_search)
