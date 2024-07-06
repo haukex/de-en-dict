@@ -3,6 +3,9 @@ if (module.hot) module.hot.accept()  // for parcel dev env
 
 const MAX_RESULTS = 200
 
+//TODO: make the whole app work offline with a service worker
+// https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Tutorials/CycleTracker/Service_workers
+
 async function loadDict() {
   const URL = 'https://bl0.zero-g.net/db/de-en.txt'
   const CACHE_NAME = 'Blict'
@@ -54,6 +57,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       const trans = match.split(/::/, 2)
       const des = (trans[0] as string).split(/\|/)
       const ens = (trans[1] as string).split(/\|/)
+      //TODO: make results look better: group related results, highlight search term, ...
       des.map((de, i) => {  // assume same length
         const en = ens[i] as string
         const tr = document.createElement('tr')
