@@ -1,0 +1,11 @@
+{
+  "files.eol": "\n",
+  "files.trimTrailingWhitespace": true,
+  "cSpell.language": "de,de-DE,en,en-US",
+  "cSpell.words": [ "Hauke", "Dämpfling", "Daempfling" ],
+  "cSpell.ignoreWords": [
+    "Beolingus",
+    "Blict"
+  ],
+  "eslint.validate": [ "javascript", "typescript" ],
+}
