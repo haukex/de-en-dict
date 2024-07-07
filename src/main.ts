@@ -59,18 +59,23 @@ window.addEventListener('DOMContentLoaded', async () => {
       const des = (trans[0] as string).split(/\|/)
       const ens = (trans[1] as string).split(/\|/)
       //TODO: make results look better: group related results, highlight search term, ...
+      const tr = document.createElement('tr')
+      const td0 = document.createElement('td')
+      const td1 = document.createElement('td')
       des.map((de, i) => {  // assume same length
         const en = ens[i] as string
-        const tr = document.createElement('tr')
-        const td0 = document.createElement('td')
-        const td1 = document.createElement('td')
-        if (i) tr.classList.add('sub-result')
-        td0.innerText = de.trim()
-        td1.innerText = en.trim()
-        tr.appendChild(td0)
-        tr.appendChild(td1)
-        result_rows.appendChild(tr)
+        const div0 = document.createElement('div')
+        if (i) div0.classList.add('sub-result')
+        div0.innerText = de.trim()
+        td0.appendChild(div0)
+        const div1 = document.createElement('div')
+        if (i) div1.classList.add('sub-result')
+        div1.innerText = en.trim()
+        td1.appendChild(div1)
       })
+      tr.appendChild(td0)
+      tr.appendChild(td1)
+      result_rows.appendChild(tr)
     })
     if (!matches.length) {
       result_count.innerText = `No matches found (dictionary holds ${dictLines.length} entries).`
