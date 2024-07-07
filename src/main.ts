@@ -55,14 +55,18 @@ window.addEventListener('DOMContentLoaded', async () => {
     const matches = what.length ? dictLines.filter((line) => line.toLowerCase().includes(what)) : []
     matches.slice(0,MAX_RESULTS).forEach((match) => {
       displayCount++
-      const trans = match.split(/::/, 2)
+      const trans = match.split(/::/)
+      if (trans.length!=2)
+        throw new Error(`unexpected database format on line "${match}"`)
       const des = (trans[0] as string).split(/\|/)
       const ens = (trans[1] as string).split(/\|/)
-      //TODO: make results look better: group related results, highlight search term, ...
+      if (des.length!=ens.length)
+        throw new Error(`unexpected database format on line "${match}"`)
+      //TODO: make results look better: highlight search term, ...
       const tr = document.createElement('tr')
       const td0 = document.createElement('td')
       const td1 = document.createElement('td')
-      des.map((de, i) => {  // assume same length
+      des.map((de, i) => {
         const en = ens[i] as string
         const div0 = document.createElement('div')
         if (i) div0.classList.add('sub-result')
