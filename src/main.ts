@@ -1,4 +1,6 @@
 
+import escapeStringRegexp from 'escape-string-regexp'
+
 if (module.hot) module.hot.accept()  // for parcel dev env
 
 const MAX_RESULTS = 200
@@ -48,11 +50,11 @@ window.addEventListener('DOMContentLoaded', async () => {
     .split(/\r?\n|\r(?!\n)/g).map((line) => line.trim()).filter((line) => line.length && !line.startsWith('#'))
 
   const do_search = () => {
-    const what = search_term.value.trim().toLowerCase()
+    const whatRe = new RegExp(escapeStringRegexp(search_term.value.trim()), 'ig')
+    const matches = search_term.value.trim().length ? dictLines.filter((line) => line.match(whatRe)) : []
+    //TODO: sort matches; prioritize matches at beginning of word
     result_rows.replaceChildren()
     let displayCount = 0
-    //TODO: sort matches; prioritize matches at beginning of word
-    const matches = what.length ? dictLines.filter((line) => line.toLowerCase().includes(what)) : []
     matches.slice(0,MAX_RESULTS).forEach((match) => {
       displayCount++
       const trans = match.split(/::/)
@@ -62,7 +64,6 @@ window.addEventListener('DOMContentLoaded', async () => {
       const ens = (trans[1] as string).split(/\|/)
       if (des.length!=ens.length)
         throw new Error(`unexpected database format on line "${match}"`)
-      //TODO: make results look better: highlight search term, ...
       const tr = document.createElement('tr')
       const td0 = document.createElement('td')
       const td1 = document.createElement('td')
@@ -71,10 +72,12 @@ window.addEventListener('DOMContentLoaded', async () => {
         const div0 = document.createElement('div')
         if (i) div0.classList.add('sub-result')
         div0.innerText = de.trim()
+        div0.innerHTML = div0.innerHTML.replaceAll(whatRe, '<strong>$&</strong>')
         td0.appendChild(div0)
         const div1 = document.createElement('div')
         if (i) div1.classList.add('sub-result')
         div1.innerText = en.trim()
+        div1.innerHTML = div1.innerHTML.replaceAll(whatRe, '<strong>$&</strong>')
         td1.appendChild(div1)
       })
       tr.appendChild(td0)
