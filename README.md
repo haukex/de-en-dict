@@ -10,7 +10,7 @@ Author, Copyright, and License
 ------------------------------
 
 Dictionary data from [dict.tu-chemnitz.de](https://dict.tu-chemnitz.de) is
-Copyright © 1995-2024 [Frank Richter](mailto:frank.richter@tu-chemnitz.de).
+Copyright © 1995-2024 [Frank Richter](https://www-user.tu-chemnitz.de/~fri/).
 
 This page/app is Copyright © 2024 [Hauke Dämpfling](https://www.zero-g.net/).
 

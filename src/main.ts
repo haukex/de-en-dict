@@ -7,6 +7,7 @@ const MAX_RESULTS = 200
 // https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Tutorials/CycleTracker/Service_workers
 
 async function loadDict() {
+  //const URL = 'https://ftp.tu-chemnitz.de/pub/Local/urz/ding/de-en-devel/de-en.txt'
   const URL = 'https://bl0.zero-g.net/db/de-en.txt'
   const CACHE_NAME = 'Blict'
   try {
