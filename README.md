@@ -1,13 +1,15 @@
 German-English Dictionary
 =========================
 
-This is a browser-based client for the now-discontinued
+This is a browser-based client for the database of the discontinued
 ["Beolingus"](https://dict.tu-chemnitz.de) German-English Dictionary.
+
+Please note I currently do not intend to maintain the word list itself.
 
 Author, Copyright, and License
 ------------------------------
 
-Dictionary Data from [dict.tu-chemnitz.de](https://dict.tu-chemnitz.de) is
+Dictionary data from [dict.tu-chemnitz.de](https://dict.tu-chemnitz.de) is
 Copyright © 1995-2024 [Frank Richter](mailto:frank.richter@tu-chemnitz.de).
 
 This page/app is Copyright © 2024 [Hauke Dämpfling](https://www.zero-g.net/).

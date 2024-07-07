@@ -8,15 +8,23 @@
   <style>
     /* https://simplecss.org/demo https://test.simplecss.org/ https://github.com/kevquirk/simple.css/wiki/Utility-elements-and-classes */
     @import '../node_modules/simpledotcss/simple.css'; /* parcel will inline and minify this */
-    /* Plus a few tweaks to reduce some of the vertical space (margins/padding) on mobile */
+    /* Plus a few tweaks to reduce some of the space (margins/padding/font), esp. for mobile */
+    /* Originally this is "1fr min(45rem, 90%) 1fr", causing a 45rem max width */
+    body { grid-template-columns: 1fr 90% 1fr }
+    body > header { padding-bottom: 0.5rem }
+    body > header > :only-child { margin-block-start: 1rem }
+    body > header h1 { margin: 0.5rem auto }
+    main { padding-top: 0 }
+    h1 { font-size: 2.0rem }
+    h2 { font-size: 1.8rem }
+    h3 { font-size: 1.5rem }
     @media only screen and (max-width: 720px) {  /* same condition as simple.css uses */
-      body > header { padding-bottom: .5rem }
-      section:first-child { margin-top: 1rem }
-      body > footer { margin-top: 1rem; padding-top: 1rem }
-    }
-    body {
-      /* Originally this is "1fr min(45rem, 90%) 1fr", causing a 45rem max width */
-      grid-template-columns: 1fr 90% 1fr;
+      body { grid-template-columns: 1fr 98% 1fr }
+      body > header { padding-bottom: 0.3rem }
+      body > header > :only-child { margin-block-start: 0.7rem }
+      h1 { font-size: 1.5rem }
+      h2 { font-size: 1.3rem }
+      h3 { font-size: 1.2rem }
     }
     /* borrow a few classes from Bootstrap */
     .text-danger { color: rgb(220, 53, 69) }
@@ -57,147 +65,141 @@
 
   <main>
 
-    <section>
-      <noscript>
-        <div class="notice text-danger">⚠️&nbsp;JavaScript is required.</div>
-      </noscript>
-      <div class="d-none notice text-danger" id="dict-load-fail">⚠️&nbsp;The dictionary failed to load!
-        Please make sure you're using a modern browser and have a working Internet connection.
-        Reload this page to try again.</div>
-      <article>
-        <header><h2>Dictionary Search</h2></header>
-        <p>
-          <label>Search Term</label>
-          <input type="text" id="search_term">
-        </p>
-        <figure><!-- for horiz scroll -->
-          <table class="result-table">
-            <thead>
-              <tr>
-                <th>🇩🇪 German</th>
-                <th>🇺🇸 English</th>
-              </tr>
-            </thead>
-            <tbody id="result_rows">
-              <tr>
-                <td colspan="2" style="text-align: center; font-style: italic;">No results.</td>
-              </tr>
-            </tbody>
-          </table>
-        </figure>
-        <p id="result_count"></p>
-      </article>
-    </section>
+    <noscript>
+      <div class="notice text-danger">⚠️&nbsp;JavaScript is required.</div>
+    </noscript>
 
-    <section>
-      <article lang="de">
-        <header><h2>Über die Quelle der Daten</h2></header>
-        <p><i>Beolingus</i> war ein unter Anderem deutsch-englisches Online-Wörterbuch der Technischen Universität Chemnitz,
-          welches bis zum 30. Juni 2024 unter <a href="https://dict.tu-chemnitz.de/" target="_blank">dict.tu-chemnitz.de</a>
-          erreichbar war. Diese Seite/App nutzt die deutsch-englische Übersetzungsliste, welche unter der
-          <a href="https://www.gnu.org/licenses/old-licenses/gpl-2.0-standalone.html" target="_blank">GNU GPL 2.0+</a>
-          <a href="https://ftp.tu-chemnitz.de/pub/Local/urz/ding/de-en-devel/" target="_blank">zum Download</a>
-          zur Verfügung gestellt wurde. Folgende Informationen über das Entstehen von Beolingus basiert auf einem
-          <a href="https://web.archive.org/web/20230531235907/https://dict.tu-chemnitz.de/doc/about.de.html"
-            target="_blank">Snapshot der WaybackMachine</a>.
-        </p>
-        <details>
-          <summary>Über Beolingus</summary>
-          <h3>Das BEOLINGUS-Team</h3>
-          <dl>
-            <dt>Organisation, Technik und Integration:</dt>
-            <dd>
-              Stefan Gleis<br>
-              Frank Richter<br>
-            </dd>
-            <dt>English Language &amp; Linguistics, TU Chemnitz</dt>
-            <dd>
-              Prof. Dr. Josef Schmied<br>
-              Dr. Haase<br>
-              Dr. Weißer<br>
-              Diana Lohse<br>
-              Conny Neubert<br>
-              Claudia Lucia Stan<br>
-              Wang Ye<br>
-              Sascha Schmidt<br>
-              Anja Bellinger<br>
-              Janine Pecher
-            </dd>
-          </dl>
-          <h3>Zusammenarbeit</h3>
-          <p>Von 1995 bis 2024 hat Frank Richter dieses Online-Wörterbuch aufgebaut und betreut.
-            Die Deutsch-Englische Wortliste ist &copy; 1995-2024 Frank Richter und ist
-            unter GNU General Public License verfügbar.</p>
-          <p>Der Aufbau dieses Online-Dienstes wäre nicht möglich gewesen ohne Ihre tatkräftige Unterstützung,
-            sei es durch Einsendung von neuen Übersetzungen, Fehlerkorrekturen, Vorschlägen oder aufmunternden Danksagungen.</p>
-          <p>Vielen Dank für die bisherige und hoffentlich auch weitere Hilfe an:</p>
-          <ul>
-            <li>Michael Forman</li>
-            <li><a href="https://web.archive.org/web/20230531235907/http://www.dubrau.de/">Gunter Dubrau</a></li>
-            <li><a href="https://web.archive.org/web/20090505180624/http://www.math.tu-berlin.de/~anst/">Andreas Steinbrecher</a> [math.]</li>
-            <li>Razi Lotfi-Tabrizi</li>
-            <li>Francisco Welter-Schultes</li>
-            <li><a href="https://web.archive.org/web/20080509061450/http://www.ozdoba.net/rhb/">Christoph Ozdoba</a> (Eisenbahn)</li>
-            <li><a href="https://web.archive.org/web/20230531235907/http://www.bibliotheks-glossar.de/">Birgit Wiegandt</a> (Bibliothekswesen)</li>
-            <li><a href="https://web.archive.org/web/20230531235907/http://www.kalkspatz.de/">G&uuml;nter Haltmayer</a> (Keramik, T&ouml;pfern)</li>
-            <li><a href="mailto:walter.baumann@iket.fzk.de">Walter Baumann</a></li>
-            <li><a href="https://web.archive.org/web/20230531235907/http://www.dunlop.de/">Dunlop GmbH</a> (Reifen, Fahrzeuge)</li>
-            <li><a href="mailto:marek.estreicher@wave-solutions.com">Marek Estreicher</a> [&Ouml;s.]</li>
-            <li><a href="https://web.archive.org/web/20230531235907/http://www.tu-cottbus.de/Strukturmechanik">BTU Cottbus, LS Strukturmechanik und Fahrzeugschwingungen</a></li>
-            <li>Hartmut Heinz</li>
-            <li><a href="mailto:dara.koper@EUnet.at">Dara Koper</a> (Wale, Delfine, [naut.])</li>
-            <li>Judy Leonore Heise</li>
-            <li>Jens Loos (gro&szlig;e Vokabelliste)</li>
-            <li>Tom Gries (gute Ideen)</li>
-            <li>Thorsten Kr&uuml;ger [ornith.]</li>
-            <li><a href="https://web.archive.org/web/20230531235907/http://www.bertram-scharpf.de/">Bertram Scharpf</a></li>
-            <li>Ken Davidson, Sr.</li>
-            <li><a href="https://web.archive.org/web/20211204211744/http://ft-c.de/">Franz Timmer</a></li>
-            <li>Dieter Haas</li>
-            <li>Frank Vent <a href="https://web.archive.org/web/20230531235907/http://www.franks-woerterbuch.de/">www.franks-woerterbuch.de</a>
-            </li>
-            <li>Marco Lehmann <a href="https://web.archive.org/web/20230531235907/https://www.industrystock.com/">www.industrystock.com</a></li>
-            <li><a href="https://web.archive.org/web/20230531235907/https://www.gts-translation.com/">Global Englisch Übersetzung</a></li>
-            <li><a href="mailto:andreaszirnig@yahoo.com">Andreas Zirnig</a></li>
-            <li>Geek_Pwn (Sicherheitshinweise)</li>
-            <li>CuPcakeN1njA (Sicherheitshinweise)</li>
-            <li>Ezio Paglia (Sicherheitshinweise)</li>
-          </ul>
-          <p>und viele andere mehr!</p>
-        </details>
-      </article>
-    </section>
+    <div class="d-none notice text-danger" id="dict-load-fail">
+      ⚠️&nbsp;The dictionary failed to load!
+      Please make sure you're using a modern browser and have a working Internet connection.
+      Reload this page to try again.
+    </div>
 
-  </main>
-
-  <footer>
     <p>
+      <input type="text" id="search_term" placeholder="🔍 Search">
+    </p>
+    <figure><!-- for horiz scroll -->
+      <table class="result-table">
+        <thead>
+          <tr>
+            <th>🇩🇪 German</th>
+            <th>🇺🇸 English</th>
+          </tr>
+        </thead>
+        <tbody id="result_rows">
+          <tr>
+            <td colspan="2" style="text-align: center; font-style: italic;">No results.</td>
+          </tr>
+        </tbody>
+      </table>
+    </figure>
+    <p id="result_count"></p>
+
+    <details lang="de">
+      <summary>Über die Datenquelle</summary>
+      <p><i>Beolingus</i> war ein unter Anderem deutsch-englisches Online-Wörterbuch der Technischen Universität Chemnitz,
+        welches bis zum 30. Juni 2024 unter <a href="https://dict.tu-chemnitz.de/" target="_blank">dict.tu-chemnitz.de</a>
+        erreichbar war. Diese Seite/App nutzt die deutsch-englische Übersetzungsliste, welche unter der
+        <a href="https://www.gnu.org/licenses/old-licenses/gpl-2.0-standalone.html" target="_blank">GNU GPL 2.0+</a>
+        <a href="https://ftp.tu-chemnitz.de/pub/Local/urz/ding/de-en-devel/" target="_blank">zum Download</a>
+        zur Verfügung gestellt wurde. Folgende Informationen über das Entstehen von Beolingus basiert auf einem
+        <a href="https://web.archive.org/web/20230531235907/https://dict.tu-chemnitz.de/doc/about.de.html"
+          target="_blank">Snapshot der WaybackMachine</a>.
+      </p>
+      <h3>Das BEOLINGUS-Team</h3>
+      <dl>
+        <dt>Organisation, Technik und Integration:</dt>
+        <dd>
+          Stefan Gleis<br>
+          Frank Richter<br>
+        </dd>
+        <dt>English Language &amp; Linguistics, TU Chemnitz</dt>
+        <dd>
+          Prof. Dr. Josef Schmied<br>
+          Dr. Haase<br>
+          Dr. Weißer<br>
+          Diana Lohse<br>
+          Conny Neubert<br>
+          Claudia Lucia Stan<br>
+          Wang Ye<br>
+          Sascha Schmidt<br>
+          Anja Bellinger<br>
+          Janine Pecher
+        </dd>
+      </dl>
+      <h3>Zusammenarbeit</h3>
+      <p>Von 1995 bis 2024 hat Frank Richter dieses Online-Wörterbuch aufgebaut und betreut.
+        Die Deutsch-Englische Wortliste ist &copy; 1995-2024 Frank Richter und ist
+        unter GNU General Public License verfügbar.</p>
+      <p>Der Aufbau dieses Online-Dienstes wäre nicht möglich gewesen ohne Ihre tatkräftige Unterstützung,
+        sei es durch Einsendung von neuen Übersetzungen, Fehlerkorrekturen, Vorschlägen oder aufmunternden Danksagungen.</p>
+      <p>Vielen Dank für die bisherige und hoffentlich auch weitere Hilfe an:</p>
+      <ul>
+        <li>Michael Forman</li>
+        <li><a href="https://web.archive.org/web/20230531235907/http://www.dubrau.de/">Gunter Dubrau</a></li>
+        <li><a href="https://web.archive.org/web/20090505180624/http://www.math.tu-berlin.de/~anst/">Andreas Steinbrecher</a> [math.]</li>
+        <li>Razi Lotfi-Tabrizi</li>
+        <li>Francisco Welter-Schultes</li>
+        <li><a href="https://web.archive.org/web/20080509061450/http://www.ozdoba.net/rhb/">Christoph Ozdoba</a> (Eisenbahn)</li>
+        <li><a href="https://web.archive.org/web/20230531235907/http://www.bibliotheks-glossar.de/">Birgit Wiegandt</a> (Bibliothekswesen)</li>
+        <li><a href="https://web.archive.org/web/20230531235907/http://www.kalkspatz.de/">G&uuml;nter Haltmayer</a> (Keramik, T&ouml;pfern)</li>
+        <li><a href="mailto:walter.baumann@iket.fzk.de">Walter Baumann</a></li>
+        <li><a href="https://web.archive.org/web/20230531235907/http://www.dunlop.de/">Dunlop GmbH</a> (Reifen, Fahrzeuge)</li>
+        <li><a href="mailto:marek.estreicher@wave-solutions.com">Marek Estreicher</a> [&Ouml;s.]</li>
+        <li><a href="https://web.archive.org/web/20230531235907/http://www.tu-cottbus.de/Strukturmechanik">BTU Cottbus, LS Strukturmechanik und Fahrzeugschwingungen</a></li>
+        <li>Hartmut Heinz</li>
+        <li><a href="mailto:dara.koper@EUnet.at">Dara Koper</a> (Wale, Delfine, [naut.])</li>
+        <li>Judy Leonore Heise</li>
+        <li>Jens Loos (gro&szlig;e Vokabelliste)</li>
+        <li>Tom Gries (gute Ideen)</li>
+        <li>Thorsten Kr&uuml;ger [ornith.]</li>
+        <li><a href="https://web.archive.org/web/20230531235907/http://www.bertram-scharpf.de/">Bertram Scharpf</a></li>
+        <li>Ken Davidson, Sr.</li>
+        <li><a href="https://web.archive.org/web/20211204211744/http://ft-c.de/">Franz Timmer</a></li>
+        <li>Dieter Haas</li>
+        <li>Frank Vent <a href="https://web.archive.org/web/20230531235907/http://www.franks-woerterbuch.de/">www.franks-woerterbuch.de</a>
+        </li>
+        <li>Marco Lehmann <a href="https://web.archive.org/web/20230531235907/https://www.industrystock.com/">www.industrystock.com</a></li>
+        <li><a href="https://web.archive.org/web/20230531235907/https://www.gts-translation.com/">Global Englisch Übersetzung</a></li>
+        <li><a href="mailto:andreaszirnig@yahoo.com">Andreas Zirnig</a></li>
+        <li>Geek_Pwn (Sicherheitshinweise)</li>
+        <li>CuPcakeN1njA (Sicherheitshinweise)</li>
+        <li>Ezio Paglia (Sicherheitshinweise)</li>
+      </ul>
+      <p>und viele andere mehr!</p>
+    </details>
+
+    <details>
+      <summary>Author, Copyright, and License</summary>
       Dictionary data from <a href="https://dict.tu-chemnitz.de/" target="_blank">dict.tu-chemnitz.de</a> is
       <strong style="white-space: nowrap;">Copyright &copy; 1995-2024
       <a href="mailto:frank.richter@tu-chemnitz.de">Frank Richter</a></strong>.
       This page/app is <strong style="white-space: nowrap;">Copyright &copy; 2024
       <a href="https://www.zero-g.net/" target="_blank">Hauke Dämpfling</a></strong>.
       This page/app and data are free software and come with ABSOLUTELY NO WARRANTY,
-      you are welcome to redistribute it under certain conditions; for details, see the
+      you are welcome to redistribute them under certain conditions; for details, see the
       <a href="https://www.gnu.org/licenses/old-licenses/gpl-2.0-standalone.html" target="_blank">GNU
       General Public License Version 2</a> or later.
       The source code is <a href="https://github.com/haukex/blict" target="_blank">on GitHub</a>.
       This page uses <a href="https://simplecss.org/" target="_blank" style="white-space: nowrap;">{} Simple.css</a>
       (<a href="https://github.com/kevquirk/simple.css/blob/main/LICENSE" target="_blank">MIT License</a>).
-    </p>
-    <p lang="de">
-      <b>Datenschutz (Data Protection):</b> Diese statische Seite wird von GitHub Pages bereitgestellt, siehe
+    </details>
+
+    <details lang="de">
+      <summary>Datenschutz (Data Protection)</summary>
+      Diese statische Seite wird von GitHub Pages bereitgestellt, siehe
       <a href="https://docs.github.com/en/pages/getting-started-with-github-pages/about-github-pages#data-collection"
       target="_blank">"GitHub Pages Data collection" (engl.)</a> und
       <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement"
       target="_blank">"GitHub General Privacy Statement" (engl.)</a>.
-      Die statische Datenbank wird ggf. von einem getrennten Server bereitgestellt, welcher
+      Die Datenbank wird zzt. von einem getrennten Server statisch bereitgestellt, welcher
       <a href="https://www.datenschutz.org/logfiles/" target="_blank">Server-Logfiles</a> aufzeichnet, und
       die darin erhobenen Daten dienen lediglich statistischen Auswertungen und zur Verbesserung der Website;
       der Websitebetreiber behält sich allerdings vor, die Server-Logfiles nachträglich zu überprüfen,
       sollten konkrete Anhaltspunkte auf eine rechtswidrige Nutzung hinweisen.
-    </p>
-  </footer>
+    </details>
+
+  </main>
 
 </body>
 </html>
