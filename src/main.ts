@@ -35,7 +35,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     const whatPat = escapeStringRegexp(search_term.value.trim().replaceAll(/\s+/g,' '))
     const scoreRes :RegExp[] = [ '(?:^|::\\s*)', '(?:^|::\\s*|\\|\\s*)', '::\\s*to\\s+', '\\b' ]
       .map((re)=>re+whatPat)
-      .flatMap((re)=>[re, re+'\\b', re+'(?:\\s*\\{[^}|]*\\}|\\s*\\[[^\\]|]*\\])*\\s*(?:$|;)'])
+      .flatMap((re)=>[re, re+'\\b', re+'(?:\\s*\\{[^}|]*\\}|\\s*\\[[^\\]|]*\\]|\\s*\\([^)]\\))*\\s*(?:$|\\||;)'])
       .flatMap((re)=>[new RegExp(re), new RegExp(re, 'i')])
     //console.debug(scoreRes)
     const whatRe = new RegExp(whatPat, 'ig')

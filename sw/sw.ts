@@ -33,8 +33,8 @@ async function activate() {
 self.addEventListener('activate', e => e.waitUntil(activate()))
 
 self.addEventListener('fetch', event => {
-  // don't touch URLs like "chrome-extension://"
-  if (event.request.url.toLowerCase().startsWith('http')) {
+  // don't touch URLs like "chrome-extension://" or the DB_URL
+  if (event.request.url.toLowerCase().startsWith('http') && event.request.url!==DB_URL) {
     console.debug('SW fetch: Intercepting', event.request)
     event.respondWith(cacheFirst(caches, APP_CACHE_NAME, event.request))
   }
