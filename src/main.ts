@@ -1,36 +1,17 @@
 
 import escapeStringRegexp from 'escape-string-regexp'
+import {DB_URL, DB_CACHE_NAME, cacheFirst} from '../src/common'
 
 if (module.hot) module.hot.accept()  // for parcel dev env
 
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register(new URL('../sw/sw.ts', import.meta.url), {type: 'module'}).then(
+    (registration) => console.debug('SW register ok', registration),
+    (error) => console.error('Service Worker registration failed', error),
+  )
+} else console.warn('Service Workers are not supported')
+
 const MAX_RESULTS = 200
-
-//TODO: make the whole app work offline with a service worker
-// https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Tutorials/CycleTracker/Service_workers
-
-async function loadDict() {
-  //const URL = 'https://ftp.tu-chemnitz.de/pub/Local/urz/ding/de-en-devel/de-en.txt'
-  const URL = 'https://bl0.zero-g.net/db/de-en.txt'
-  const CACHE_NAME = 'Blict'
-  try {
-    const cachedResponse = await window.caches.match(URL)
-    if (cachedResponse) {
-      console.debug('Cache hit on '+URL)
-      return cachedResponse
-    }
-    console.log('Cache miss on '+URL)
-    const networkResponse = await fetch(URL)
-    if (networkResponse.ok) {
-      console.debug('Cache store '+URL)
-      const cache = await window.caches.open(CACHE_NAME)
-      cache.put(URL, networkResponse.clone())
-    }
-    return networkResponse
-  } catch (error) {
-    console.error(error)
-    return Response.error()
-  }
-}
 
 window.addEventListener('DOMContentLoaded', async () => {
   const search_term = document.getElementById('search_term') as HTMLInputElement
@@ -39,10 +20,10 @@ window.addEventListener('DOMContentLoaded', async () => {
   const load_fail = document.getElementById('dict-load-fail') as HTMLElement
   const no_results = (result_rows.children[0] as HTMLElement).cloneNode(true) as HTMLElement  // should be a tr
 
-  const dictResp = await loadDict()
-  if ( !dictResp || !dictResp.ok ) {
+  const dictResp = await cacheFirst(caches, DB_CACHE_NAME, new Request(DB_URL))
+  if ( !dictResp.ok ) {
     load_fail.classList.remove('d-none')
-    throw new Error('Could not load dictionary.')
+    throw new Error('Failed to load dict')
   }
 
   const dictLines = (await dictResp.text())
@@ -51,14 +32,18 @@ window.addEventListener('DOMContentLoaded', async () => {
     .split(/\r?\n|\r(?!\n)/g).map((line) => line.trim()).filter((line) => line.length && !line.startsWith('#'))
 
   const do_search = () => {
-    const whatPat = escapeStringRegexp(search_term.value.trim())
-    const scoreRes :RegExp[] = [ `(?:^|::\\s*)${whatPat}`, `(?:^|::\\s*|\\|\\s*)${whatPat}`, `\\b${whatPat}` ]
-      .flatMap((re)=>[re,re+'\\b']).flatMap((re)=>[new RegExp(re), new RegExp(re, 'i')])
+    const whatPat = escapeStringRegexp(search_term.value.trim().replaceAll(/\s+/g,' '))
+    const scoreRes :RegExp[] = [ '(?:^|::\\s*)', '(?:^|::\\s*|\\|\\s*)', '::\\s*to\\s+', '\\b' ]
+      .map((re)=>re+whatPat)
+      .flatMap((re)=>[re, re+'\\b', re+'(?:\\s*\\{[^}|]*\\}|\\s*\\[[^\\]|]*\\])*\\s*(?:$|;)'])
+      .flatMap((re)=>[new RegExp(re), new RegExp(re, 'i')])
+    //console.debug(scoreRes)
     const whatRe = new RegExp(whatPat, 'ig')
     const scoredMatches :[string,number][] = (
       search_term.value.trim().length ? dictLines.filter((line) => line.match(whatRe)) : [] )
       .map((matchedLine) => [matchedLine, scoreRes.map((re):number=>matchedLine.match(re)?1:0).reduce((a,b)=>a+b,0) ])
     scoredMatches.sort((a,b) => b[1]-a[1])  // should be stable in modern JS
+    //console.debug(scoredMatches)
     const newChildren :HTMLElement[] = []
     scoredMatches.slice(0, MAX_RESULTS).forEach((scoredMatch) => {
       const trans = scoredMatch[0].split(/::/)
