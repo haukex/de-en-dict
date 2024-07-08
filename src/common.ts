@@ -1,9 +1,11 @@
 
-export {DB_URL, DB_CACHE_NAME, cacheFirst}
+export {DB_URL, DB_VER_URL, DB_CACHE_NAME, cacheFirst}
 
 //const DB_URL = 'https://ftp.tu-chemnitz.de/pub/Local/urz/ding/de-en-devel/de-en.txt.gz'
+//const DB_VER_URL = 'https://ftp.tu-chemnitz.de/pub/Local/urz/ding/de-en-devel/sha256sums.txt'
 const DB_URL = 'https://bl0.zero-g.net/de-en.txt.gz'
-const DB_CACHE_NAME = 'DeEnDict-v1'  // modify this to force a reload
+const DB_VER_URL = 'https://bl0.zero-g.net/sha256sums.txt'
+const DB_CACHE_NAME = 'DeEnDict'
 
 async function cacheFirst(storage :CacheStorage, cacheName :string, request :Request) {
   try {

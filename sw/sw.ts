@@ -1,7 +1,7 @@
 // eslint-disable-next-line no-var
 declare var self: ServiceWorkerGlobalScope
 
-import {DB_URL, DB_CACHE_NAME, cacheFirst} from '../src/common'
+import {DB_URL, DB_VER_URL, DB_CACHE_NAME, cacheFirst} from '../src/common'
 import {manifest, version} from '@parcel/service-worker'
 
 const APP_CACHE_NAME = `DeEnDict-${version}`
@@ -33,8 +33,8 @@ async function activate() {
 self.addEventListener('activate', e => e.waitUntil(activate()))
 
 self.addEventListener('fetch', event => {
-  // don't touch URLs like "chrome-extension://" or the DB_URL
-  if (event.request.url.toLowerCase().startsWith('http') && event.request.url!==DB_URL) {
+  // don't touch URLs like "chrome-extension://" or the DB_URL/DB_VER_URL
+  if (event.request.url.toLowerCase().startsWith('http') && event.request.url!==DB_URL && event.request.url!==DB_VER_URL) {
     console.debug('SW fetch: Intercepting', event.request)
     event.respondWith(cacheFirst(caches, APP_CACHE_NAME, event.request))
   }

@@ -1,6 +1,6 @@
 
 import escapeStringRegexp from 'escape-string-regexp'
-import {DB_URL, DB_CACHE_NAME, cacheFirst} from '../src/common'
+import {DB_URL, DB_VER_URL, DB_CACHE_NAME, cacheFirst} from '../src/common'
 
 if (module.hot) module.hot.accept()  // for parcel dev env
 
@@ -28,8 +28,33 @@ async function gunzipUTF8(stream :ReadableStream) {
 }
 
 async function loadDict() :Promise<string[]> {
+  let dictNeedsUpdate = false
   try {
-    const dictResp = await cacheFirst(caches, DB_CACHE_NAME, new Request(DB_URL))
+    const dictVerResp = await fetch(DB_VER_URL)
+    if (dictVerResp.ok) {
+      const dictVerRespClone = dictVerResp.clone()
+      const dictVerRespData = await dictVerResp.text()
+      const cache = await caches.open(DB_CACHE_NAME)
+      const dictVerCache = await cache.match(DB_CACHE_NAME)
+      if (dictVerCache) {
+        const dictVerCacheData = await dictVerCache.text()
+        console.debug('The cached version data vs current version data', dictVerCacheData, dictVerRespData)
+        if (dictVerCacheData !== dictVerRespData)
+          dictNeedsUpdate = true
+      } else dictNeedsUpdate = true
+      cache.put(DB_CACHE_NAME, dictVerRespClone)
+    }
+  } catch (error) {
+    console.log('Failed to get dict version info', error)
+  }
+  try {
+    const dbReq = new Request(DB_URL)
+    if (dictNeedsUpdate) {
+      console.debug('The dictionary needs an update, deleting it from cache.')
+      const cache = await caches.open(DB_CACHE_NAME)
+      await cache.delete(dbReq)
+    } else console.debug('The dictionary does not appear to need an update.')
+    const dictResp = await cacheFirst(caches, DB_CACHE_NAME, dbReq)
     if ( !dictResp.ok || !dictResp.body )
       throw new Error('Failed to load dict')
     return (await gunzipUTF8(dictResp.body))
@@ -60,6 +85,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   const do_search = () => {
     const whatPat = escapeStringRegexp(search_term.value.trim().replaceAll(/\s+/g,' '))
+    //TODO: more code comments
     const scoreRes :RegExp[] = [ '(?:^|::\\s*)', '(?:^|::\\s*|\\|\\s*)', '::\\s*to\\s+', '\\b' ]
       .map((re)=>re+whatPat)
       .flatMap((re)=>[re, re+'\\b', re+'(?:\\s*\\{[^}|]*\\}|\\s*\\[[^\\]|]*\\]|\\s*\\([^)]\\))*\\s*(?:$|\\||;)'])
@@ -80,6 +106,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       const ens = (trans[1] as string).split(/\|/)
       if (des.length!=ens.length)
         throw new Error(`unexpected database format on line "${scoredMatch[0]}"`)
+      //TODO: feedback mailto links
       const tr = document.createElement('tr')
       const td0 = document.createElement('td')
       const td1 = document.createElement('td')
