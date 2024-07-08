@@ -4,7 +4,8 @@ German-English Dictionary
 This is a browser-based client for the database of the discontinued
 ["Beolingus"](https://dict.tu-chemnitz.de) German-English Dictionary.
 
-Please note I currently do not intend to maintain the word list itself.
+Please note the word list itself is *not* part of this repository,
+please do not submit issues about that here.
 
 Author, Copyright, and License
 ------------------------------
