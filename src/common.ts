@@ -23,12 +23,21 @@
 
 export {DB_URL, DB_VER_URL, DB_CACHE_NAME, cacheFirst}
 
+/* The URLs from which to load the dictionary and version information.
+ * Although I have permission to use the ftp.tu-chemnitz.de server from Frank Richter,
+ * at the moment this doesn't work because the server does not send a CORS header.
+ * So for now, use the mirror at zero-g.net. */
 //const DB_URL = 'https://ftp.tu-chemnitz.de/pub/Local/urz/ding/de-en-devel/de-en.txt.gz'
 //const DB_VER_URL = 'https://ftp.tu-chemnitz.de/pub/Local/urz/ding/de-en-devel/sha256sums.txt'
 const DB_URL = 'https://bl0.zero-g.net/de-en.txt.gz'
 const DB_VER_URL = 'https://bl0.zero-g.net/sha256sums.txt'
+
+/* The name of the cache in which to store the dictionary.
+ * Note the main script takes care of checking for cache freshness. */
 const DB_CACHE_NAME = 'DeEnDict'
 
+/* This function checks for the existence of a request URL in the specified cache,
+ * returning it if it is found, otherwise it goes out to the network and stores the result in the cache. */
 async function cacheFirst(storage :CacheStorage, cacheName :string, request :Request) {
   try {
     const cache = await storage.open(cacheName)
@@ -36,7 +45,7 @@ async function cacheFirst(storage :CacheStorage, cacheName :string, request :Req
     if (responseFromCache) {
       console.debug(`cache HIT ${cacheName} ${request.method} ${request.url}`)
       return responseFromCache
-    }
+    } // else
     console.debug(`cache MISS ${cacheName} ${request.method} ${request.url}`)
     const responseFromNetwork = await fetch(request)
     await cache.put(request, responseFromNetwork.clone())

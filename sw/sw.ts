@@ -21,19 +21,28 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+/* This is the Service Worker that allows the Progressive Web App
+ * to work in offline mode. */
+
+// We need to trick TypeScript into realizing that `self` isn't a `Window` in this file.
 // eslint-disable-next-line no-var
 declare var self: ServiceWorkerGlobalScope
 
-import {DB_URL, DB_VER_URL, DB_CACHE_NAME, cacheFirst} from '../src/common'
+// manifest is a list of the static resources that belong to the webapp
+// version is a hash calculated by parcel for the static resources
 import {manifest, version} from '@parcel/service-worker'
+import {DB_URL, DB_VER_URL, DB_CACHE_NAME, cacheFirst} from '../src/common'
 
+/* The name of the cache, dependent on the current version, so that when the version changes,
+ * the previous cache is discarded and resources are fetched again. */
 const APP_CACHE_NAME = `DeEnDict-${version}`
 
+// handler for the Service Worker "install" event (typically used for preloading)
 async function install() {
-  // add the files for this app to a versioned cache
+  // add the files for this app to the (versioned) cache
   await (await caches.open(APP_CACHE_NAME)).addAll(manifest)
   console.debug('SW install: Added static resources to cache', manifest)
-  // add the dictionary to its cache
+  // preload the dictionary into its cache
   const dbCache = await caches.open(DB_CACHE_NAME)
   if (await dbCache.match(DB_URL))
     console.debug('SW install: DB was already in its cache')
@@ -44,17 +53,22 @@ async function install() {
 }
 self.addEventListener('install', e => e.waitUntil(install()))
 
+// handler for the Service Worker "activate" event (typically used for cache cleaning)
 async function activate() {
+  // determine which caches can be deleted
   const cachesToDelete = (await caches.keys()).filter((key) => key !== APP_CACHE_NAME && key !== DB_CACHE_NAME)
   if (cachesToDelete.length) {
+    // and delete those caches
     await Promise.all(cachesToDelete.map(key => caches.delete(key)))
     console.debug('SW activate: Cleaned caches', cachesToDelete)
   }
+  // activate this Service Worker on existing pages
   await self.clients.claim()
   console.debug('SW activated')
 }
 self.addEventListener('activate', e => e.waitUntil(activate()))
 
+// handler for the Service Worker "fetch" event (for intercepting all network requests)
 self.addEventListener('fetch', event => {
   // don't touch URLs like "chrome-extension://" or the DB_URL/DB_VER_URL
   if (event.request.url.toLowerCase().startsWith('http') && event.request.url!==DB_URL && event.request.url!==DB_VER_URL) {
