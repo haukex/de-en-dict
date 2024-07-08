@@ -11,6 +11,9 @@ if ('serviceWorker' in navigator) {
   )
 } else console.warn('Service Workers are not supported')
 
+const FEEDBACK_URL = 'mailto:frank.richter@hrz.tu-chemnitz.de'
+const FEEDBACK_SUBJECT = 'De-En Word List Suggestion'
+const ENABLE_FEEDBACK = false
 const MAX_RESULTS = 200
 
 async function gunzipUTF8(stream :ReadableStream) {
@@ -107,7 +110,6 @@ window.addEventListener('DOMContentLoaded', async () => {
       const ens = (trans[1] as string).split(/\|/)
       if (des.length!=ens.length)
         throw new Error(`unexpected database format on line "${scoredMatch[0]}"`)
-      //TODO: feedback mailto links
       des.map((de, i) => {
         const en = ens[i] as string
         const tr = document.createElement('tr')
@@ -121,6 +123,21 @@ window.addEventListener('DOMContentLoaded', async () => {
         const td1 = document.createElement('td')
         td1.innerText = en.trim()
         td1.innerHTML = td1.innerHTML.replaceAll(whatRe, '<strong>$&</strong>')
+        if (!i && ENABLE_FEEDBACK) {
+          const fbIcon = document.createElement('div')
+          fbIcon.classList.add('feedback-thing')
+          const fbLink = document.createElement('a')
+          fbLink.setAttribute('title', 'Send Feedback Email')
+          fbLink.setAttribute('href', FEEDBACK_URL
+            +'?subject='+encodeURIComponent(FEEDBACK_SUBJECT)
+            +'&body='+encodeURIComponent('Hello,\n\n'
+            +'I would like to make a suggestion about the following dictionary entry. [Please do not edit the following entry!]\n'
+            +'Ich möchte einen Vorschlag zu dem folgenden Wörterbucheintrag machen. [Bitte den folgenden Eintrag nicht bearbeiten!]\n\n'
+            +scoredMatch[0]+'\n\nMy suggestion is:\nMein Vorschlag ist:\n'))
+          fbLink.innerText = '✉️'
+          fbIcon.appendChild(fbLink)
+          td1.prepend(fbIcon)
+        }
         tr.appendChild(td1)
         newChildren.push(tr)
       })
