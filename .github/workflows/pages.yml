@@ -26,9 +26,7 @@ jobs:
         run: make installdeps
       - uses: actions/configure-pages@v5
       - name: Build pages
-        run: |
-          make
-          curl -LsSf https://www.zero-g.net/favicon.ico -o dist/favicon.ico
+        run: make
       - uses: actions/upload-pages-artifact@v3
         with:
           path: ./dist

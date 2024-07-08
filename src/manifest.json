@@ -5,6 +5,7 @@
     { "src": "icons/logo_512px.png", "sizes": "512x512" },
     { "src": "icons/logo_192px.png", "sizes": "192x192" }
   ],
+  "background_color": "#3C3C3C",
   "start_url": "/",
   "display": "standalone"
 }
