@@ -5,7 +5,6 @@
   "cSpell.words": [ "Hauke", "Dämpfling", "Daempfling" ],
   "cSpell.ignoreWords": [
     "Beolingus",
-    "Blict"
   ],
   "eslint.validate": [ "javascript", "typescript" ],
 }

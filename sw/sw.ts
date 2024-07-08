@@ -4,7 +4,7 @@ declare var self: ServiceWorkerGlobalScope
 import {DB_URL, DB_CACHE_NAME, cacheFirst} from '../src/common'
 import {manifest, version} from '@parcel/service-worker'
 
-const APP_CACHE_NAME = `Blict-${version}`
+const APP_CACHE_NAME = `DeEnDict-${version}`
 
 async function install() {
   // add the files for this app to a versioned cache
