@@ -98,7 +98,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     scoredMatches.sort((a,b) => b[1]-a[1])  // should be stable in modern JS
     //console.debug(scoredMatches)
     const newChildren :HTMLElement[] = []
-    scoredMatches.slice(0, MAX_RESULTS).forEach((scoredMatch) => {
+    let displayedMatches = 0
+    scoredMatches.slice(0, MAX_RESULTS).forEach((scoredMatch, mi) => {
       const trans = scoredMatch[0].split(/::/)
       if (trans.length!=2)
         throw new Error(`unexpected database format on line "${scoredMatch[0]}"`)
@@ -107,33 +108,31 @@ window.addEventListener('DOMContentLoaded', async () => {
       if (des.length!=ens.length)
         throw new Error(`unexpected database format on line "${scoredMatch[0]}"`)
       //TODO: feedback mailto links
-      const tr = document.createElement('tr')
-      const td0 = document.createElement('td')
-      const td1 = document.createElement('td')
       des.map((de, i) => {
-        //TODO Later: if a line wraps, the following pairs will no longer be aligned
         const en = ens[i] as string
-        const div0 = document.createElement('div')
-        if (i) div0.classList.add('sub-result')
-        div0.innerText = de.trim()
-        div0.innerHTML = div0.innerHTML.replaceAll(whatRe, '<strong>$&</strong>')
-        td0.appendChild(div0)
-        const div1 = document.createElement('div')
-        if (i) div1.classList.add('sub-result')
-        div1.innerText = en.trim()
-        div1.innerHTML = div1.innerHTML.replaceAll(whatRe, '<strong>$&</strong>')
-        td1.appendChild(div1)
+        const tr = document.createElement('tr')
+        if (i) tr.classList.add('sub-result')
+        else tr.classList.add('first-result')
+        if (mi%2) tr.classList.add('odd-result')
+        const td0 = document.createElement('td')
+        td0.innerText = de.trim()
+        td0.innerHTML = td0.innerHTML.replaceAll(whatRe, '<strong>$&</strong>')
+        tr.appendChild(td0)
+        const td1 = document.createElement('td')
+        td1.innerText = en.trim()
+        td1.innerHTML = td1.innerHTML.replaceAll(whatRe, '<strong>$&</strong>')
+        tr.appendChild(td1)
+        newChildren.push(tr)
       })
-      tr.appendChild(td0)
-      tr.appendChild(td1)
-      newChildren.push(tr)
+      newChildren.at(-1)?.classList.add('last-subresult')
+      displayedMatches++
     })
     if (!scoredMatches.length) {
       result_count.innerText = `No matches found (dictionary holds ${dictLines.length} entries).`
       newChildren.push(no_results.cloneNode(true) as HTMLElement)
     }
-    else if (newChildren.length!=scoredMatches.length)
-      result_count.innerText = `Found ${scoredMatches.length} matches, showing the first ${newChildren.length}.`
+    else if (displayedMatches!=scoredMatches.length)
+      result_count.innerText = `Found ${scoredMatches.length} matches, showing the first ${displayedMatches}.`
     else
       result_count.innerText = `Showing all ${scoredMatches.length} matches.`
     result_rows.replaceChildren(...newChildren)

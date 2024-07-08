@@ -40,18 +40,39 @@
     }
     .result-table {
       width: 100%;
+      border: 1px solid var(--border);
+    }
+    .result-table tr {
+      background-color: var(--bg);
+    }
+    .result-table tr.odd-result {
+      background-color: var(--accent-bg);
     }
     .result-table th {
       text-align: center;
       white-space: nowrap;
     }
     .result-table td {
+      border-left: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+      border-top: 0;
+      border-bottom: 0;
       vertical-align: text-top;
       width: 50%;
       font-size: 1rem;  /* Default would be 1.15rem from body */
+      padding-top: 0;
+      padding-bottom: 0;
     }
-    .result-table div.sub-result {
+    .result-table .sub-result td {
       padding-left: 2rem;
+    }
+    .result-table .first-result td {
+      border-top: 1px solid var(--border);
+      padding-top: 0.5rem;
+    }
+    .result-table .last-subresult td {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
     }
   </style>
   <script type="module">import "./main.ts";</script> <!-- parcel will inline and minify this -->
