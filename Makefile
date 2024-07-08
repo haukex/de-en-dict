@@ -1,8 +1,8 @@
 
 # Run `npm start` for the dev server
 
-.PHONY: build
-build: dist/index.html
+.PHONY: all
+all: dist/index.html
 
 dist/index.html: test src/index.html src/main.ts sw/sw.ts package.json package-lock.json src/tsconfig.json sw/tsconfig.json .parcelrc
 	npx parcel build
