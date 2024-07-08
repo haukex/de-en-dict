@@ -15,7 +15,7 @@ const MAX_RESULTS = 200
 
 async function gunzipUTF8(stream :ReadableStream) {
   const reader = stream.pipeThrough(new DecompressionStream('gzip')).pipeThrough(new TextDecoderStream('UTF-8')).getReader()
-  if (!reader) throw new Error('failed to get reader')
+  if (!reader) throw new Error('Failed to get reader')
   let result = ''
   // eslint-disable-next-line no-constant-condition
   while (true) {
@@ -27,6 +27,21 @@ async function gunzipUTF8(stream :ReadableStream) {
   return result
 }
 
+async function loadDict() :Promise<string[]> {
+  try {
+    const dictResp = await cacheFirst(caches, DB_CACHE_NAME, new Request(DB_URL))
+    if ( !dictResp.ok || !dictResp.body )
+      throw new Error('Failed to load dict')
+    return (await gunzipUTF8(dictResp.body))
+      // these two replaces fix some oversights that I guess happened on conversion from CP1252 to UTF-8 (?)
+      .replaceAll(String.fromCodePoint(0x92),'\u2019').replaceAll(String.fromCodePoint(0x96),'\u2013')
+      .split(/\r?\n|\r(?!\n)/g).map((line) => line.trim()).filter((line) => line.length && !line.startsWith('#'))
+  } catch (error) {
+    console.error(error)
+    return []
+  }
+}
+
 window.addEventListener('DOMContentLoaded', async () => {
   const search_term = document.getElementById('search_term') as HTMLInputElement
   const result_rows = document.getElementById('result_rows') as HTMLElement
@@ -34,16 +49,14 @@ window.addEventListener('DOMContentLoaded', async () => {
   const load_fail = document.getElementById('dict-load-fail') as HTMLElement
   const no_results = (result_rows.children[0] as HTMLElement).cloneNode(true) as HTMLElement  // should be a tr
 
-  const dictResp = await cacheFirst(caches, DB_CACHE_NAME, new Request(DB_URL))
-  if ( !dictResp.ok || !dictResp.body ) {
+  search_term.setAttribute('disabled', 'disabled')
+  const dictLines = await loadDict()
+  if (!dictLines.length) {
     load_fail.classList.remove('d-none')
-    throw new Error('Failed to load dict')
+    return
   }
-
-  const dictLines = (await gunzipUTF8(dictResp.body))
-    // these two replaces fix some oversights that I guess happened on conversion from CP1252 to UTF-8 (?)
-    .replaceAll(String.fromCodePoint(0x92),'\u2019').replaceAll(String.fromCodePoint(0x96),'\u2013')
-    .split(/\r?\n|\r(?!\n)/g).map((line) => line.trim()).filter((line) => line.length && !line.startsWith('#'))
+  console.debug(`Loaded ${dictLines.length} dictionary lines`)
+  search_term.removeAttribute('disabled')
 
   const do_search = () => {
     const whatPat = escapeStringRegexp(search_term.value.trim().replaceAll(/\s+/g,' '))
