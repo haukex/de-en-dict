@@ -13,6 +13,20 @@ if ('serviceWorker' in navigator) {
 
 const MAX_RESULTS = 200
 
+async function gunzipUTF8(stream :ReadableStream) {
+  const reader = stream.pipeThrough(new DecompressionStream('gzip')).pipeThrough(new TextDecoderStream('UTF-8')).getReader()
+  if (!reader) throw new Error('failed to get reader')
+  let result = ''
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const {done, value} = await reader.read()
+    if (done) break
+    result += value
+  }
+  console.debug(`Decompressed ${result.length} chars`)
+  return result
+}
+
 window.addEventListener('DOMContentLoaded', async () => {
   const search_term = document.getElementById('search_term') as HTMLInputElement
   const result_rows = document.getElementById('result_rows') as HTMLElement
@@ -21,12 +35,12 @@ window.addEventListener('DOMContentLoaded', async () => {
   const no_results = (result_rows.children[0] as HTMLElement).cloneNode(true) as HTMLElement  // should be a tr
 
   const dictResp = await cacheFirst(caches, DB_CACHE_NAME, new Request(DB_URL))
-  if ( !dictResp.ok ) {
+  if ( !dictResp.ok || !dictResp.body ) {
     load_fail.classList.remove('d-none')
     throw new Error('Failed to load dict')
   }
 
-  const dictLines = (await dictResp.text())
+  const dictLines = (await gunzipUTF8(dictResp.body))
     // these two replaces fix some oversights that I guess happened on conversion from CP1252 to UTF-8 (?)
     .replaceAll(String.fromCodePoint(0x92),'\u2019').replaceAll(String.fromCodePoint(0x96),'\u2013')
     .split(/\r?\n|\r(?!\n)/g).map((line) => line.trim()).filter((line) => line.length && !line.startsWith('#'))
