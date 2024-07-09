@@ -46,6 +46,7 @@ const FEEDBACK_BODY = 'Hello, Hallo,\n\n'
 const ENABLE_FEEDBACK = false
 //TODO Later: I could consider a "load more results" link
 const MAX_RESULTS = 200
+const TITLE_PREFIX = 'German-English Dictionary'
 
 // this function decodes a stream of bytes (Response body) first as a gzip stream, then as UTF-8 text
 async function gunzipUTF8(stream :ReadableStream) {
@@ -146,10 +147,34 @@ window.addEventListener('DOMContentLoaded', async () => {
   console.debug(`Loaded ${dictLines.length} dictionary lines`)
   search_term.removeAttribute('disabled')
 
+  // Starts a search using a value in the URL hash, if any
+  const search_from_url = () => {
+    let what = ''
+    if (window.location.hash.startsWith('#q=')) {
+      what = decodeURIComponent(window.location.hash.substring('#q='.length)).trim()
+    }
+    search_term.value = what
+    do_search(what)
+  }
+
+  // Updates the URL hash, if necessary, and runs a search when the input field changes
+  const search_term_changed = () => {
+    const what = search_term.value.trim()
+    const newHash = `#q=${encodeURIComponent(what)}`
+    if (window.location.hash !== newHash) {
+      window.history.pushState(null, '', newHash)
+    }
+    do_search(what)
+  }
+
   // this is our handler for running the search:
-  const do_search = () => {
-    // first, get the search term and escape special characters so it can be used in a regex
-    const whatPat = escapeStringRegexp(search_term.value.trim().replaceAll(/\s+/g,' '))
+  const do_search = (what: string) => {
+    // update page title with search term
+    const titleSuffix = what ? `: ${what}` : ''
+    document.title = TITLE_PREFIX + titleSuffix
+
+    // escape special characters so it can be used in a regex
+    const whatPat = escapeStringRegexp(what.replaceAll(/\s+/g, ' '))
     /* The following code generates a set of regular expressions used for scoring the matches.
      * For each regex that matches, one point is awarded. */
     const scoreRes :RegExp[] = [ '(?:^|::\\s*)', '(?:^|::\\s*|\\|\\s*)', '::\\s*to\\s+', '\\b' ]
@@ -161,8 +186,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     const whatRe = new RegExp(whatPat, 'ig')
     // generate a list of tuples of the match line and its score
     const scoredMatches :[string,number][] = (
-      // if the search box is empty, don't produce any results:
-      search_term.value.trim().length ? dictLines.filter((line) => line.match(whatRe)) : [] )
+      // if the search term is empty, don't produce any results:
+      what.length ? dictLines.filter((line) => line.match(whatRe)) : [])
       // for each line, store the line, and match it against each scoring regex, giving one point per match, and summing the scores:
       .map((matchedLine) => [matchedLine, scoreRes.map((re):number=>matchedLine.match(re)?1:0).reduce((a,b)=>a+b,0) ])
     // sort the scored matches (sort should be stable in modern JS)
@@ -233,7 +258,16 @@ window.addEventListener('DOMContentLoaded', async () => {
     // add the generated HTML to the document
     result_rows.replaceChildren(...newChildren)
   }
-  // install the handler and run the search once:
-  search_term.addEventListener('change', do_search)
-  do_search()
+
+  // Install event listener for input field changes
+  search_term.addEventListener('change', search_term_changed)
+
+  // Install event listener for browser navigation updating the URL hash
+  window.addEventListener('hashchange', search_from_url)
+
+  // Trigger a search upon loading
+  search_from_url()
+
+  // Put the focus on the input field
+  search_term.focus()
 })
