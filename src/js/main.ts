@@ -22,7 +22,7 @@
  */
 
 import escapeStringRegexp from 'escape-string-regexp'
-import {DB_URL, DB_VER_URL, DB_CACHE_NAME, cacheFirst} from '../src/common'
+import {DB_URL, DB_VER_URL, DB_CACHE_NAME, cacheFirst} from './common'
 
 // for the parcel development environment:
 if (module.hot) module.hot.accept()

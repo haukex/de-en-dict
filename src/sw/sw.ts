@@ -31,7 +31,7 @@ declare var self: ServiceWorkerGlobalScope
 // manifest is a list of the static resources that belong to the webapp
 // version is a hash calculated by parcel for the static resources
 import {manifest, version} from '@parcel/service-worker'
-import {DB_URL, DB_VER_URL, DB_CACHE_NAME, cacheFirst} from '../src/common'
+import {DB_URL, DB_VER_URL, DB_CACHE_NAME, cacheFirst} from '../js/common'
 
 /* The name of the cache, dependent on the current version, so that when the version changes,
  * the previous cache is discarded and resources are fetched again. */
