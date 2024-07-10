@@ -151,7 +151,13 @@ window.addEventListener('DOMContentLoaded', async () => {
   const search_from_url = () => {
     let what = ''
     if (window.location.hash.startsWith('#q=')) {
-      what = decodeURIComponent(window.location.hash.substring('#q='.length)).trim()
+      try {
+        what = decodeURIComponent(window.location.hash.substring('#q='.length)).trim()
+      }
+      catch (error) {
+        // for example, `decodeURIComponent('%97')` causes "URIError: malformed URI sequence"
+        console.log('ignoring bad window.location.hash',error)
+      }
     }
     search_term.value = what
     do_search(what)
