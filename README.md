@@ -1,14 +1,27 @@
 German-English Dictionary
 =========================
 
+**<https://dict.zero-g.net>**
+
 This is a browser-based client for the database of the discontinued
 ["Beolingus"](https://dict.tu-chemnitz.de) German-English Dictionary.
-
 It can be used in any modern browser with modern JavaScript support,
 and it can be installed for offline use as a "Progressive Web App".
 
 Please note the word list itself is not part of this repository.
 Please send suggestions for the word list to beolingus@tu-chemnitz.de
+
+Development Environment
+-----------------------
+
+- Prerequisites:
+  - Linux (Windows may work, I haven't checked)
+  - Node.js with `npm` ([my installation notes](https://github.com/haukex/toolshed/blob/main/notes/JavaScript.md))
+  - GNU `make`
+- Run `make installdeps` to install the dependencies via `npm`
+- Run `make clean all` for a full rebuild with tests
+- Run `npm start` to start up the local development server (with live refresh)
+
 
 Author, Copyright, and License
 ------------------------------

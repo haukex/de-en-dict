@@ -1,6 +1,4 @@
 
-# Run `npm start` for the dev server
-
 .PHONY: all
 all: dist/index.html
 
@@ -18,6 +16,5 @@ clean:
 	rm -rf dist .parcel-cache
 
 .PHONY: installdeps
-# First you need to install Node/npm, for example as per https://github.com/haukex/toolshed/blob/main/notes/JavaScript.md
 installdeps:
 	npm ci
