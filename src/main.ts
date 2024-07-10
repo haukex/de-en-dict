@@ -36,14 +36,14 @@ if ('serviceWorker' in navigator) {
 } else console.warn('Service Workers are not supported')
 
 // a couple of user-settable variables
-const FEEDBACK_URL = 'mailto:frank.richter@hrz.tu-chemnitz.de'
+const FEEDBACK_URL = 'mailto:beolingus@tu-chemnitz.de'  // as requested by Frank Richter
 const FEEDBACK_SUBJECT = 'De-En Word List Suggestion'
 const FEEDBACK_BODY = 'Hello, Hallo,\n\n'
     +'I would like to make a suggestion about the following dictionary entry. [Please do not edit the following entry!]\n'
     +'Ich möchte einen Vorschlag zu dem folgenden Wörterbucheintrag machen. [Bitte den folgenden Eintrag nicht bearbeiten!]\n'
     +'\n$LINE\n'  // the code below replaces this with the dictionary line
     +'\nMy suggestion is:\nMein Vorschlag ist:\n'
-const ENABLE_FEEDBACK = false
+const ENABLE_FEEDBACK = true
 //TODO Later: I could consider a "load more results" link
 const MAX_RESULTS = 200
 const TITLE_PREFIX = 'German-English Dictionary'

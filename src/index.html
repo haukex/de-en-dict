@@ -76,15 +76,21 @@
       padding-bottom: 0.5rem;
     }
     .result-table .feedback-thing {
-      font-size: 12px;
+      font-size: 0.8rem;
       float: right;
     }
     .result-table .feedback-thing a {
       text-decoration: none;
-      opacity: 30%;
+      opacity: 50%;
     }
     .result-table .feedback-thing a:hover {
       opacity: 100%;
+    }
+    @media only screen and (max-width: 720px) {
+      /* hide on narrow screens */
+      .result-table .feedback-thing {
+        display: none;
+      }
     }
   </style>
   <script type="module">import "./main.ts";</script> <!-- parcel will inline and minify this -->
@@ -205,7 +211,7 @@
       <summary>Author, Copyright, and License</summary>
       Dictionary data from <a href="https://dict.tu-chemnitz.de/" target="_blank">dict.tu-chemnitz.de</a> is
       <strong style="white-space: nowrap;">Copyright &copy; 1995-2024
-      <a href="https://www-user.tu-chemnitz.de/~fri/">Frank Richter</a></strong>.
+      <a href="https://www-user.tu-chemnitz.de/~fri/" target="_blank">Frank Richter</a></strong>.
       This page/app is <strong style="white-space: nowrap;">Copyright &copy; 2024
       <a href="https://www.zero-g.net/" target="_blank">Hauke Dämpfling</a></strong>.
       This page/app and data are free software and come with ABSOLUTELY NO WARRANTY,
@@ -216,6 +222,14 @@
       This page uses <a href="https://simplecss.org/" target="_blank" style="white-space: nowrap;">{} Simple.css</a>,
       Copyright &copy; 2020 Simple.css (Kev Quirk), terms:
       <a href="https://github.com/kevquirk/simple.css/blob/main/LICENSE" target="_blank">MIT License</a>.
+    </details>
+
+    <details>
+      <summary>Feedback</summary>
+      <p>Suggestions for the word list can be emailed to <a href="mailto:beolingus@tu-chemnitz.de">beolingus@tu-chemnitz.de</a>.
+        You can also click on the ✉️ icon next to every dictionary entry (this icon is only visible if your screen is wide enough;
+        if you're on a mobile device, try turning it horizontally).</p>
+      <p>Suggestions for this page/app can be submitted <a href="https://github.com/haukex/de-en-dict/issues" target="_blank">on GitHub</a>.</p>
     </details>
 
     <details lang="de">
