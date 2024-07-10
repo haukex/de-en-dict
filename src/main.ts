@@ -44,7 +44,6 @@ const FEEDBACK_BODY = 'Hello, Hallo,\n\n'
     +'\n$LINE\n'  // the code below replaces this with the dictionary line
     +'\nMy suggestion is:\nMein Vorschlag ist:\n'
 const ENABLE_FEEDBACK = true
-//TODO Later: I could consider a "load more results" link
 const MAX_RESULTS = 200
 const TITLE_PREFIX = 'German-English Dictionary'
 
