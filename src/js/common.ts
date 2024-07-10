@@ -24,13 +24,13 @@
 export {DB_URL, DB_VER_URL, DB_CACHE_NAME, cacheFirst}
 
 /* The URLs from which to load the dictionary and version information.
- * Although I have permission to use the ftp.tu-chemnitz.de server from Frank Richter,
- * at the moment this doesn't work because the server does not send a CORS header.
- * So for now, use the mirror at zero-g.net. */
-//const DB_URL = 'https://ftp.tu-chemnitz.de/pub/Local/urz/ding/de-en-devel/de-en.txt.gz'
-//const DB_VER_URL = 'https://ftp.tu-chemnitz.de/pub/Local/urz/ding/de-en-devel/sha256sums.txt'
-const DB_URL = 'https://bl0.zero-g.net/de-en.txt.gz'
-const DB_VER_URL = 'https://bl0.zero-g.net/sha256sums.txt'
+ * I have permission to use the ftp.tu-chemnitz.de server from Frank Richter.
+ * It now sends CORS headers so we can access it. */
+const DB_URL = 'https://ftp.tu-chemnitz.de/pub/Local/urz/ding/de-en-devel/de-en.txt.gz'
+const DB_VER_URL = 'https://ftp.tu-chemnitz.de/pub/Local/urz/ding/de-en-devel/sha256sums.txt'
+// The following is my (Hauke's) mirror; manually updated so it may not be up-to-date.
+//const DB_URL = 'https://bl0.zero-g.net/de-en.txt.gz'
+//const DB_VER_URL = 'https://bl0.zero-g.net/sha256sums.txt'
 
 /* The name of the cache in which to store the dictionary.
  * Note the main script takes care of checking for cache freshness. */
