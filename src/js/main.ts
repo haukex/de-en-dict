@@ -224,8 +224,42 @@ window.addEventListener('DOMContentLoaded', async () => {
     // sort the scored matches (sort should be stable in modern JS)
     scoredMatches.sort((a,b) => b[1]-a[1])
     //console.debug(scoredMatches)
+
+    const renderTr = (i :number, matchLine :string, de :string, en :string) => {
+      const tr = document.createElement('tr')
+      // Add a few classes used for styling the table
+      if (i) tr.classList.add('sub-result')
+      else tr.classList.add('first-result')
+      // left <td>, German
+      const td0 = document.createElement('td')
+      td0.innerText = de.trim()
+      reformatHtml(td0, whatRe)
+      tr.appendChild(td0)
+      // right <td>, English
+      const td1 = document.createElement('td')
+      td1.innerText = en.trim()
+      reformatHtml(td1, whatRe)
+      // the "feedback" button on each result
+      if (!i && ENABLE_FEEDBACK) {
+        const fbIcon = document.createElement('div')
+        fbIcon.classList.add('feedback-thing')
+        const fbLink = document.createElement('a')
+        fbLink.setAttribute('title', 'Send Feedback Email')
+        // generate "mailto:" link with predefined subject and body
+        fbLink.setAttribute('href', FEEDBACK_URL
+          +'?subject='+encodeURIComponent(FEEDBACK_SUBJECT)
+          +'&body='+encodeURIComponent(FEEDBACK_BODY.replace('$LINE', matchLine)))
+        fbLink.innerText = '✉️'
+        fbIcon.appendChild(fbLink)
+        // add the child <div> to the <td> *after* setting its .innerText:
+        td1.prepend(fbIcon)
+      }
+      tr.appendChild(td1)
+      return tr
+    }
+
     // next, we build the HTML
-    const newChildren :HTMLElement[] = []
+    result_rows.replaceChildren()
     let displayedMatches = 0
     // loop over a maximum of MAX_RESULTS matches:
     scoredMatches.slice(0, MAX_RESULTS).forEach((scoredMatch, mi) => {
@@ -244,53 +278,26 @@ window.addEventListener('DOMContentLoaded', async () => {
       }
       // generate the HTML for each result
       des.map((de, i) => {
-        const en = ens[i] as string
-        const tr = document.createElement('tr')
-        // Add a few classes used for styling the table
-        if (i) tr.classList.add('sub-result')
-        else tr.classList.add('first-result')
+        const tr = renderTr(i, scoredMatch[0], de, ens[i] as string)
         if (mi%2) tr.classList.add('odd-result')
-        // left <td>, German
-        const td0 = document.createElement('td')
-        td0.innerText = de.trim()
-        reformatHtml(td0, whatRe)
-        tr.appendChild(td0)
-        // right <td>, English
-        const td1 = document.createElement('td')
-        td1.innerText = en.trim()
-        reformatHtml(td1, whatRe)
-        // the "feedback" button on each result
-        if (!i && ENABLE_FEEDBACK) {
-          const fbIcon = document.createElement('div')
-          fbIcon.classList.add('feedback-thing')
-          const fbLink = document.createElement('a')
-          fbLink.setAttribute('title', 'Send Feedback Email')
-          // generate "mailto:" link with predefined subject and body
-          fbLink.setAttribute('href', FEEDBACK_URL
-            +'?subject='+encodeURIComponent(FEEDBACK_SUBJECT)
-            +'&body='+encodeURIComponent(FEEDBACK_BODY.replace('$LINE',scoredMatch[0])))
-          fbLink.innerText = '✉️'
-          fbIcon.appendChild(fbLink)
-          // add the child <div> to the <td> *after* setting its .innerText:
-          td1.prepend(fbIcon)
-        }
-        tr.appendChild(td1)
-        newChildren.push(tr)
+        result_rows.appendChild(tr)
       }) // done generating the rows for this entry
-      newChildren.at(-1)?.classList.add('last-subresult')
+      result_rows.lastElementChild?.classList.add('last-subresult')
+
       displayedMatches++
     }) // done looping over all matches
+
     // update the text below the search box
     if (!scoredMatches.length) {
       result_count.innerText = `No matches found (dictionary holds ${dictLines.length} entries).`
-      newChildren.push(no_results.cloneNode(true) as HTMLElement)
+      result_rows.replaceChildren(no_results.cloneNode(true) as HTMLElement)
     }
-    else if (displayedMatches!=scoredMatches.length)
-      result_count.innerText = `Found ${scoredMatches.length} matches, showing the first ${displayedMatches}.`
-    else
-      result_count.innerText = `Showing all ${scoredMatches.length} matches.`
-    // add the generated HTML to the document
-    result_rows.replaceChildren(...newChildren)
+    else {
+      if (displayedMatches!=scoredMatches.length)
+        result_count.innerText = `Found ${scoredMatches.length} matches, showing the first ${displayedMatches}.`
+      else
+        result_count.innerText = `Showing all ${scoredMatches.length} matches.`
+    }
   }
 
   // Install event listener for input field changes
