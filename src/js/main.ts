@@ -45,7 +45,7 @@ const FEEDBACK_BODY = 'Hello, Hallo,\n\n'
     +'\n$LINE\n'  // the code below replaces this with the dictionary line
     +'\nMy suggestion is:\nMein Vorschlag ist:\n'
 const ENABLE_FEEDBACK = true
-const MAX_RESULTS = 200
+const RESULT_CHUNK_SZ = 50
 const TITLE_PREFIX = 'German-English Dictionary'
 
 // this function decodes a stream of bytes (Response body) first as a gzip stream, then as UTF-8 text
@@ -166,6 +166,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       loc.search = ''
       window.location.replace(loc)
     }
+    // parse hash
     if (window.location.hash.startsWith('#q=')) {
       try {
         what = decodeURIComponent(window.location.hash.substring('#q='.length)).trim()
@@ -290,29 +291,38 @@ window.addEventListener('DOMContentLoaded', async () => {
             // prepend to the right <td> (<div> is floated right)
             tr.lastElementChild?.prepend(makeFeedbackThing())
           result_rows.appendChild(tr)
-        })
+        }) // end of loop over each (sub-)result
         result_rows.lastElementChild?.classList.add('last-subresult')
 
         displayedMatches++
-      })
+      }) // end of loop over this chunk of results
 
       // update the text below the search box
-      if (displayedMatches!=scoredMatches.length)
+      if (displayedMatches<scoredMatches.length) {
         result_count.innerText = `Found ${scoredMatches.length} matches, showing the first ${displayedMatches}.`
+        // we haven't shown all results, show a button to load more
+        const btn_more = document.createElement('button')
+        btn_more.classList.add('btn-more')
+        btn_more.innerText = 'Show More'
+        btn_more.addEventListener('click', () => {
+          renderMatches(end, end+RESULT_CHUNK_SZ)
+        })
+        result_count.appendChild(btn_more)
+      }
       else
         result_count.innerText = `Showing all ${scoredMatches.length} matches.`
-    }
+    } // end of renderMatches
 
     // next, we build the HTML
     result_rows.replaceChildren()
 
-    // loop over a maximum of MAX_RESULTS matches:
-    renderMatches(0, MAX_RESULTS)
+    // show the first chunk of results
+    renderMatches(0, RESULT_CHUNK_SZ)
 
     const renderEndMs = new Date().getTime()
     // Testing shows that searching takes way more time than rendering.
     console.debug(`Rendering took ${renderEndMs-searchEndRenderStartMs}ms.`)
-  }
+  } // end of do_search
 
   // Install event listener for input field changes
   search_term.addEventListener('change', search_term_changed)
