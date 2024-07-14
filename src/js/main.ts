@@ -210,19 +210,29 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     // generate a list of tuples of the match line and its score
     const searchStartMs = new Date().getTime()
-    const scoredMatches :[string,number][] = (
-      // if the search term is empty, don't produce any results:
-      what.length ? dictLines.filter((line) => line.match(whatRe)) : [])
-      // for each line, store the line, and match it against each scoring regex, giving one point per match, and summing the scores:
-      .map((matchedLine) => [matchedLine, scoreRes.map((re):number=>matchedLine.match(re)?1:0).reduce((a,b)=>a+b,0) ])
-    // sort the scored matches (sort should be stable in modern JS)
-    scoredMatches.sort((a,b) => b[1]-a[1])
+    // the `matches` array stores indices into the `dictLines` array for each matching line
+    const matches :number[] = (() => {
+      // if the search term is empty, don't produce any results
+      if (!what.length) return []
+      // build an array of tuples, each element being the matching line's index and its score
+      const scoredMatches :[number,number][] = (
+        // apply the regex to each dictionary line, returning the line's index if it matches
+        dictLines.flatMap((line, i) => line.match(whatRe) ? [i] : [])
+          // for each match, store the line's index...
+          .map(li => [li,
+            // ... and match it against each scoring regex, giving one point per match, and summing the scores
+            scoreRes.map((re):number=>dictLines[li]?.match(re)?1:0).reduce((a,b)=>a+b,0) ]) )
+      // sort the scored matches (note sort should be stable in modern JS)
+      scoredMatches.sort((a,b) => b[1]-a[1])
+      // now that we've sorted, we can strip the scores out of the returned values
+      return scoredMatches.map(([li, _score]) => li)
+    })()
     const searchEndRenderStartMs = new Date().getTime()
-    console.debug(`Search for ${whatRe} found ${scoredMatches.length} matches in ${searchEndRenderStartMs-searchStartMs}ms.`)
+    console.debug(`Search for ${whatRe} found ${matches.length} matches in ${searchEndRenderStartMs-searchStartMs}ms.`)
     //console.debug(scoredMatches)
 
     // there were no results
-    if (!scoredMatches.length) {
+    if (!matches.length) {
       result_count.innerText = `No matches found (dictionary holds ${dictLines.length} entries).`
       result_rows.replaceChildren(no_results.cloneNode(true) as HTMLElement)
       return
@@ -242,7 +252,11 @@ window.addEventListener('DOMContentLoaded', async () => {
     // function for rendering matches
     let displayedMatches = 0
     const renderMatches = (start :number, end :number) => {
-      scoredMatches.slice(start, end).forEach(([matchLine, _score], mi) => {
+      matches.slice(start, end).forEach((lineIndex, mi) => {
+        const matchLine = dictLines[lineIndex]
+        if (!matchLine)
+          throw new Error(`internal error: bad lineIndex ${lineIndex}, dictLines.length=${dictLines.length}`)
+
         // split the dictionary lines into "German :: English"
         const trans = matchLine.split(/::/)
         if (trans.length!=2) {
@@ -298,8 +312,8 @@ window.addEventListener('DOMContentLoaded', async () => {
       }) // end of loop over this chunk of results
 
       // update the text below the search box
-      if (displayedMatches<scoredMatches.length) {
-        result_count.innerText = `Found ${scoredMatches.length} matches, showing the first ${displayedMatches}.`
+      if (displayedMatches<matches.length) {
+        result_count.innerText = `Found ${matches.length} matches, showing the first ${displayedMatches}.`
         // we haven't shown all results, show a button to load more
         const btn_more = document.createElement('button')
         btn_more.classList.add('btn-more')
@@ -310,7 +324,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         result_count.appendChild(btn_more)
       }
       else
-        result_count.innerText = `Showing all ${scoredMatches.length} matches.`
+        result_count.innerText = `Showing all ${matches.length} matches.`
     } // end of renderMatches
 
     // next, we build the HTML
