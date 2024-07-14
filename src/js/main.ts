@@ -224,13 +224,17 @@ window.addEventListener('DOMContentLoaded', async () => {
     scoredMatches.slice(0, MAX_RESULTS).forEach((scoredMatch, mi) => {
       // split the dictionary lines into "German :: English"
       const trans = scoredMatch[0].split(/::/)
-      if (trans.length!=2)
-        throw new Error(`unexpected database format on line "${scoredMatch[0]}"`)
+      if (trans.length!=2) {
+        console.error('unexpected database format on line', scoredMatch[0])
+        return
+      }
       // split each entry on "|"s, should have the same number of entries on each side
       const des = (trans[0] as string).split(/\|/)
       const ens = (trans[1] as string).split(/\|/)
-      if (des.length!=ens.length)
-        throw new Error(`unexpected database format on line "${scoredMatch[0]}"`)
+      if (des.length!=ens.length) {
+        console.error('unexpected database format on line', scoredMatch[0])
+        return
+      }
       // generate the HTML for each result
       des.map((de, i) => {
         const en = ens[i] as string
