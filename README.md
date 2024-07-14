@@ -26,10 +26,10 @@ Thanks
 ------
 
 - @frituc (Frank Richter) for the [German-English Dictionary](https://ftp.tu-chemnitz.de/pub/Local/urz/ding/de-en-devel/)
-- @orrc (Christopher Orr) for Pull Request #1
+- @orrc (Christopher Orr) for [implementing searching via URL hash](https://github.com/haukex/de-en-dict/pull/1)
 - @Tekl (Wolfgang Kreutz), author of the
   [macOS Beolingus German-English Dictionary Plugin](https://tekl.de/lexikon-plug-ins/beolingus-deutsch-englisch-lexikon-plugin),
-  for Issue #7
+  for [suggesting searching via URL query](https://github.com/haukex/de-en-dict/issues/7)
 
 Author, Copyright, and License
 ------------------------------
