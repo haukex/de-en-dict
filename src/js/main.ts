@@ -135,10 +135,14 @@ async function loadDict() :Promise<string[]> {
   }
 }
 
-// we want to display annotations like `{f}` or `[comp.]` in different formatting
-const annotationRe = /\{[^}]+\}|\[[^\]]+\]/g
-// words in angle brackets are common misspellings or other cross-references that should be hidden from view
-const hideRe = /&lt;.+?&gt;/g
+function reformatHtml(el :HTMLElement, whatRe :RegExp) {
+  // highlight the search term in the match:
+  el.innerHTML = el.innerHTML.replaceAll(whatRe, '<strong>$&</strong>')
+    // we want to display annotations like `{f}` or `[comp.]` in different formatting
+    .replaceAll(/\{[^}]+\}|\[[^\]]+\]/g, '<span class="annotation">$&</span>')
+    // words in angle brackets are common misspellings or other cross-references that should be hidden from view
+    .replaceAll(/&lt;.+?&gt;/g, '<span class="hidden">$&</span>')
+}
 
 // when the HTML page has finished loading:
 window.addEventListener('DOMContentLoaded', async () => {
@@ -249,19 +253,12 @@ window.addEventListener('DOMContentLoaded', async () => {
         // left <td>, German
         const td0 = document.createElement('td')
         td0.innerText = de.trim()
-        // highlight the search term in the match:
-        td0.innerHTML = td0.innerHTML.replaceAll(whatRe, '<strong>$&</strong>')
-          // and apply special formatting to annotations:
-          .replaceAll(annotationRe, '<span class="annotation">$&</span>')
-          // and certain words should not be displayed at all:
-          .replaceAll(hideRe, '<span class="hidden">$&</span>')
+        reformatHtml(td0, whatRe)
         tr.appendChild(td0)
         // right <td>, English
         const td1 = document.createElement('td')
         td1.innerText = en.trim()
-        td1.innerHTML = td1.innerHTML.replaceAll(whatRe, '<strong>$&</strong>')
-          .replaceAll(annotationRe, '<span class="annotation">$&</span>')
-          .replaceAll(hideRe, '<span class="hidden">$&</span>')
+        reformatHtml(td1, whatRe)
         // the "feedback" button on each result
         if (!i && ENABLE_FEEDBACK) {
           const fbIcon = document.createElement('div')
