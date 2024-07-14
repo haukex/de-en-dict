@@ -220,6 +220,14 @@ window.addEventListener('DOMContentLoaded', async () => {
     console.debug(`Search for ${whatRe} found ${scoredMatches.length} matches in ${searchEndRenderStartMs-searchStartMs}ms.`)
     //console.debug(scoredMatches)
 
+    // there were no results
+    if (!scoredMatches.length) {
+      result_count.innerText = `No matches found (dictionary holds ${dictLines.length} entries).`
+      result_rows.replaceChildren(no_results.cloneNode(true) as HTMLElement)
+      return
+    }
+
+    // function to add some formatting to result HTML
     const reformatHtml = (el :HTMLElement) => {
       el.innerHTML = el.innerHTML
         // highlight the search term in the match
@@ -230,86 +238,76 @@ window.addEventListener('DOMContentLoaded', async () => {
         .replaceAll(/&lt;.+?&gt;/g, '<span class="hidden">$&</span>')
     }
 
-    const makeFeedbackThing = (matchLine :string) => {
-      const fbIcon = document.createElement('div')
-      fbIcon.classList.add('feedback-thing')
-      const fbLink = document.createElement('a')
-      fbLink.setAttribute('title', 'Send Feedback Email')
-      // generate "mailto:" link with predefined subject and body
-      fbLink.setAttribute('href', FEEDBACK_URL
-        +'?subject='+encodeURIComponent(FEEDBACK_SUBJECT)
-        +'&body='+encodeURIComponent(FEEDBACK_BODY.replace('$LINE', matchLine)))
-      fbLink.innerText = '✉️'
-      fbIcon.appendChild(fbLink)
-      return fbIcon
-    }
-
-    // this renders a single row in the table
-    const renderTr = (de :string, en :string) => {
-      const tr = document.createElement('tr')
-      // left <td>, German
-      const td0 = document.createElement('td')
-      td0.innerText = de.trim()
-      reformatHtml(td0)
-      tr.appendChild(td0)
-      // right <td>, English
-      const td1 = document.createElement('td')
-      td1.innerText = en.trim()
-      reformatHtml(td1)
-      tr.appendChild(td1)
-      return tr
-    }
-
-    // next, we build the HTML
-    result_rows.replaceChildren()
-
+    // function for rendering matches
     let displayedMatches = 0
-    // loop over a maximum of MAX_RESULTS matches:
-    scoredMatches.slice(0, MAX_RESULTS).forEach(([matchLine, _score], mi) => {
-      // split the dictionary lines into "German :: English"
-      const trans = matchLine.split(/::/)
-      if (trans.length!=2) {
-        console.error('unexpected database format on line', matchLine)
-        return
-      }
-      // split each entry on "|"s, should have the same number of entries on each side
-      const des = (trans[0] as string).split(/\|/)
-      const ens = (trans[1] as string).split(/\|/)
-      if (des.length!=ens.length) {
-        console.error('unexpected database format on line', matchLine)
-        return
-      }
-
-      // generate the HTML for each (sub-)result
-      des.map((de, i) => {
-        const tr = renderTr(de, ens[i] as string)
-        // Add a few classes used for styling the table
-        if (!i) {
-          tr.classList.add('first-result')
-          // the "feedback" button on each result
-          if (ENABLE_FEEDBACK)
-            tr.lastElementChild?.prepend(makeFeedbackThing(matchLine))
+    const renderMatches = (start :number, end :number) => {
+      scoredMatches.slice(start, end).forEach(([matchLine, _score], mi) => {
+        // split the dictionary lines into "German :: English"
+        const trans = matchLine.split(/::/)
+        if (trans.length!=2) {
+          console.error('unexpected database format on line', matchLine)
+          return
         }
-        else tr.classList.add('sub-result')
-        if (mi%2) tr.classList.add('odd-result')
-        result_rows.appendChild(tr)
+        // split each entry on "|"s, should have the same number of entries on each side
+        const des = (trans[0] as string).split(/\|/)
+        const ens = (trans[1] as string).split(/\|/)
+        if (des.length!=ens.length) {
+          console.error('unexpected database format on line', matchLine)
+          return
+        }
+
+        // function for generating the feedback link HTML
+        const makeFeedbackThing = () => {
+          const fbIcon = document.createElement('div')
+          fbIcon.classList.add('feedback-thing')
+          const fbLink = document.createElement('a')
+          fbLink.setAttribute('title', 'Send Feedback Email')
+          // generate "mailto:" link with predefined subject and body
+          fbLink.setAttribute('href', FEEDBACK_URL
+            +'?subject='+encodeURIComponent(FEEDBACK_SUBJECT)
+            +'&body='+encodeURIComponent(FEEDBACK_BODY.replace('$LINE', matchLine)))
+          fbLink.innerText = '✉️'
+          fbIcon.appendChild(fbLink)
+          return fbIcon
+        }
+
+        // generate the HTML for each (sub-)result
+        des.forEach((de, i) => {
+          // generate the <tr> with the two <td> children
+          const tr = document.createElement('tr');
+          [de, ens[i] as string].forEach((ent) => {
+            const td = document.createElement('td')
+            td.innerText = ent.trim()
+            reformatHtml(td)
+            tr.appendChild(td)
+          })
+          // Add a few classes used for styling the table
+          if (i) tr.classList.add('sub-result')
+          else tr.classList.add('first-result')
+          if (mi%2) tr.classList.add('odd-result')
+          // the "feedback" button on each result
+          if (!i && ENABLE_FEEDBACK)
+            // prepend to the right <td> (<div> is floated right)
+            tr.lastElementChild?.prepend(makeFeedbackThing())
+          result_rows.appendChild(tr)
+        })
+        result_rows.lastElementChild?.classList.add('last-subresult')
+
+        displayedMatches++
       })
-      result_rows.lastElementChild?.classList.add('last-subresult')
 
-      displayedMatches++
-    }) // done looping over all matches
-
-    // update the text below the search box
-    if (!scoredMatches.length) {
-      result_count.innerText = `No matches found (dictionary holds ${dictLines.length} entries).`
-      result_rows.replaceChildren(no_results.cloneNode(true) as HTMLElement)
-    }
-    else {
+      // update the text below the search box
       if (displayedMatches!=scoredMatches.length)
         result_count.innerText = `Found ${scoredMatches.length} matches, showing the first ${displayedMatches}.`
       else
         result_count.innerText = `Showing all ${scoredMatches.length} matches.`
     }
+
+    // next, we build the HTML
+    result_rows.replaceChildren()
+
+    // loop over a maximum of MAX_RESULTS matches:
+    renderMatches(0, MAX_RESULTS)
 
     const renderEndMs = new Date().getTime()
     // Testing shows that searching takes way more time than rendering.
