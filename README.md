@@ -22,6 +22,14 @@ Development Environment
 - Run `make clean all` for a full rebuild with tests
 - Run `npm start` to start up the local development server (with live refresh)
 
+Thanks
+------
+
+- @frituc (Frank Richter) for the [German-English Dictionary](https://ftp.tu-chemnitz.de/pub/Local/urz/ding/de-en-devel/)
+- @orrc (Christopher Orr) for Pull Request #1
+- @Tekl (Wolfgang Kreutz), author of the
+  [macOS Beolingus German-English Dictionary Plugin](https://tekl.de/lexikon-plug-ins/beolingus-deutsch-englisch-lexikon-plugin),
+  for Issue #7
 
 Author, Copyright, and License
 ------------------------------
