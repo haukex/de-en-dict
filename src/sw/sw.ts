@@ -37,6 +37,14 @@ import {DB_URL, DB_VER_URL, DB_CACHE_NAME, cacheFirst} from '../js/common'
  * the previous cache is discarded and resources are fetched again. */
 const APP_CACHE_NAME = `DeEnDict-${version}`
 
+function sendMsg(msg :string) {
+  self.clients.matchAll({includeUncontrolled: true}).then(clients => {
+    clients.forEach(client =>
+      client.postMessage(msg)
+    )
+  })
+}
+
 // handler for the Service Worker "install" event (typically used for preloading)
 async function install() {
   // add the files for this app to the (versioned) cache
@@ -65,6 +73,7 @@ async function activate() {
   // activate this Service Worker on existing pages
   await self.clients.claim()
   console.debug('SW activated')
+  sendMsg('activate done')
 }
 self.addEventListener('activate', e => e.waitUntil(activate()))
 
@@ -73,6 +82,7 @@ self.addEventListener('fetch', event => {
   // don't touch URLs like "chrome-extension://" or the DB_URL/DB_VER_URL
   if (event.request.url.toLowerCase().startsWith('http') && event.request.url!==DB_URL && event.request.url!==DB_VER_URL) {
     console.debug('SW fetch: Intercepting', event.request)
+    sendMsg(`fetch: Intercepting ${event.request.method} ${event.request.url}`)
     event.respondWith(cacheFirst(caches, APP_CACHE_NAME, event.request))
   }
 })

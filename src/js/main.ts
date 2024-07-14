@@ -33,6 +33,7 @@ if ('serviceWorker' in navigator) {
     (registration) => console.debug('SW register ok', registration),
     (error) => console.error('Service Worker registration failed', error),
   )
+  navigator.serviceWorker.addEventListener('message', event => console.debug('SW:', event.data))
 } else console.warn('Service Workers are not supported')
 
 // a couple of user-settable variables
