@@ -135,6 +135,8 @@ async function loadDict() :Promise<string[]> {
   }
 }
 
+const annotationRe = /\{[^}]+\}|\[[^\]]+\]/g
+
 // when the HTML page has finished loading:
 window.addEventListener('DOMContentLoaded', async () => {
   // get a few HTML elements from the page that we need
@@ -242,11 +244,14 @@ window.addEventListener('DOMContentLoaded', async () => {
         td0.innerText = de.trim()
         // highlight the search term in the match:
         td0.innerHTML = td0.innerHTML.replaceAll(whatRe, '<strong>$&</strong>')
+          // and apply special formatting to annotations:
+          .replaceAll(annotationRe, '<span class="annotation">$&</span>')
         tr.appendChild(td0)
         // right <td>, English
         const td1 = document.createElement('td')
         td1.innerText = en.trim()
         td1.innerHTML = td1.innerHTML.replaceAll(whatRe, '<strong>$&</strong>')
+          .replaceAll(annotationRe, '<span class="annotation">$&</span>')
         // the "feedback" button on each result
         if (!i && ENABLE_FEEDBACK) {
           const fbIcon = document.createElement('div')
