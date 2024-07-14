@@ -85,20 +85,29 @@ async function loadDict() :Promise<string[]> {
         const dictVerCacheData = await dictVerCache.text()
         //console.debug('The cached version data vs current version data', dictVerCacheData, dictVerRespData)
         // and then compare whether the two files are the same
-        if (dictVerCacheData !== dictVerRespData)
+        if (dictVerCacheData === dictVerRespData)
+          console.debug('The dict version information has not changed.')
+        else {
           // if the file on the server has changed, the dictionary needs to be updated too
+          console.debug('The dict version information has changed.')
           dictNeedsUpdate = true
+        }
       }
       /* Otherwise, we don't have a copy of the file in the cache, which probably means that
        * the cache is empty, meaning that the dictionary will have to be fetched anyway.
        * But it could also indicate an inconsistent state of the cache, so it makes sense to explicitly fetch. */
-      else dictNeedsUpdate = true
+      else {
+        console.debug('The dict version information is not in our cache.')
+        dictNeedsUpdate = true
+      }
       cache.put(DB_VER_URL, dictVerRespClone)
     }
-    // else, we couldn't get the file, which isn't a big problem, we'll try again next time
-    // the same applies if an error occurs:
+    else
+      // we couldn't get the file, which isn't a big problem, we'll try again next time
+      // the same applies if an error occurs:
+      console.debug('Failed to get dict version information.', dictVerResp)
   } catch (error) {
-    console.log('Failed to get dict version info', error)
+    console.log('Failed to get dict version information.', error)
   }
   // next, fetch the dictionary
   try {
