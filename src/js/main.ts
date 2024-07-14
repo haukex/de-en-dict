@@ -159,6 +159,13 @@ window.addEventListener('DOMContentLoaded', async () => {
   // Starts a search using a value in the URL hash, if any
   const search_from_url = () => {
     let what = ''
+    // ?q=... overrides #q=... (see GitHub Issue #7 for why)
+    if ( window.location.search.length > 1 ) {
+      const loc = new URL(''+window.location)
+      loc.hash = '#' + loc.search.substring(1)
+      loc.search = ''
+      window.location.replace(loc)
+    }
     if (window.location.hash.startsWith('#q=')) {
       try {
         what = decodeURIComponent(window.location.hash.substring('#q='.length)).trim()
