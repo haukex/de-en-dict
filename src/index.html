@@ -36,6 +36,23 @@
     }
     .d-none { display: none }
     /* custom classes for our elements */
+    .flag-icon {
+      display: inline-block;
+      margin-right: 0.4rem;
+      position: relative;
+    }
+    .flag-icon > div + div {
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+    .flag-icon > div {
+      transition: opacity 1s ease-in-out;
+      opacity: 1;
+    }
+    .flag-icon > div.flag-icon-inactive {
+      opacity: 0;
+    }
     .annotation {
       color: var(--text-light);
       /*font-weight: lighter;*/
@@ -132,8 +149,8 @@
       <table class="result-table">
         <thead>
           <tr>
-            <th>🇩🇪 German</th>
-            <th>🇺🇸 English</th>
+            <th><div class="flag-icon" id="flag-de"><div>🇩🇪</div></div> German</th>
+            <th><div class="flag-icon" id="flag-en"><div>🇺🇸</div></div> English</th>
           </tr>
         </thead>
         <tbody id="result_rows">

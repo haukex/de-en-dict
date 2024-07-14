@@ -23,6 +23,7 @@
 
 import escapeStringRegexp from 'escape-string-regexp'
 import {DB_URL, DB_VER_URL, DB_CACHE_NAME, cacheFirst} from './common'
+import {init_flags} from './flags'
 
 // for the parcel development environment:
 if (module.hot) module.hot.accept()
@@ -349,4 +350,9 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // Put the focus on the input field
   search_term.focus()
+
+  // set up flag animations
+  try { init_flags() }
+  // but don't let bugs blow us up
+  catch (error) { console.error(error) }
 })
