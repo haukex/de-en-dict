@@ -15,6 +15,16 @@ export default tseslint.config({
     "linebreak-style": [ "error", "unix" ],
     "semi": [ "warn", "never" ],
     "indent": [ "error", 2 ],
-    "quotes": [ "warn", "single" ]
+    "quotes": [ "warn", "single" ],
+    // https://stackoverflow.com/a/78734642
+    "no-unused-vars": "off",
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      {
+        "argsIgnorePattern": "^_[^_].*$|^_$",
+        "varsIgnorePattern": "^_[^_].*$|^_$",
+        "caughtErrorsIgnorePattern": "^_[^_].*$|^_$"
+      }
+    ]
   },
 })
