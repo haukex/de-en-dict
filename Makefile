@@ -18,3 +18,9 @@ clean:
 .PHONY: installdeps
 installdeps:
 	npm ci
+
+# This upgrades dependencies to their latest version.
+# Run `npm outdated` or `npx ncu` to just see a report without modifying versions.
+.PHONY: upgrade
+upgrade:
+	npx ncu -u
