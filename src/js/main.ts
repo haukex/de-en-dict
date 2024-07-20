@@ -193,19 +193,27 @@ window.addEventListener('DOMContentLoaded', async () => {
   // this is our handler for running the search:
   const do_search = (what: string) => {
     // update page title with search term
-    const titleSuffix = what ? `: ${what}` : ''
-    document.title = TITLE_PREFIX + titleSuffix
+    document.title = what ? `${TITLE_PREFIX}: ${what}` : TITLE_PREFIX
 
     // turn the search term into a regex
-    const whatPat = what.replaceAll(/\s+/g, ' ')
+    const whatPatStricter = what.replaceAll(/\s+/g, ' ')
       // escape characters that are special to a regex
       // https://github.com/sindresorhus/escape-string-regexp/blob/6ced614e/index.js#L8
       .replaceAll(/[|\\{}()[\]^$+*?.]/g, '\\$&').replaceAll(/-/g, '\\x2d')
+      // searching for different kinds of quotation marks finds all of them
+      .replaceAll(/[\u0027\u2019]/g, '[\\u0027\\u2019]')
+      .replaceAll(/[\u0022\u201C\u201D\u201E]/g, '[\\u0022\\u201C\\u201D\\u201E]')
+    // we differentiate between a stricter and looser match for scoring
+    const whatPat = whatPatStricter
+      // searching for umlaut replacements searches for the umlauts as well (e.g. for users of non-German keyboard layouts)
+      // (note the search will be case-insensitive anyway, so we don't need to care about case here)
+      .replaceAll(/ae/ig, '(?:ae|ä)').replaceAll(/oe/ig, '(?:oe|ö)').replaceAll(/ue/ig, '(?:ue|ü)')
+      .replaceAll(/s[sz]/ig, '(?:$&|ß)')
 
     /* The following code generates a set of regular expressions used for scoring the matches.
      * For each regex that matches, one point is awarded. */
     const scoreRes :RegExp[] = [ '(?:^|::\\s*)', '(?:^|::\\s*|\\|\\s*)', '::\\s*to\\s+', '\\b' ]
-      .map((re)=>re+whatPat)
+      .flatMap((re)=>[re+whatPat, re+whatPatStricter])
       .flatMap((re)=>[re, re+'\\b', re+'(?:\\s*\\{[^}|]*\\}|\\s*\\[[^\\]|]*\\]|\\s*\\([^)]\\))*\\s*(?:$|\\||;)'])
       .flatMap((re)=>[new RegExp(re), new RegExp(re, 'i')])
     //console.debug(scoreRes)
