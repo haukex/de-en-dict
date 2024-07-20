@@ -10,13 +10,14 @@ body > header h1 { margin: 0.5rem auto }
 main { padding-top: 0 }
 h1 { font-size: 2.0rem }
 h2 { font-size: 1.8rem }
-h3 { font-size: 1.5rem }
+h3 { font-size: 1.4rem }
 @media only screen and (max-width: 720px) {  /* same condition as simple.css uses */
+  :root { font-size: calc(100%/1.15) }
   body { grid-template-columns: 1fr 98% 1fr }
   body > header { padding-bottom: 0.3rem }
   body > header > :only-child { margin-block-start: 0.7rem }
-  h1 { font-size: 1.5rem }
-  h2 { font-size: 1.3rem }
+  h1 { font-size: 1.6rem }
+  h2 { font-size: 1.4rem }
   h3 { font-size: 1.2rem }
 }
 
