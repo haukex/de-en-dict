@@ -21,7 +21,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-import escapeStringRegexp from 'escape-string-regexp'
 import {DB_URL, DB_VER_URL, DB_CACHE_NAME, cacheFirst} from './common'
 import {init_flags} from './flags'
 
@@ -197,8 +196,12 @@ window.addEventListener('DOMContentLoaded', async () => {
     const titleSuffix = what ? `: ${what}` : ''
     document.title = TITLE_PREFIX + titleSuffix
 
-    // escape special characters so it can be used in a regex
-    const whatPat = escapeStringRegexp(what.replaceAll(/\s+/g, ' '))
+    // turn the search term into a regex
+    const whatPat = what.replaceAll(/\s+/g, ' ')
+      // escape characters that are special to a regex
+      // https://github.com/sindresorhus/escape-string-regexp/blob/6ced614e/index.js#L8
+      .replaceAll(/[|\\{}()[\]^$+*?.]/g, '\\$&').replaceAll(/-/g, '\\x2d')
+
     /* The following code generates a set of regular expressions used for scoring the matches.
      * For each regex that matches, one point is awarded. */
     const scoreRes :RegExp[] = [ '(?:^|::\\s*)', '(?:^|::\\s*|\\|\\s*)', '::\\s*to\\s+', '\\b' ]
