@@ -18,16 +18,20 @@ Development Environment
   - Linux (Windows may work, I haven't checked)
   - Node.js with `npm` ([my installation notes](https://github.com/haukex/toolshed/blob/main/notes/JavaScript.md))
   - GNU `make`
-- Run `make installdeps` to install the dependencies via `npm`
+  - Run `make installdeps` to install the dependencies via `npm`
+  - Or [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/haukex/de-en-dict)
 - Run `make clean all` for a full rebuild with tests
 - Run `npm start` to start up the local development server (with live refresh)
 
 Thanks
 ------
 
-- @frituc (Frank Richter) for the [German-English Dictionary](https://ftp.tu-chemnitz.de/pub/Local/urz/ding/de-en-devel/)
-- @orrc (Christopher Orr) for [implementing searching via URL hash](https://github.com/haukex/de-en-dict/pull/1)
-- @Tekl (Wolfgang Kreutz), author of the
+- [@frituc (Frank Richter)](https://github.com/frituc)
+  for the [German-English Dictionary](https://ftp.tu-chemnitz.de/pub/Local/urz/ding/de-en-devel/)
+  and [several suggestions](https://github.com/haukex/de-en-dict/issues?q=author%3Afrituc)
+- [@orrc (Christopher Orr)](https://github.com/orrc)
+  for [implementing searching via URL hash](https://github.com/haukex/de-en-dict/pull/1)
+- [@Tekl (Wolfgang Kreutz)](https://github.com/Tekl), author of the
   [macOS Beolingus German-English Dictionary Plugin](https://tekl.de/lexikon-plug-ins/beolingus-deutsch-englisch-lexikon-plugin),
   for [suggesting searching via URL query](https://github.com/haukex/de-en-dict/issues/7)
 
