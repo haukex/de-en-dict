@@ -30,7 +30,7 @@ if (module.hot) module.hot.accept()
 
 // register the Service Worker (if possible)
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register(new URL('../sw/sw.ts', import.meta.url), {type: 'module'}).then(
+  navigator.serviceWorker.register(new URL('../sw/sw.ts', import.meta.url), {type: 'module', scope: '/'}).then(
     (registration) => console.debug('SW register ok', registration),
     (error) => console.error('Service Worker registration failed', error),
   )

@@ -37,6 +37,9 @@ import {DB_URL, DB_VER_URL, DB_CACHE_NAME, cacheFirst} from '../js/common'
  * the previous cache is discarded and resources are fetched again. */
 const APP_CACHE_NAME = `DeEnDict-${version}`
 
+/** Send a message to the main window, where the event handler will log it as a debug message.
+ * This is needed because in Firefox, Service Worker console.log messages don't end up in the main console.
+ * (This results in duplicate log messages in Chrome, which does log Service Worker logs to the main console.) */
 function sendMsg(msg :string) {
   self.clients.matchAll({includeUncontrolled: true}).then(clients => {
     clients.forEach(client =>
@@ -84,5 +87,9 @@ self.addEventListener('fetch', event => {
     console.debug('SW fetch: Intercepting', event.request)
     sendMsg(`fetch: Intercepting ${event.request.method} ${event.request.url}`)
     event.respondWith(cacheFirst(caches, APP_CACHE_NAME, event.request))
+  }
+  else {
+    console.debug('SW fetch: NOT Intercepting', event.request)
+    sendMsg(`fetch: NOT Intercepting ${event.request.method} ${event.request.url}`)
   }
 })
