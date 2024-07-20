@@ -348,6 +348,12 @@ window.addEventListener('DOMContentLoaded', async () => {
   // Trigger a search upon loading
   search_from_url()
 
+  search_term.addEventListener('keyup', evt => {
+    // Escape key clears input
+    if (evt.key=='Escape')
+      search_term.value = ''
+  })
+
   // Put the focus on the input field
   search_term.focus()
 
