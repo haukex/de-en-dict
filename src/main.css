@@ -1,0 +1,133 @@
+
+/* https://simplecss.org/demo https://test.simplecss.org/ https://github.com/kevquirk/simple.css/wiki/Utility-elements-and-classes */
+@import '../node_modules/simpledotcss/simple.css'; /* parcel will inline and minify this */
+
+/* Plus a few tweaks to reduce some of the space (margins/padding/font), esp. for mobile */
+body { grid-template-columns: 1fr min(80rem, 90%) 1fr }
+body > header { padding-bottom: 0.5rem }
+body > header > :only-child { margin-block-start: 1rem }
+body > header h1 { margin: 0.5rem auto }
+main { padding-top: 0 }
+h1 { font-size: 2.0rem }
+h2 { font-size: 1.8rem }
+h3 { font-size: 1.5rem }
+@media only screen and (max-width: 720px) {  /* same condition as simple.css uses */
+  body { grid-template-columns: 1fr 98% 1fr }
+  body > header { padding-bottom: 0.3rem }
+  body > header > :only-child { margin-block-start: 0.7rem }
+  h1 { font-size: 1.5rem }
+  h2 { font-size: 1.3rem }
+  h3 { font-size: 1.2rem }
+}
+
+/* borrow a few classes from Bootstrap */
+.text-danger { color: rgb(220, 53, 69) }
+.text-success { color: rgb(25, 135, 84) }
+.text-secondary { color: rgb(108, 117, 125) }
+.text-info-emphasis { color: rgb(5, 81, 96) }
+.text-nowrap { white-space: nowrap; }
+@media (prefers-color-scheme: dark) {
+  .text-info-emphasis { color: rgb(110, 223, 246) }
+}
+.d-none { display: none }
+
+/* custom styles */
+#search_term {
+  width: 100%;
+}
+.btn-more {
+  margin-left: 1rem;
+}
+
+/* custom classes for flag icons */
+.flag-icon {
+  display: inline-block;
+  margin-right: 0.4rem;
+  position: relative;
+}
+.flag-icon > div + div {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.flag-icon > div {
+  transition: opacity 1s ease-in-out;
+  opacity: 1;
+}
+.flag-icon > div.flag-icon-inactive {
+  opacity: 0;
+}
+
+/* custom classes for styling results */
+.annotation {
+  /* used for "{f}" and "[ornith.]" etc. */
+  color: var(--text-light);
+  /*font-weight: lighter;*/
+}
+.hidden {
+  /* used for e.g. "referrer <referer>" (instead of .d-none, to differentiate) */
+  display: none;
+}
+
+/* custom classes for results table */
+.result-table {
+  width: 100%;
+  border: 1px solid var(--border);
+}
+.result-table tr {
+  background-color: var(--bg);
+}
+.result-table tr.odd-result {
+  background-color: var(--accent-bg);
+}
+.result-table th {
+  text-align: center;
+  white-space: nowrap;
+}
+.result-table td {
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  border-top: 0;
+  border-bottom: 0;
+  vertical-align: text-top;
+  width: 50%;
+  font-size: 1rem;  /* Default would be 1.15rem from body */
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.result-table tr.sub-result td {
+  padding-left: 2rem;
+}
+.result-table tr.first-result td {
+  border-top: 1px solid var(--border);
+  padding-top: 0.5rem;
+}
+.result-table tr.last-subresult td {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.5rem;
+}
+.result-table td.no-results {
+  text-align: center;
+  font-style: italic;
+  padding: 1rem 0.5rem;
+  font-size: 1.15rem;
+}
+
+/* custom classes for feedback icon */
+.feedback-thing {
+  font-size: 0.8rem;
+  float: right;
+}
+.feedback-thing a {
+  text-decoration: none;
+  opacity: 50%;
+}
+.feedback-thing a:hover {
+  opacity: 100%;
+}
+@media only screen and (max-width: 720px) {
+  /* hide on narrow screens */
+  .feedback-thing {
+    display: none;
+  }
+}

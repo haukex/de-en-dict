@@ -6,121 +6,8 @@
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icons/favicon.ico">
   <title>German-English Dictionary</title>
-  <style>
-    /* https://simplecss.org/demo https://test.simplecss.org/ https://github.com/kevquirk/simple.css/wiki/Utility-elements-and-classes */
-    @import '../node_modules/simpledotcss/simple.css'; /* parcel will inline and minify this */
-    /* Plus a few tweaks to reduce some of the space (margins/padding/font), esp. for mobile */
-    body { grid-template-columns: 1fr min(80rem, 90%) 1fr }
-    body > header { padding-bottom: 0.5rem }
-    body > header > :only-child { margin-block-start: 1rem }
-    body > header h1 { margin: 0.5rem auto }
-    main { padding-top: 0 }
-    h1 { font-size: 2.0rem }
-    h2 { font-size: 1.8rem }
-    h3 { font-size: 1.5rem }
-    @media only screen and (max-width: 720px) {  /* same condition as simple.css uses */
-      body { grid-template-columns: 1fr 98% 1fr }
-      body > header { padding-bottom: 0.3rem }
-      body > header > :only-child { margin-block-start: 0.7rem }
-      h1 { font-size: 1.5rem }
-      h2 { font-size: 1.3rem }
-      h3 { font-size: 1.2rem }
-    }
-    /* borrow a few classes from Bootstrap */
-    .text-danger { color: rgb(220, 53, 69) }
-    .text-success { color: rgb(25, 135, 84) }
-    .text-secondary { color: rgb(108, 117, 125) }
-    .text-info-emphasis { color: rgb(5, 81, 96) }
-    @media (prefers-color-scheme: dark) {
-      .text-info-emphasis { color: rgb(110, 223, 246) }
-    }
-    .d-none { display: none }
-    /* custom classes for our elements */
-    .flag-icon {
-      display: inline-block;
-      margin-right: 0.4rem;
-      position: relative;
-    }
-    .flag-icon > div + div {
-      position: absolute;
-      top: 0;
-      left: 0;
-    }
-    .flag-icon > div {
-      transition: opacity 1s ease-in-out;
-      opacity: 1;
-    }
-    .flag-icon > div.flag-icon-inactive {
-      opacity: 0;
-    }
-    .annotation {
-      color: var(--text-light);
-      /*font-weight: lighter;*/
-    }
-    .hidden {
-      display: none;
-    }
-    #search_term {
-      width: 100%;
-    }
-    .result-table {
-      width: 100%;
-      border: 1px solid var(--border);
-    }
-    .result-table tr {
-      background-color: var(--bg);
-    }
-    .result-table tr.odd-result {
-      background-color: var(--accent-bg);
-    }
-    .result-table th {
-      text-align: center;
-      white-space: nowrap;
-    }
-    .result-table td {
-      border-left: 1px solid var(--border);
-      border-right: 1px solid var(--border);
-      border-top: 0;
-      border-bottom: 0;
-      vertical-align: text-top;
-      width: 50%;
-      font-size: 1rem;  /* Default would be 1.15rem from body */
-      padding-top: 0;
-      padding-bottom: 0;
-    }
-    .result-table .sub-result td {
-      padding-left: 2rem;
-    }
-    .result-table .first-result td {
-      border-top: 1px solid var(--border);
-      padding-top: 0.5rem;
-    }
-    .result-table .last-subresult td {
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 0.5rem;
-    }
-    .result-table .feedback-thing {
-      font-size: 0.8rem;
-      float: right;
-    }
-    .result-table .feedback-thing a {
-      text-decoration: none;
-      opacity: 50%;
-    }
-    .result-table .feedback-thing a:hover {
-      opacity: 100%;
-    }
-    @media only screen and (max-width: 720px) {
-      /* hide on narrow screens */
-      .result-table .feedback-thing {
-        display: none;
-      }
-    }
-    .btn-more {
-      margin-left: 1rem;
-    }
-  </style>
-  <script type="module">import "./js/main.ts";</script> <!-- parcel will inline and minify this -->
+  <style>@import 'main.css'; /* parcel will inline and minify this */</style>
+  <script type="module">import "./js/main.ts"; /* parcel will inline and minify this */</script>
 </head>
 <body>
 
@@ -155,7 +42,7 @@
         </thead>
         <tbody id="result_rows">
           <tr>
-            <td colspan="2" style="text-align: center; font-style: italic; padding: 1rem 0.5rem;">No results.</td>
+            <td colspan="2" class="no-results">No results.</td>
           </tr>
         </tbody>
       </table>
@@ -239,16 +126,16 @@
     <details>
       <summary>Author, Copyright, and License</summary>
       Dictionary data from <a href="https://dict.tu-chemnitz.de/" target="_blank">dict.tu-chemnitz.de</a> is
-      <strong style="white-space: nowrap;">Copyright &copy; 1995-2024
+      <strong class="text-nowrap">Copyright &copy; 1995-2024
       <a href="https://www-user.tu-chemnitz.de/~fri/" target="_blank">Frank Richter</a></strong>.
-      This page/app is <strong style="white-space: nowrap;">Copyright &copy; 2024
+      This page/app is <strong class="text-nowrap">Copyright &copy; 2024
       <a href="https://www.zero-g.net/" target="_blank">Hauke Dämpfling</a></strong>.
       This page/app and data are free software and come with ABSOLUTELY NO WARRANTY,
       you are welcome to redistribute them under certain conditions; for details, see the
       <a href="https://www.gnu.org/licenses/old-licenses/gpl-2.0-standalone.html" target="_blank">GNU
       General Public License Version 2</a> or later.
       The source code is <a href="https://github.com/haukex/de-en-dict" target="_blank">on GitHub</a>.
-      This page uses <a href="https://simplecss.org/" target="_blank" style="white-space: nowrap;">{} Simple.css</a>,
+      This page uses <a href="https://simplecss.org/" target="_blank" class="text-nowrap">{} Simple.css</a>,
       Copyright &copy; 2020 Simple.css (Kev Quirk), terms:
       <a href="https://github.com/kevquirk/simple.css/blob/main/LICENSE" target="_blank">MIT License</a>.
     </details>
