@@ -209,6 +209,8 @@ window.addEventListener('DOMContentLoaded', async () => {
       // (note the search will be case-insensitive anyway, so we don't need to care about case here)
       .replaceAll(/ae/ig, '(?:ae|ä)').replaceAll(/oe/ig, '(?:oe|ö)').replaceAll(/ue/ig, '(?:ue|ü)')
       .replaceAll(/s[sz]/ig, '(?:$&|ß)')
+    // generate a regex that matches the search term
+    const whatRe = new RegExp(whatPat, 'ig')
 
     /* The following code generates a set of regular expressions used for scoring the matches.
      * For each regex that matches, one point is awarded. */
@@ -217,8 +219,6 @@ window.addEventListener('DOMContentLoaded', async () => {
       .flatMap((re)=>[re, re+'\\b', re+'(?:\\s*\\{[^}|]*\\}|\\s*\\[[^\\]|]*\\]|\\s*\\([^)]\\))*\\s*(?:$|\\||;)'])
       .flatMap((re)=>[new RegExp(re), new RegExp(re, 'i')])
     //console.debug(scoreRes)
-    // generate a regex that matches the search term
-    const whatRe = new RegExp(whatPat, 'ig')
 
     // generate a list of tuples of the match line and its score
     const searchStartMs = new Date().getTime()
@@ -252,9 +252,14 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     // function to add some formatting to result HTML
     const reformatHtml = (el :HTMLElement) => {
+      // don't do highlighting if we'd potentially touch HTML characters
+      // (This is overgeneralized; in theory it'd still be possible to highlight matches that
+      // contain HTML special chars, but at the moment that's more effort than it's worth.)
+      if ( what.search(/[&<>]/)<0 )
+        el.innerHTML = el.innerHTML
+          // highlight the search term in the match
+          .replaceAll(whatRe, '<strong>$&</strong>')
       el.innerHTML = el.innerHTML
-        // highlight the search term in the match
-        .replaceAll(whatRe, '<strong>$&</strong>')
         // we want to display annotations like `{f}` or `[...]` in different formatting
         .replaceAll(/\{[^}]+\}|\[[^\]]+\]/g, '<span class="annotation">$&</span>')
         // words in angle brackets are common misspellings or other cross-references that should be hidden from view
