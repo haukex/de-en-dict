@@ -35,7 +35,7 @@ Development Environment
   - GNU `make`
   - Run `make installdeps` to install the dependencies via `npm`
   - Or [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/haukex/de-en-dict)
-- Run `make clean all` for a full rebuild with tests
+- Run `make clean all` for a full rebuild with linting
 - Run `npm start` to start up the local development server (with live refresh)
 
 Thanks

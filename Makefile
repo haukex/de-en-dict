@@ -2,11 +2,11 @@
 .PHONY: all
 all: dist/index.html
 
-dist/index.html: test src/index.html src/*/*.ts package*.json src/*/tsconfig.json .parcelrc
+dist/index.html: lint src/index.html src/*/*.ts package*.json src/*/tsconfig.json .parcelrc
 	npx parcel build
 
-.PHONY: test
-test:
+.PHONY: lint
+lint:
 	cd src/js && npx tsc --noEmit
 	cd src/sw && npx tsc --noEmit
 	npx eslint src/*/*.ts
