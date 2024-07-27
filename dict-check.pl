@@ -77,7 +77,6 @@ my $LINE_GRAMMAR = qr{
             | (?> [<>] \x20* [0-9] )     # greater/less than a number
             | (?> \#\ am )               # "(# am Telefon)" (the only occurrence of #)
             | (?> /:-\)/ )               # "Smiley /:-)/"
-            | (?> \#BE_make\# )          # TODO: what's this? report as bug?
 
             # see notes above for why this is commented out:
             #| (?<= (?&LETTER) ) ' (?= (?&LETTER) )             # "can't" etc.
@@ -96,8 +95,7 @@ my $LINE_GRAMMAR = qr{
 
             # ##### ##### Bad Characters ##### #####
             # I assume the following are mistakes that happened on conversion from CP1252 to UTF-8
-            | [ \x{0092}    # should be \N{RIGHT SINGLE QUOTATION MARK}
-                \x{0096} ]  # should be \N{EN DASH}
+            | [ \x{0096} ]  # should be \N{EN DASH}
         )
 
         (?<STRING> (
@@ -109,25 +107,45 @@ my $LINE_GRAMMAR = qr{
             | (?&TOKEN)*+
         )*+ )
 
-        # "(formation of erosion hollows in (former) stream beds)", "Sakko {n} ({m} [Schw.])", "to put through (<> a deal)"
-        (?<BAL_PARENS>   (?> \( (?&ANY_BAL_LIST)  \) ) )
-        (?<BAL_BRACES>   (?> \{ (?&IN_BRACE_LIST) \} ) )  # "to swing {swung (swang [obs.]); swung}"
-        (?<BAL_ANGLES>   (?> \< (?&IN_ANGLE_LIST) \> ) )  # "<name--dropping <name drop>>"  (TODO: this appears to be the only case, report)
-        (?<BAL_BRACKETS> (?> \[ (?&NO_NEST_LIST)  \] ) )
+        (?<PARENTHESES>  (?> \( (?&STRING) ( ; (?&STRING) )*+ \) )  )
+        (?<BRACKETS>     (?> \[ (?&STRING) ( ; (?&STRING) )*+ \] )  )
 
-        #TODO Later: Could limit the max nesting depth.
+        (?<BRACES>  (?> \{
+            (?<IN_BRACE_STR>  (
+                (?> \(  # "to swing {swung (swang [obs.]); swung}"
+                    (?<ONLY_BRACKET_STR> ( (?&BRACKETS) | (?&STRING) )* )
+                    ( ; (?&ONLY_BRACKET_STR) )*
+                \) )
+                | (?&BRACKETS)  # "to clothe {clothed, clad [obs.]; clothed, clad [obs.]}"
+                | (?&STRING) )*  )
+            ( ; (?&IN_BRACE_STR) )*
+        \} ) )
+
+        (?<ANGLES>  (?> \<
+            (?<IN_ANGLE_STR> (
+                (?&PARENTHESES)  # "<after tax (operating) results>"
+                | (?&BRACKETS)   # "<pushbike [Br.]>"
+                | (?&STRING) )*  )
+            ( ; (?&IN_ANGLE_STR) )*+
+        \> ) )
+
+        (?<ENTRY>  (?&ANY_BAL_LIST) ( \| (?&ANY_BAL_LIST) )* )
         (?<ANY_BAL_LIST>
-            (?<ANY_BAL_STR> ( (?&STRING) | (?&BAL_PARENS) | (?&BAL_BRACKETS) | (?&BAL_BRACES) | (?&BAL_ANGLES) )* )
-            ( ; (?&ANY_BAL_STR) )* )
-        (?<IN_BRACE_LIST>
-            (?<IN_BRACE_STR> ( (?&STRING) | (?&BAL_PARENS) | (?&BAL_BRACKETS) )* )
-            ( ; (?&IN_BRACE_STR) )* )
-        (?<IN_ANGLE_LIST>
-            (?<IN_ANGLE_STR> ( (?&STRING) | (?&BAL_ANGLES) )* )
-            ( ; (?&IN_ANGLE_STR) )*+ )
-        (?<NO_NEST_LIST> (?&STRING) ( ; (?&STRING) )*+ )
-
-        (?<ENTRY> (?&ANY_BAL_LIST) ( \| (?&ANY_BAL_LIST) )* )
+            (?<ANY_BAL_STR>  (
+                (?> \(
+                    (?<IN_PAREN_STR> (
+                        (?&PARENTHESES)  # "(formation of erosion hollows in (former) stream beds)"
+                        | (?&BRACKETS)   # "Sakko {n} ({m} [Schw.])"
+                        | (?&BRACES)     # "Sakko {n} ({m} [Schw.])"
+                        | (?&ANGLES)     # "to put through (<> a deal)"
+                        | (?&STRING) )*  )
+                    ( ; (?&IN_PAREN_STR) )*
+                \) )
+                | (?&BRACKETS)
+                | (?&BRACES)
+                | (?&ANGLES)
+                | (?&STRING) )*  )
+            ( ; (?&ANY_BAL_STR) )*  )
     )
     \A (?<LEFT> (?&ENTRY) ) :: (?<RIGHT> (?&ENTRY) ) \z
 }msxxaan;
@@ -192,7 +210,7 @@ while (my $line = <$fh>) {
         warn "Failed to parse ".pp($line)."\n";
         die "Aborting after too many failures\n" if ++$fail_cnt>=100;
     }
-    warn "Warning: Bad Unicode chars in ".pp($line)."\n" if $line=~/[\x{0092}\x{0096}]/;  #TODO: report
+    warn "Warning: Bad Unicode chars in ".pp($line)."\n" if $line=~/[\x{0096}]/;  #TODO: report
 }
 close $fh;
 die "$fail_cnt failures\n" if $fail_cnt;
