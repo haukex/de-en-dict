@@ -24,6 +24,9 @@
 import {DB_URL, DB_VER_URL, DB_CACHE_NAME, cacheFirst} from './common'
 import {init_flags} from './flags'
 import {makeSearchPattern} from './equiv'
+import {createPopper} from '@popperjs/core/lib/popper-lite.js'
+import preventOverflow from '@popperjs/core/lib/modifiers/preventOverflow.js'
+import offset from '@popperjs/core/lib/modifiers/offset.js'
 
 // for the parcel development environment:
 if (module.hot) module.hot.accept()
@@ -263,6 +266,11 @@ window.addEventListener('DOMContentLoaded', async () => {
         if (!matchLine)
           throw new Error(`internal error: bad lineIndex ${lineIndex}, dictLines.length=${dictLines.length}`)
 
+        // generate "mailto:" link with predefined subject and body (used below)
+        const fbHref = FEEDBACK_URL
+          + '?subject=' + encodeURIComponent(FEEDBACK_SUBJECT)
+          + '&body=' + encodeURIComponent(FEEDBACK_BODY.replace('$LINE', matchLine))
+
         // split the dictionary lines into "German :: English"
         const trans = matchLine.split(/::/)
         if (trans.length!=2) {
@@ -283,10 +291,7 @@ window.addEventListener('DOMContentLoaded', async () => {
           fbIcon.classList.add('feedback-thing')
           const fbLink = document.createElement('a')
           fbLink.setAttribute('title', 'Send Feedback Email')
-          // generate "mailto:" link with predefined subject and body
-          fbLink.setAttribute('href', FEEDBACK_URL
-            +'?subject='+encodeURIComponent(FEEDBACK_SUBJECT)
-            +'&body='+encodeURIComponent(FEEDBACK_BODY.replace('$LINE', matchLine)))
+          fbLink.setAttribute('href', fbHref)
           fbLink.innerText = '✉️'
           fbIcon.appendChild(fbLink)
           return fbIcon
@@ -310,6 +315,8 @@ window.addEventListener('DOMContentLoaded', async () => {
           if (!i && ENABLE_FEEDBACK)
             // prepend to the right <td> (<div> is floated right)
             tr.lastElementChild?.prepend(makeFeedbackThing())
+          // also store the href in an attribute on each row for use by selection popup
+          tr.setAttribute('data-feedback-href', fbHref)
           result_rows.appendChild(tr)
         }) // end of loop over each (sub-)result
         result_rows.lastElementChild?.classList.add('last-subresult')
@@ -366,4 +373,54 @@ window.addEventListener('DOMContentLoaded', async () => {
   try { init_flags() }
   // but don't let bugs blow us up
   catch (error) { console.error(error) }
+
+  // Selection popup handler
+  const sel_popup = document.getElementById('sel-popup') as HTMLElement
+  const popup_search = document.getElementById('popup-search') as HTMLElement
+  const popup_feedback = document.getElementById('popup-feedback') as HTMLElement
+  document.addEventListener('selectionchange', () => {
+    sel_popup.classList.add('d-none')  // hide by default (gets shown below if applicable)
+    const selection = window.getSelection()
+    // something was selected (we only handle simple selections with one range)
+    if ( selection && selection.rangeCount==1 ) {
+      const text = selection.toString()
+        // remove the feedback icon in case the user selected it
+        .replaceAll(/[\uFE0F\u2709]/g,'')
+        // normalize whitespace
+        .replaceAll(/\s+/g,' ').trim()
+      const range = selection.getRangeAt(0)
+      // only handle selections of text inside the results table
+      if ( text.length && result_rows.contains(range.commonAncestorContainer) ) {
+        // figure out the common ancestor Element of the selection
+        let parent_elem :Node|null = range.commonAncestorContainer
+        while ( parent_elem && !(parent_elem instanceof Element) )
+          parent_elem = parent_elem.parentNode
+        popup_feedback.classList.add('d-none')  // hide by default (gets shown below if applicable)
+        // figure out if the selection spans only one row
+        if ( parent_elem ) {
+          // at this point we know parent_elem must be an Element
+          // find the closest results row
+          const tr = (parent_elem as Element).closest('#result-table tr')
+          if (tr) {
+            // get href for the feedback link that should be stored here for us
+            const fb = tr.getAttribute('data-feedback-href')
+            if (fb) {
+              popup_feedback.setAttribute('href', fb)
+              popup_feedback.classList.remove('d-none')
+            }
+          }
+        }
+        // set the search link href and show the div
+        popup_search.setAttribute('href', `#q=${encodeURIComponent(text)}`)
+        sel_popup.classList.remove('d-none')
+        // use Popper for placement
+        //TODO Later: It is unclear to me from the documentation whether I really should be creating a new Popper instance each time.
+        createPopper( range, sel_popup, { placement: 'bottom',
+          modifiers: [ preventOverflow, offset,
+            { name: 'offset', options: { offset: [0, 7], } },
+          ],
+        })
+      }
+    }
+  })
 })

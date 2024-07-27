@@ -30,7 +30,7 @@ h3 { font-size: 1.4rem }
 @media (prefers-color-scheme: dark) {
   .text-info-emphasis { color: rgb(110, 223, 246) }
 }
-.d-none { display: none }
+.d-none { display: none !important }
 
 /* custom styles */
 #search_term {
@@ -71,21 +71,21 @@ h3 { font-size: 1.4rem }
 }
 
 /* custom classes for results table */
-.result-table {
+#result-table {
   width: 100%;
   border: 1px solid var(--border);
 }
-.result-table tr {
+#result-table tr {
   background-color: var(--bg);
 }
-.result-table tr.odd-result {
+#result-table tr.odd-result {
   background-color: var(--accent-bg);
 }
-.result-table th {
+#result-table th {
   text-align: center;
   white-space: nowrap;
 }
-.result-table td {
+#result-table td {
   border-left: 1px solid var(--border);
   border-right: 1px solid var(--border);
   border-top: 0;
@@ -96,18 +96,18 @@ h3 { font-size: 1.4rem }
   padding-top: 0;
   padding-bottom: 0;
 }
-.result-table tr.sub-result td {
+#result-table tr.sub-result td {
   padding-left: 2rem;
 }
-.result-table tr.first-result td {
+#result-table tr.first-result td {
   border-top: 1px solid var(--border);
   padding-top: 0.5rem;
 }
-.result-table tr.last-subresult td {
+#result-table tr.last-subresult td {
   border-bottom: 1px solid var(--border);
   padding-bottom: 0.5rem;
 }
-.result-table td.no-results {
+#result-table td.no-results {
   text-align: center;
   font-style: italic;
   padding: 1rem 0.5rem;
@@ -131,4 +131,17 @@ h3 { font-size: 1.4rem }
   .feedback-thing {
     display: none;
   }
+}
+
+#sel-popup {
+  display: block;
+  position: absolute;
+  background-color: var(--accent-bg);
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+  font-size: 0.9rem;
+}
+#sel-popup > a {
+  display: block;
+  text-decoration: none;
 }

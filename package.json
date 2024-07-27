@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@parcel/service-worker": "^2.12.0",
+    "@popperjs/core": "^2.11.8",
     "escape-string-regexp": "^5.0.0"
   }
 }
