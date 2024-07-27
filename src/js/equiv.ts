@@ -27,7 +27,7 @@ import escapeStringRegexp from 'escape-string-regexp'
  * The following is the list of character equivalencies.
  * If the user searches for any of the strings in the left list, then the search should
  * result in matches for what the user entered, plus the alternatives in the right list.
- * If the right list is empty, it is taken to be identical to the right list.
+ * If the right list is empty, it is taken to be identical to the left list.
  * The idea is that users can enter search terms in ASCII and still find Unicode chars.
  * REMEMBER to keep this list in sync with the special characters in the grammar in dict-check.pl !
  */

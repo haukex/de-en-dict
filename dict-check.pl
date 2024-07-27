@@ -96,11 +96,11 @@ my $LINE_GRAMMAR = qr{
             | (?> / [ ) [\] <> {} ] / )  # "left square bracket /[/" etc.
             | (?> \( [<>] \) )           # "greater-than sign (>)" etc.
             | (?> [<>] \x20* [0-9] )     # greater/less than a number
+            | (?> /:-\)/ )               # "Smiley"
             # special characters occurring only once
             | (?> / [ \\ \N{ACUTE ACCENT} ] / )
             | (?> \( [ @ \N{CENT SIGN} \N{YEN SIGN} \N{COPYRIGHT SIGN} ] \) )
-            | (?> \(\#\x20am\x20Telefon\) )  # Rautentaste
-            | (?> /:-\)/ )  # Smiley
+            | (?> \( \# \x20am\x20Telefon \) )  # "Rautentaste"
 
             # ##### ##### Special Characters ##### #####
             # Note double colon (::), pipe (|), and semicolon (;) are separators that we explicitly don't want to match here.
