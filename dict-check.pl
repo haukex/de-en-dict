@@ -18,13 +18,11 @@ sub pp { Data::Dumper->new(\@_)->Terse(1)->Purity(1)->Useqq(1)->Quotekeys(0)->So
 my $DICT_FILE = catfile($FindBin::Bin, 'de-en.txt.gz');
 my $DICT_URL = 'https://ftp.tu-chemnitz.de/pub/Local/urz/ding/de-en-devel/de-en.txt.gz';
 
-# NOTE there currently is quite a bit of code commented out below relating to single quotes (')
-# because it turns out because of the varied usage and typos, it's hard to parse them as balanced quotes.
-# This would also result in the regex to run away in some cases, which
-# it's not easy to break out of: https://stackoverflow.com/a/23938462
-# The commented out code is therefore incomplete and does not work; I may remove it.
+# Note that single quotes (') are not treated specially because of their varied usage:
+# "can't", "hunters' parlance", "height 5' 7''", "x prime /x'/", "f';" (f-prime), and as quotes.
 
-# Note the grammar does not treat "/ABBR/" specially, because there are too many variations of that, e.g. "three eighth / 3/8 /"
+# Note the grammar does not treat "/Abbrev/" specially, because there are too many variations of that,
+# e.g. "three eighth / 3/8 /" and "dipped [Br.] / dimmed [Am.] headlights/lights; dipped [Br.] / low [Am.] beam(s)/beam light"
 
 my $LINE_GRAMMAR = qr{
     (?(DEFINE)
@@ -78,31 +76,19 @@ my $LINE_GRAMMAR = qr{
             | (?> \#\ am )               # "(# am Telefon)" (the only occurrence of #)
             | (?> /:-\)/ )               # "Smiley /:-)/"
 
-            # see notes above for why this is commented out:
-            #| (?<= (?&LETTER) ) ' (?= (?&LETTER) )             # "can't" etc.
-            #| (?<= s ) ' (?= \x20 )                            # "hunters' parlance" etc.
-            #| (?> (?<= [0-9] ) ''? (?! (?&LETTER) | [0-9] ) )  # "height 5' 7''" etc.
-            #| (?<= x ) ' (?= / )                               # "x prime /x'/"
-            #| (?<= f ) ' (?= ; )                               # "f';" (f-prime)
-
             # ##### ##### Special Characters ##### #####
             # Note double colon (::), pipe (|), and semicolon (;) are separators that we explicitly don't want to match here.
+            # We also treat quotation marks specially.
             | (?!::) [ \x20 ! $ % & + , \- . / : = ? ~
             ' \N{RIGHT SINGLE QUOTATION MARK}
             \N{EN DASH} \N{ACUTE ACCENT} \N{DEGREE SIGN} \N{SECTION SIGN} \N{HORIZONTAL ELLIPSIS} \N{MICRO SIGN}
             \N{SUPERSCRIPT TWO} \N{SUPERSCRIPT THREE} \N{VULGAR FRACTION ONE HALF} \N{MULTIPLICATION SIGN}
             \N{EURO SIGN} \N{CENT SIGN} \N{POUND SIGN} \N{YEN SIGN} \N{COPYRIGHT SIGN} \N{REGISTERED SIGN} ]
-
-            # ##### ##### Bad Characters ##### #####
-            # I assume the following are mistakes that happened on conversion from CP1252 to UTF-8
-            | [ \x{0096} ]  # should be \N{EN DASH}
         )
 
         (?<STRING> (
             (?>   \N{LEFT DOUBLE QUOTATION MARK}  ( (?> \( (?&TOKEN)++ \) ) | (?&TOKEN) )++ \N{RIGHT DOUBLE QUOTATION MARK} )  # English style
             | (?> \N{DOUBLE LOW-9 QUOTATION MARK} ( (?> \( (?&TOKEN)++ \) ) | (?&TOKEN) )++ \N{LEFT DOUBLE QUOTATION MARK}  )  # German style
-            # see notes above for why this is commented out:
-            #| (?>    ' ( (?> \[ (?&TOKEN)++ \] ) | (?> \( (?&TOKEN)++ \) ) | (?&TOKEN) )+  ' )  # e.g. "'... half two. [Br.]'"
             | (?> " (?&TOKEN)++ " )
             | (?&TOKEN)*+
         )*+ )
@@ -151,7 +137,7 @@ my $LINE_GRAMMAR = qr{
 }msxxaan;
 
 my $resp = HTTP::Tiny->new->mirror($DICT_URL, $DICT_FILE);
-die "$DICT_URL $$resp{status} $$resp{reason}".($$resp{status}==599 ? ": $$resp{content}" : '') unless $$resp{success};
+$$resp{success} or die "$DICT_URL $$resp{status} $$resp{reason}".($$resp{status}==599 ? ": $$resp{content}" : '');
 
 gunzip $DICT_FILE => \my $buffer or die "gunzip failed: $GunzipError\n";
 
@@ -162,55 +148,23 @@ while (my $line = <$fh>) {
     next if $line=~/^\s*#/ || $line!~/\S/;  # skip comments and blank lines
 
     # ### fix some apparent bugs/typos (TODO: report)
-    # (see notes above for why a lot of these are commented out)
-    # wrong :: placement
-    $line =~ s{\Q(der Nachkriegszeit :: 1950er bis 1960er Jahre) [soc.] baby boom\E}
-                {(der Nachkriegszeit: 1950er bis 1960er Jahre) [soc.] :: baby boom};
-    # missing '
-    #$line =~ s{\Q/ Of course, I can see it!'\E}{/ 'Of course, I can see it!'};
-    #$line =~ s{'Hang \(on\) in there!'; \K(?=Don\x{2019}t quit!')}{'};
-    #$line =~ s{\| \K(?=Can I put you down for a donation\?')}{'};
-    #$line =~ s{\| \K(?=You\x{2019}re always welcome at our house\.')}{'};
-    # typo fix * to ' (the only occurrence of *)
-    $line =~ s{'When did it happen\?\K\*(?= 'Not that long ago\.')}{'};
-    # stray quote
-    $line =~ s{molecular mass\K\x{201c}(?= \|)}{};
-    $line =~ s{self-perpetuating\K\x{201c}(?= )}{};
-    #$line =~ s{:: Perm\K'(?= \(city)}{};
-    # bad JS escape
-    $line =~ s{'Portnoy\K\\u2019(?=s Complaint')}{\x{2019}};
-    # incorrect quote
-    $line =~ s{\x{201c}The Magic Flute\K'}{\x{201d}};
-    $line =~ s{and the Singers\K\x{201c}(?= Contest at Wartburg Castle)}{\x{2019}};  # I think
     # missing quote
-    $line =~ s{^(?=(?:Die brandenburgischen Konzerte|Eine Nacht auf dem kahlen Berge)\x{201c})}{\x{201e}};
-    # U+2019 to '
-    #$line =~ s{'That depends on the circumstances\K\x{2019}(?= she hedged\.)}{'};
-    #$line =~ s{the \K\x{2019}(?=magic of love'\.)}{'};
-    #$line =~ s{'shit\K\x{2019}(?=\.)}{'};
-    #$line =~ s{He left out an \K\x{2019}(?=m')}{'};
-    # double ''
-    #$line =~ s{damned if you don\x{2019}t'\K'}{};
-    # the following are easier to parse by replacing ' to U+2019 - can the grammar be adjusted instead?
-    #$line =~ s{H\x{f6}r\K'(?= doch zu!)}{\x{2019}};
-    #$line =~ s{da \K'(?=raus!)}{\x{2019}};
-    #$line =~ s{San\K'a'(?= \(capital of Yemen\))}{\x{2019}a\x{2019}};
-    #$line =~ s{ \K'(?=tween \(contraction of between\))}{\x{2019}};
+    $line =~ s{^(?=Eine Nacht auf dem kahlen Berge\x{201c})}{\x{201e}};
+    # I assume the following is a mistake that happened on conversion from CP1252 to UTF-8
+    $line =~ s{Wiedemann\K\x{0096}(?=Franz)}{\N{EN DASH}};
     # ###
 
     if ( $line =~ $LINE_GRAMMAR ) {  # parse the line
-        my ($de, $en) = ($+{LEFT}, $+{RIGHT});   # get left (German) and right (English) entries
-        my @des = split m/\|/, $de;  # sub-entries are delimited by '|'
+        my ($de, $en) = ($+{LEFT}, $+{RIGHT});
+        my @des = split m/\|/, $de;
         my @ens = split m/\|/, $en;
-        # we expect the same number of sub-entries on both sides
-        @des == @ens or die "Inconsistent sub-entry count in ".pp($line)."\n";
+        @des == @ens or die "Did not get the same number of sub-entries in ".pp($line)."\n";
         #say pp \@des, \@ens;  # debugging, helps visualize runaway regex
     }
     else {
         warn "Failed to parse ".pp($line)."\n";
         die "Aborting after too many failures\n" if ++$fail_cnt>=100;
     }
-    warn "Warning: Bad Unicode chars in ".pp($line)."\n" if $line=~/[\x{0096}]/;  #TODO: report
 }
 close $fh;
 die "$fail_cnt failures\n" if $fail_cnt;
