@@ -21,6 +21,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+/* This just provides the code for the flag icon switching. */
+
 interface IFlagList { de: string[], en: string[] }
 
 /* That these lists are off by one is kind of nice because it means

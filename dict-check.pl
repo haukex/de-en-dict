@@ -10,8 +10,30 @@ use HTTP::Tiny;
 use FindBin;
 $|=1;
 
-# This is a script to check the German-English Dictionary formatting.
-# (It doesn't do a *full* parse because that would be too difficult.)
+=head1 Synopsis
+
+This is a script to check the German-English Dictionary formatting.
+(It doesn't do a *full* parse because that would be too difficult.)
+
+=head2 Author, Copyright, and License
+
+Copyright © 2024 Hauke Dämpfling (haukex@zero-g.net)
+
+This project is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This project is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this project; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+=cut
 
 sub pp { Data::Dumper->new(\@_)->Terse(1)->Purity(1)->Useqq(1)->Quotekeys(0)->Sortkeys(1)->Indent(0)->Pair('=>')->Dump }
 

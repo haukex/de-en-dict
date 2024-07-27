@@ -1,4 +1,6 @@
 {
+  /* This file is identical to the one in ../js/ with the exception of "lib",
+     because TypeScript needs that to be different to compile Service Workers. */
   "compilerOptions": {
     "removeComments": true,
     "noEmitOnError": true,

@@ -11,6 +11,21 @@ and it can be installed for offline use as a "Progressive Web App".
 Please note the word list itself is not part of this repository.
 Please send suggestions for the word list to beolingus@tu-chemnitz.de
 
+Technical Overview
+------------------
+
+The main part of this project is written in [TypeScript](https://www.typescriptlang.org/), which is
+called from an HTML file. The [Parcel](https://parceljs.org/) tool is used to compile TypeScript
+to JavaScript and bundle everything (HTML, CSS, JS, images). The result is currently hosted on
+GitHub Pages, using a GitHub Action to produce the aforementioned bundle. The dictionary data is
+fetched as a gzipped text file from a remote server, which must send an `Access-Control-Allow-Origin`
+header to allow the JS code to fetch the file. The dictionary file is explicitly cached using the
+JS Cache API to limit the load on the origin server as much as possible. Installation as a
+"Progressive Web App" is made possible by a corresponding manifest file, and offline use is made
+possible by a corresponding JS Service Worker that caches the app. The entered search term is
+turned into a regular expression, which is used to search the dictionary data, and results are
+sorted by a score determined by a set of regular expressions and rendered into an HTML table.
+
 Development Environment
 -----------------------
 
