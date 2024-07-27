@@ -34,9 +34,6 @@ Thanks
 - [@Tekl (Wolfgang Kreutz)](https://github.com/Tekl), author of the
   [macOS Beolingus German-English Dictionary Plugin](https://tekl.de/lexikon-plug-ins/beolingus-deutsch-englisch-lexikon-plugin),
   for [suggesting searching via URL query](https://github.com/haukex/de-en-dict/issues/7)
-- [@sindresorhus (Sindre Sorhus)](https://github.com/sindresorhus)
-  for [escape-string-regexp](https://github.com/sindresorhus/escape-string-regexp),
-  from which I've borrowed a line of code
 
 Author, Copyright, and License
 ------------------------------
@@ -59,3 +56,14 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this project; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+### Used Libraries
+
+This project makes use of the following libraries:
+
+- [{} Simple.css](https://simplecss.org/),
+  Copyright © 2020 Simple.css (Kev Quirk),
+  [MIT License](https://github.com/kevquirk/simple.css/blob/main/LICENSE)
+- [escape-string-regexp](https://www.npmjs.com/package/escape-string-regexp),
+  Copyright © Sindre Sorhus \<sindresorhus@gmail.com\> (https://sindresorhus.com),
+  [MIT License](https://github.com/sindresorhus/escape-string-regexp/blob/main/license)

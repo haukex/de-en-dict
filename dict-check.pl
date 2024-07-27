@@ -27,6 +27,7 @@ my $DICT_URL = 'https://ftp.tu-chemnitz.de/pub/Local/urz/ding/de-en-devel/de-en.
 my $LINE_GRAMMAR = qr{
     (?(DEFINE)
         (?<TOKEN>
+            # REMEMBER to keep all of the special characters here in sync with equiv.ts !
             (?<LETTER>
                 [ a-z A-Z
                 \N{LATIN SMALL LETTER A WITH DIAERESIS}

@@ -23,6 +23,7 @@
 
 import {DB_URL, DB_VER_URL, DB_CACHE_NAME, cacheFirst} from './common'
 import {init_flags} from './flags'
+import {makeSearchPattern} from './equiv'
 
 // for the parcel development environment:
 if (module.hot) module.hot.accept()
@@ -124,8 +125,8 @@ async function loadDict() :Promise<string[]> {
       throw new Error('Failed to load dict')
     // unpack the dictionary file
     return (await gunzipUTF8(dictResp.body))
-      // these two replaces fix some oversights that I guess happened on conversion from CP1252 to UTF-8 (?)
-      .replaceAll(String.fromCodePoint(0x92),'\u2019').replaceAll(String.fromCodePoint(0x96),'\u2013')
+      // this fixes an oversight that I guess happened on conversion from CP1252 to UTF-8 (?)
+      .replaceAll(String.fromCodePoint(0x96),'\u2013')
       // split the text into lines, trim the lines, remove blank lines and comments
       .split(/\r?\n|\r(?!\n)/g).map((line) => line.trim()).filter((line) => line.length && !line.startsWith('#'))
   } catch (error) {
@@ -196,19 +197,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     document.title = what ? `${TITLE_PREFIX}: ${what}` : TITLE_PREFIX
 
     // turn the search term into a regex
-    const whatPatStricter = what.replaceAll(/\s+/g, ' ')
-      // escape characters that are special to a regex
-      // https://github.com/sindresorhus/escape-string-regexp/blob/6ced614e/index.js#L8
-      .replaceAll(/[|\\{}()[\]^$+*?.]/g, '\\$&').replaceAll(/-/g, '\\x2d')
-      // searching for different kinds of quotation marks finds all of them
-      .replaceAll(/[\u0027\u2019]/g, '[\\u0027\\u2019]')
-      .replaceAll(/[\u0022\u201C\u201D\u201E]/g, '[\\u0022\\u201C\\u201D\\u201E]')
-    // we differentiate between a stricter and looser match for scoring
-    const whatPat = whatPatStricter
-      // searching for umlaut replacements searches for the umlauts as well (e.g. for users of non-German keyboard layouts)
-      // (note the search will be case-insensitive anyway, so we don't need to care about case here)
-      .replaceAll(/ae/ig, '(?:ae|ä)').replaceAll(/oe/ig, '(?:oe|ö)').replaceAll(/ue/ig, '(?:ue|ü)')
-      .replaceAll(/s[sz]/ig, '(?:$&|ß)')
+    const [whatPatStricter, whatPat] = makeSearchPattern(what)
     // generate a regex that matches the search term
     const whatRe = new RegExp(whatPat, 'ig')
 
