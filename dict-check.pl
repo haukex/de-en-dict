@@ -18,7 +18,7 @@ sub pp { Data::Dumper->new(\@_)->Terse(1)->Purity(1)->Useqq(1)->Quotekeys(0)->So
 my $DICT_FILE = catfile($FindBin::Bin, 'de-en.txt.gz');
 my $DICT_URL = 'https://ftp.tu-chemnitz.de/pub/Local/urz/ding/de-en-devel/de-en.txt.gz';
 
-# Note that single quotes (') are not treated specially because of their varied usage:
+# Note that single quotes (') are not treated specially because of their varied usage (and some typos in the data):
 # "can't", "hunters' parlance", "height 5' 7''", "x prime /x'/", "f';" (f-prime), and as quotes.
 
 # Note the grammar does not treat "/Abbrev/" specially, because there are too many variations of that,
@@ -68,22 +68,24 @@ my $LINE_GRAMMAR = qr{
             | [0-9]
 
             # ##### ##### Special Sequences ##### #####
+            # characters we would otherwise treat specially
             | (?> / \x20 \( \x20 / )     # "left parenthesis / ( /"
             | (?> / [ ) [\] <> {} ] / )  # "left square bracket /[/" etc.
             | (?> \( [<>] \) )           # "greater-than sign (>)" etc.
-            | (?> /\\/ ) | (?> \(@\) )   # the only occurrences of @ and \
             | (?> [<>] \x20* [0-9] )     # greater/less than a number
-            | (?> \#\ am )               # "(# am Telefon)" (the only occurrence of #)
-            | (?> /:-\)/ )               # "Smiley /:-)/"
+            # special characters occurring only once
+            | (?> / [ \\ \N{ACUTE ACCENT} ] / )
+            | (?> \( [ @ \N{CENT SIGN} \N{YEN SIGN} \N{COPYRIGHT SIGN} ] \) )
+            | (?> \(\#\x20am\x20Telefon\) )  # Rautentaste
+            | (?> /:-\)/ )  # Smiley
 
             # ##### ##### Special Characters ##### #####
             # Note double colon (::), pipe (|), and semicolon (;) are separators that we explicitly don't want to match here.
-            # We also treat quotation marks specially.
-            | (?!::) [ \x20 ! $ % & + , \- . / : = ? ~
-            ' \N{RIGHT SINGLE QUOTATION MARK}
-            \N{EN DASH} \N{ACUTE ACCENT} \N{DEGREE SIGN} \N{SECTION SIGN} \N{HORIZONTAL ELLIPSIS} \N{MICRO SIGN}
+            # We also treat quotation marks specially below.
+            | (?!::) [ \x20 ! $ % & + , \- . / : = ? ~  ' \N{RIGHT SINGLE QUOTATION MARK}
+            \N{EN DASH} \N{DEGREE SIGN} \N{SECTION SIGN} \N{HORIZONTAL ELLIPSIS} \N{MICRO SIGN}
             \N{SUPERSCRIPT TWO} \N{SUPERSCRIPT THREE} \N{VULGAR FRACTION ONE HALF} \N{MULTIPLICATION SIGN}
-            \N{EURO SIGN} \N{CENT SIGN} \N{POUND SIGN} \N{YEN SIGN} \N{COPYRIGHT SIGN} \N{REGISTERED SIGN} ]
+            \N{EURO SIGN} \N{POUND SIGN} \N{REGISTERED SIGN} ]
         )
 
         (?<STRING> (
@@ -152,6 +154,8 @@ while (my $line = <$fh>) {
     $line =~ s{^(?=Eine Nacht auf dem kahlen Berge\x{201c})}{\x{201e}};
     # I assume the following is a mistake that happened on conversion from CP1252 to UTF-8
     $line =~ s{Wiedemann\K\x{0096}(?=Franz)}{\N{EN DASH}};
+    # stray acute accent
+    $line =~ s{; initial print run\K\N{ACUTE ACCENT}(?=;)}{};
     # ###
 
     if ( $line =~ $LINE_GRAMMAR ) {  # parse the line
