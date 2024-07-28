@@ -24,6 +24,7 @@
 import {DB_URL, DB_VER_URL, DB_CACHE_NAME, cacheFirst} from './common'
 import {init_flags} from './flags'
 import {makeSearchPattern} from './equiv'
+import {initPopup} from './popup'
 
 // for the parcel development environment:
 if (module.hot) module.hot.accept()
@@ -263,6 +264,11 @@ window.addEventListener('DOMContentLoaded', async () => {
         if (!matchLine)
           throw new Error(`internal error: bad lineIndex ${lineIndex}, dictLines.length=${dictLines.length}`)
 
+        // generate "mailto:" link with predefined subject and body (used below)
+        const fbHref = FEEDBACK_URL
+          + '?subject=' + encodeURIComponent(FEEDBACK_SUBJECT)
+          + '&body=' + encodeURIComponent(FEEDBACK_BODY.replace('$LINE', matchLine))
+
         // split the dictionary lines into "German :: English"
         const trans = matchLine.split(/::/)
         if (trans.length!=2) {
@@ -283,10 +289,7 @@ window.addEventListener('DOMContentLoaded', async () => {
           fbIcon.classList.add('feedback-thing')
           const fbLink = document.createElement('a')
           fbLink.setAttribute('title', 'Send Feedback Email')
-          // generate "mailto:" link with predefined subject and body
-          fbLink.setAttribute('href', FEEDBACK_URL
-            +'?subject='+encodeURIComponent(FEEDBACK_SUBJECT)
-            +'&body='+encodeURIComponent(FEEDBACK_BODY.replace('$LINE', matchLine)))
+          fbLink.setAttribute('href', fbHref)
           fbLink.innerText = '✉️'
           fbIcon.appendChild(fbLink)
           return fbIcon
@@ -310,6 +313,8 @@ window.addEventListener('DOMContentLoaded', async () => {
           if (!i && ENABLE_FEEDBACK)
             // prepend to the right <td> (<div> is floated right)
             tr.lastElementChild?.prepend(makeFeedbackThing())
+          // also store the href in an attribute on each row for use by selection popup
+          tr.setAttribute('data-feedback-href', fbHref)
           result_rows.appendChild(tr)
         }) // end of loop over each (sub-)result
         result_rows.lastElementChild?.classList.add('last-subresult')
@@ -362,8 +367,11 @@ window.addEventListener('DOMContentLoaded', async () => {
   // Put the focus on the input field
   search_term.focus()
 
-  // set up flag animations
-  try { init_flags() }
+  // set up flag animations and selection popup handler
+  try {
+    init_flags()
+    initPopup()
+  }
   // but don't let bugs blow us up
   catch (error) { console.error(error) }
 })

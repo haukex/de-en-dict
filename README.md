@@ -78,7 +78,10 @@ This project makes use of the following libraries:
 
 - [{} Simple.css](https://simplecss.org/),
   Copyright © 2020 Simple.css (Kev Quirk),
-  [MIT License](https://github.com/kevquirk/simple.css/blob/main/LICENSE)
+  [MIT License](https://github.com/kevquirk/simple.css/blob/main/LICENSE).
 - [escape-string-regexp](https://www.npmjs.com/package/escape-string-regexp),
   Copyright © Sindre Sorhus \<sindresorhus@gmail.com\> (https://sindresorhus.com),
-  [MIT License](https://github.com/sindresorhus/escape-string-regexp/blob/main/license)
+  [MIT License](https://github.com/sindresorhus/escape-string-regexp/blob/main/license).
+- [Floating UI](https://floating-ui.com/),
+  Copyright © 2021 Floating UI contributors,
+  [MIT License](https://github.com/floating-ui/floating-ui/blob/master/LICENSE).

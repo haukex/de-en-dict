@@ -33,7 +33,7 @@
       <input type="text" id="search_term" placeholder="🔍 Search" disabled>
     </p>
     <figure><!-- for horiz scroll -->
-      <table class="result-table">
+      <table id="result-table">
         <thead>
           <tr>
             <th><div class="flag-icon" id="flag-de"><div>🇩🇪</div></div> German</th>
@@ -48,6 +48,12 @@
       </table>
     </figure>
     <p id="result_count">The dictionary is loading, please wait...</p>
+
+    <div id="sel-popup" class="d-none">
+      <div>Selection tools:</div>
+      <a id="popup-search" href="#q=" title="Search for the selected text">🔍 Search</a>
+      <a id="popup-feedback" href="#" title="Send Feeedback Email">✉️ Feedback</a>
+    </div>
 
     <details lang="de">
       <summary>Über die Datenquelle</summary>
@@ -144,6 +150,9 @@
           Copyright &copy; Sindre Sorhus <sindresorhus@gmail.com>
           (<a href="https://sindresorhus.com" target="_blank">https://sindresorhus.com</a>),
           <a href="https://github.com/sindresorhus/escape-string-regexp/blob/main/license" target="_blank">MIT License</a>.</li>
+        <li><a href="https://floating-ui.com/" target="_blank">Floating UI</a>,
+          Copyright &copy; 2021 Floating UI contributors,
+          <a href="https://github.com/floating-ui/floating-ui/blob/master/LICENSE" target="_blank">MIT License</a>.</li>
       </ul>
     </details>
 
