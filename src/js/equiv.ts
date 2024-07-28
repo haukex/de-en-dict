@@ -129,7 +129,13 @@ for (const pat of _pats) {
   const s = _pat_dict[pat]
   assert(s)
   const repl = Array.from(s.values()).sort().sort((a,b) => b.length-a.length)
-  EQUIV_REPL[pat] = '(?:' + repl.map(escapeStringRegexp).join('|') + ')'
+  EQUIV_REPL[pat] = (
+    repl.length == 1
+      ? escapeStringRegexp(repl[0] as string)
+      : repl.every((r)=>r.length==1)
+        ? '[' + repl.map(escapeStringRegexp).join('') + ']'
+        : '(?:' + repl.map(escapeStringRegexp).join('|') + ')'
+  )
 }
 //console.debug(EQUIV_PAT, EQUIV_REPL)
 
