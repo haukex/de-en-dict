@@ -30,7 +30,7 @@ h3 { font-size: 1.4rem }
 @media (prefers-color-scheme: dark) {
   .text-info-emphasis { color: rgb(110, 223, 246) }
 }
-.d-none { display: none !important }
+.d-none { display: none }
 
 /* custom styles */
 #search_term {
@@ -134,8 +134,10 @@ h3 { font-size: 1.4rem }
 }
 
 #sel-popup {
-  display: block;
+  width: max-content;
   position: absolute;
+  top: 0;
+  left: 0;
   background-color: var(--accent-bg);
   border: 1px solid var(--border);
   padding: 0.5rem;

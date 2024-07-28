@@ -24,9 +24,7 @@
 import {DB_URL, DB_VER_URL, DB_CACHE_NAME, cacheFirst} from './common'
 import {init_flags} from './flags'
 import {makeSearchPattern} from './equiv'
-import {createPopper} from '@popperjs/core/lib/popper-lite.js'
-import preventOverflow from '@popperjs/core/lib/modifiers/preventOverflow.js'
-import offset from '@popperjs/core/lib/modifiers/offset.js'
+import {initPopup} from './popup'
 
 // for the parcel development environment:
 if (module.hot) module.hot.accept()
@@ -369,58 +367,11 @@ window.addEventListener('DOMContentLoaded', async () => {
   // Put the focus on the input field
   search_term.focus()
 
-  // set up flag animations
-  try { init_flags() }
+  // set up flag animations and selection popup handler
+  try {
+    init_flags()
+    initPopup()
+  }
   // but don't let bugs blow us up
   catch (error) { console.error(error) }
-
-  // Selection popup handler
-  const sel_popup = document.getElementById('sel-popup') as HTMLElement
-  const popup_search = document.getElementById('popup-search') as HTMLElement
-  const popup_feedback = document.getElementById('popup-feedback') as HTMLElement
-  document.addEventListener('selectionchange', () => {
-    sel_popup.classList.add('d-none')  // hide by default (gets shown below if applicable)
-    const selection = window.getSelection()
-    // something was selected (we only handle simple selections with one range)
-    if ( selection && selection.rangeCount==1 ) {
-      const text = selection.toString()
-        // remove the feedback icon in case the user selected it
-        .replaceAll(/[\uFE0F\u2709]/g,'')
-        // normalize whitespace
-        .replaceAll(/\s+/g,' ').trim()
-      const range = selection.getRangeAt(0)
-      // only handle selections of text inside the results table
-      if ( text.length && result_rows.contains(range.commonAncestorContainer) ) {
-        // figure out the common ancestor Element of the selection
-        let parent_elem :Node|null = range.commonAncestorContainer
-        while ( parent_elem && !(parent_elem instanceof Element) )
-          parent_elem = parent_elem.parentNode
-        popup_feedback.classList.add('d-none')  // hide by default (gets shown below if applicable)
-        // figure out if the selection spans only one row
-        if ( parent_elem ) {
-          // at this point we know parent_elem must be an Element
-          // find the closest results row
-          const tr = (parent_elem as Element).closest('#result-table tr')
-          if (tr) {
-            // get href for the feedback link that should be stored here for us
-            const fb = tr.getAttribute('data-feedback-href')
-            if (fb) {
-              popup_feedback.setAttribute('href', fb)
-              popup_feedback.classList.remove('d-none')
-            }
-          }
-        }
-        // set the search link href and show the div
-        popup_search.setAttribute('href', `#q=${encodeURIComponent(text)}`)
-        sel_popup.classList.remove('d-none')
-        // use Popper for placement
-        //TODO Later: It is unclear to me from the documentation whether I really should be creating a new Popper instance each time.
-        createPopper( range, sel_popup, { placement: 'bottom',
-          modifiers: [ preventOverflow, offset,
-            { name: 'offset', options: { offset: [0, 7], } },
-          ],
-        })
-      }
-    }
-  })
 })
