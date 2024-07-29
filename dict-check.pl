@@ -135,7 +135,6 @@ my $LINE_GRAMMAR = qr{
         (?<ANGLES>  (?> \<
             (?<IN_ANGLE_STR> (
                 (?&PARENTHESES)  # "<after tax (operating) results>"
-                | (?&BRACKETS)   # "<pushbike [Br.]>"
                 | (?&STRING) )*  )
             ( ; (?&IN_ANGLE_STR) )*+
         \> ) )
@@ -171,16 +170,6 @@ my $fail_cnt = 0;
 while (my $line = <$fh>) {
     chomp($line);  # remove trailing newline
     next if $line=~/^\s*#/ || $line!~/\S/;  # skip comments and blank lines
-
-    # ### fix some apparent bugs/typos (TODO: report)
-    # missing quote
-    $line =~ s{^(?=Eine Nacht auf dem kahlen Berge\x{201c})}{\x{201e}};
-    # I assume the following is a mistake that happened on conversion from CP1252 to UTF-8
-    $line =~ s{Wiedemann\K\x{0096}(?=Franz)}{\N{EN DASH}};
-    # stray acute accent
-    $line =~ s{; initial print run\K\N{ACUTE ACCENT}(?=;)}{};
-    # ###
-
     if ( $line =~ $LINE_GRAMMAR ) {  # parse the line
         my ($de, $en) = ($+{LEFT}, $+{RIGHT});
         my @des = split m/\|/, $de;
