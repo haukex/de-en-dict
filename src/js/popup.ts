@@ -74,6 +74,7 @@ export function initPopup() {
         hide = false
         sel_popup.classList.remove('d-none')
         // use Floating UI for placement
+        if (cleanup) cleanup()
         cleanup = autoUpdate( range, sel_popup, () => {
           computePosition( range, sel_popup, {
             placement: 'bottom-start',
@@ -86,4 +87,5 @@ export function initPopup() {
     }
     if (hide) doHide()
   })
+  return doHide
 }

@@ -158,6 +158,15 @@ window.addEventListener('DOMContentLoaded', async () => {
   console.debug(`Loaded ${dictLines.length} dictionary lines`)
   search_term.removeAttribute('disabled')
 
+  // set up flag animations and selection popup handler
+  let doHidePopup :()=>void
+  try {
+    init_flags()
+    doHidePopup = initPopup()
+  }
+  // but don't let bugs blow us up
+  catch (error) { console.error(error) }
+
   // Starts a search using a value in the URL hash, if any
   const search_from_url = () => {
     let what = ''
@@ -344,6 +353,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     // show the first chunk of results
     renderMatches(0, RESULT_CHUNK_SZ)
 
+    // ensure the popup gets hidden (apparently needed in some browsers?)
+    if (doHidePopup) doHidePopup()
+
     const renderEndMs = new Date().getTime()
     // Testing shows that searching takes way more time than rendering.
     console.debug(`Rendering took ${renderEndMs-searchEndRenderStartMs}ms.`)
@@ -366,12 +378,4 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // Put the focus on the input field
   search_term.focus()
-
-  // set up flag animations and selection popup handler
-  try {
-    init_flags()
-    initPopup()
-  }
-  // but don't let bugs blow us up
-  catch (error) { console.error(error) }
 })
