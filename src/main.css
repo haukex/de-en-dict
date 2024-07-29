@@ -20,6 +20,9 @@ h3 { font-size: 1.4rem }
   h2 { font-size: 1.4rem }
   h3 { font-size: 1.2rem }
 }
+details ul, details ol {
+  padding-left: 1.2rem;
+}
 
 /* borrow a few classes from Bootstrap */
 .text-danger { color: rgb(220, 53, 69) }
