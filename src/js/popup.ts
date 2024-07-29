@@ -30,6 +30,7 @@ export function initPopup() {
   const popup_search = document.getElementById('popup-search') as HTMLElement
   const popup_feedback = document.getElementById('popup-feedback') as HTMLElement
   const result_rows = document.getElementById('result_rows') as HTMLElement
+  const popup_close = document.getElementById('popup-close') as HTMLElement
 
   let cleanup :null|(()=>void) = null  // holds state for later cleanup of autoUpdate
   const doHide = () => {
@@ -37,6 +38,7 @@ export function initPopup() {
     if (cleanup) cleanup()
     cleanup = null
   }
+  popup_close.addEventListener('click', doHide)
   document.addEventListener('selectionchange', () => {
     const selection = window.getSelection()
     let hide :boolean = true  // we need to do several checks before we can show, so hide by default

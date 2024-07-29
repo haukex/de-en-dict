@@ -146,4 +146,10 @@ h3 { font-size: 1.4rem }
 #sel-popup > a {
   display: block;
   text-decoration: none;
+  width: max-content;
+}
+#popup-close {
+  float: right;
+  margin-left: 1rem;
+  cursor: pointer;
 }
