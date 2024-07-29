@@ -30,7 +30,7 @@ h3 { font-size: 1.4rem }
 @media (prefers-color-scheme: dark) {
   .text-info-emphasis { color: rgb(110, 223, 246) }
 }
-.d-none { display: none }
+.d-none { display: none !important }
 
 /* custom styles */
 #search_term {
