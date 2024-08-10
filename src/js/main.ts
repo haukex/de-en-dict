@@ -137,6 +137,61 @@ async function loadDict() :Promise<string[]> {
   }
 }
 
+// function to turn a dictionary line into a rendered <tbody>
+function result2tbody (dictLine :string) {
+  // split the dictionary lines into "German :: English"
+  const trans = dictLine.split(/::/)
+  if (trans.length!=2)
+    throw new Error(`unexpected database format on line ${dictLine}`)
+  // split each entry on "|"s, should have the same number of entries on each side
+  const des = (trans[0] as string).split(/\|/)
+  const ens = (trans[1] as string).split(/\|/)
+  if (des.length!=ens.length)
+    throw new Error(`unexpected database format on line ${dictLine}`)
+
+  // generate "mailto:" link with predefined subject and body (used below)
+  const fbHref = FEEDBACK_URL
+    + '?subject=' + encodeURIComponent(FEEDBACK_SUBJECT)
+    + '&body=' + encodeURIComponent(FEEDBACK_BODY.replace('$LINE', dictLine))
+
+  // function for generating the feedback link HTML
+  const fbIcon = document.createElement('div')
+  fbIcon.classList.add('feedback-thing')
+  const fbLink = document.createElement('a')
+  fbLink.setAttribute('title', 'Send Feedback Email')
+  fbLink.setAttribute('href', fbHref)
+  fbLink.innerText = '✉️'
+  fbIcon.appendChild(fbLink)
+
+  // each result is contained in a <tbody>
+  const tbody = document.createElement('tbody')
+  tbody.classList.add('result')
+  tbody.setAttribute('data-feedback-href', fbHref)  // for later use by the popup code
+
+  // generate the HTML for each (sub-)result
+  des.forEach((de, i) => {
+    // generate the <tr> with the two <td> children
+    const tr = document.createElement('tr');
+    [de, ens[i] as string].forEach((ent) => {
+      const td = document.createElement('td')
+      td.innerText = ent.trim()
+      // add HTML markup to annotations
+      td.innerHTML = td.innerHTML
+        // we want to display annotations like `{f}` or `[...]` in different formatting
+        .replaceAll(/\{[^}]+\}|\[[^\]]+\]/g, '<span class="annotation">$&</span>')
+        // words in angle brackets are common misspellings or other cross-references that should be hidden from view
+        .replaceAll(/&lt;.+?&gt;/g, '<span class="hidden">$&</span>')
+      tr.appendChild(td)
+    })
+    // add the "feedback" button to the first <tr>
+    if (!i && ENABLE_FEEDBACK)
+      // prepend to the right <td> (<div> is floated right)
+      tr.lastElementChild?.prepend(fbIcon)
+    tbody.appendChild(tr)
+  }) // end of loop over each (sub-)result
+  return tbody
+}
+
 // when the HTML page has finished loading:
 window.addEventListener('DOMContentLoaded', async () => {
   // get a few HTML elements from the page that we need
@@ -145,6 +200,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   const result_count = document.getElementById('result-count') as HTMLElement
   const load_fail = document.getElementById('dict-load-fail') as HTMLElement
   const no_results = document.getElementById('no-results') as HTMLElement
+  const rand_entry_link = document.getElementById('rand-entry-link') as HTMLElement
 
   // load the dictionary, disabling the input field while we do so
   search_term.setAttribute('disabled', 'disabled')
@@ -165,6 +221,13 @@ window.addEventListener('DOMContentLoaded', async () => {
   }
   // but don't let bugs blow us up
   catch (error) { console.error(error) }
+
+  const clearResults = () => {
+    // remove all existing results
+    document.querySelectorAll('tbody.result').forEach((elem) => elem.remove())
+    // ensure the popup gets hidden (apparently needed in some browsers?)
+    if (doHidePopup) doHidePopup()
+  }
 
   // Starts a search using a value in the URL hash, if any
   const search_from_url = () => {
@@ -246,10 +309,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     console.debug(`Search for ${whatRe} found ${matches.length} matches in ${new Date().getTime()-searchStartMs}ms.`)
     //console.debug(scoredMatches)
 
-    // remove all existing results
-    document.querySelectorAll('tbody.result').forEach((elem) => elem.remove())
-    // ensure the popup gets hidden (apparently needed in some browsers?)
-    if (doHidePopup) doHidePopup()
+    clearResults()
 
     // there were no results
     if (!matches.length) {
@@ -259,75 +319,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
     // otherwise, there were matches
     else no_results.classList.add('d-none')
-    // first, we set up some functions to render the HTML, then we call them below
 
-    // function to add some formatting to result HTML
-    const reformatHtml = (el :HTMLElement) => {
-      // don't do highlighting if we'd potentially touch HTML characters
-      // (This is overgeneralized; in theory it'd still be possible to highlight matches that
-      // contain HTML special chars, but at the moment that's more effort than it's worth.)
-      if ( what.search(/[&<>]/)<0 )
-        el.innerHTML = el.innerHTML
-          // highlight the search term in the match
-          .replaceAll(whatRe, '<strong>$&</strong>')
-      el.innerHTML = el.innerHTML
-        // we want to display annotations like `{f}` or `[...]` in different formatting
-        .replaceAll(/\{[^}]+\}|\[[^\]]+\]/g, '<span class="annotation">$&</span>')
-        // words in angle brackets are common misspellings or other cross-references that should be hidden from view
-        .replaceAll(/&lt;.+?&gt;/g, '<span class="hidden">$&</span>')
-    }
-
-    // function to turn a dictionary line into a rendered <tbody>
-    const result2tbody = (matchLine :string) => {
-      // split the dictionary lines into "German :: English"
-      const trans = matchLine.split(/::/)
-      if (trans.length!=2)
-        throw new Error(`unexpected database format on line ${matchLine}`)
-      // split each entry on "|"s, should have the same number of entries on each side
-      const des = (trans[0] as string).split(/\|/)
-      const ens = (trans[1] as string).split(/\|/)
-      if (des.length!=ens.length)
-        throw new Error(`unexpected database format on line ${matchLine}`)
-
-      // generate "mailto:" link with predefined subject and body (used below)
-      const fbHref = FEEDBACK_URL
-        + '?subject=' + encodeURIComponent(FEEDBACK_SUBJECT)
-        + '&body=' + encodeURIComponent(FEEDBACK_BODY.replace('$LINE', matchLine))
-
-      // function for generating the feedback link HTML
-      const fbIcon = document.createElement('div')
-      fbIcon.classList.add('feedback-thing')
-      const fbLink = document.createElement('a')
-      fbLink.setAttribute('title', 'Send Feedback Email')
-      fbLink.setAttribute('href', fbHref)
-      fbLink.innerText = '✉️'
-      fbIcon.appendChild(fbLink)
-
-      // each result is contained in a <tbody>
-      const tbody = document.createElement('tbody')
-      tbody.classList.add('result')
-      tbody.setAttribute('data-feedback-href', fbHref)  // for later use by the popup code
-
-      // generate the HTML for each (sub-)result
-      des.forEach((de, i) => {
-        // generate the <tr> with the two <td> children
-        const tr = document.createElement('tr');
-        [de, ens[i] as string].forEach((ent) => {
-          const td = document.createElement('td')
-          td.innerText = ent.trim()
-          reformatHtml(td)
-          tr.appendChild(td)
-        })
-        // add the "feedback" button to the first <tr>
-        if (!i && ENABLE_FEEDBACK)
-          // prepend to the right <td> (<div> is floated right)
-          tr.lastElementChild?.prepend(fbIcon)
-        tbody.appendChild(tr)
-      }) // end of loop over each (sub-)result
-      return tbody
-    } // end of result2tbody
-
-    // function for rendering matches
+    // function for rendering matches, which we set up here, then call below
     let displayedMatches = 0  // holds the state between invocations of this function:
     const renderMatches = (start :number, end :number) => {
       // loop over the chunk of lines to be displayed
@@ -336,7 +329,16 @@ window.addEventListener('DOMContentLoaded', async () => {
         if (!matchLine)
           throw new Error(`internal error: bad lineIndex ${lineIndex}, dictLines.length=${dictLines.length}`)
         try {  // especially result2tbody may throw errors
-          result_table.appendChild(result2tbody(matchLine))
+          const tbody = result2tbody(matchLine)
+          // highlight the search term in the match
+          tbody.querySelectorAll('td').forEach((td) => {
+            // don't do highlighting if we'd potentially touch HTML characters
+            // (This is overgeneralized; in theory it'd still be possible to highlight matches that
+            // contain HTML special chars, but at the moment that's more effort than it's worth.)
+            if ( what.search(/[&<>]/)<0 )
+              td.innerHTML = td.innerHTML.replaceAll(whatRe, '<strong>$&</strong>')
+          })
+          result_table.appendChild(tbody)
           displayedMatches++
         }
         catch (error) { console.error(error) }
@@ -370,6 +372,13 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // Trigger a search upon loading
   search_from_url()
+
+  // random entry link handler
+  rand_entry_link.addEventListener('click', event => {
+    event.preventDefault()
+    clearResults()
+    result_table.appendChild( result2tbody( dictLines[Math.floor(Math.random()*dictLines.length)] as string ) )
+  })
 
   search_term.addEventListener('keyup', evt => {
     // Escape key clears input
