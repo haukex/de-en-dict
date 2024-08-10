@@ -24,7 +24,8 @@
 import {DB_URL, DB_VER_URL, DB_CACHE_NAME, cacheFirst, cleanSearchTerm} from './common'
 import {init_flags} from './flags'
 import {makeSearchPattern} from './equiv'
-import {initPopup} from './popup'
+import {initPopup, initTooltips, addTooltips} from './popup'
+import {default as abbreviations} from './abbreviations.json'
 
 // for the parcel development environment:
 if (module.hot) module.hot.accept()
@@ -178,7 +179,14 @@ function result2tbody (dictLine :string) {
       // add HTML markup to annotations
       td.innerHTML = td.innerHTML
         // we want to display annotations like `{f}` or `[...]` in different formatting
-        .replaceAll(/\{[^}]+\}|\[[^\]]+\]/g, '<span class="annotation">$&</span>')
+        .replaceAll(/\{[^}]+\}|\[[^\]]+\]/g, (match) => {
+          if (Object.hasOwn(abbreviations, match)) {
+            const abb = abbreviations[match as keyof typeof abbreviations]
+            // note we control the JSON file and know it's safe to use in HTML
+            return `<abbr class="annotation" title="🇩🇪 ${abb['de']} • 🇺🇸 ${abb['en']}">${match}</abbr>`
+          }
+          return `<span class="annotation">${match}</span>`
+        })
         // words in angle brackets are common misspellings or other cross-references that should be hidden from view
         .replaceAll(/&lt;.+?&gt;/g, '<span class="hidden">$&</span>')
       tr.appendChild(td)
@@ -218,6 +226,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   try {
     init_flags()
     doHidePopup = initPopup()
+    initTooltips()
   }
   // but don't let bugs blow us up
   catch (error) { console.error(error) }
@@ -342,6 +351,7 @@ window.addEventListener('DOMContentLoaded', async () => {
               td.innerHTML = td.innerHTML.replaceAll(whatRe, '<strong>$&</strong>')
           })
           result_table.appendChild(tbody)
+          addTooltips(tbody)
           displayedMatches++
         }
         catch (error) { console.error(error) }
@@ -380,7 +390,9 @@ window.addEventListener('DOMContentLoaded', async () => {
   rand_entry_link.addEventListener('click', event => {
     event.preventDefault()
     clearResults()
-    result_table.appendChild( result2tbody( dictLines[Math.floor(Math.random()*dictLines.length)] as string ) )
+    const tbody = result2tbody( dictLines[Math.floor(Math.random()*dictLines.length)] as string )
+    result_table.appendChild(tbody)
+    addTooltips(tbody)
   })
 
   search_term.addEventListener('keyup', event => {

@@ -23,7 +23,39 @@
 
 import {computePosition, autoUpdate, shift, flip, limitShift, offset} from '@floating-ui/dom'
 
-/* Handles the "Selection Tools" popup. */
+/* Handles the "Selection Tools" popup and the "Annotation Tooltips". */
+
+let currentTooltip :Node|null = null
+
+export function initTooltips() {
+  const abbr_tooltip = document.getElementById('abbr-tooltip') as HTMLElement
+  document.addEventListener('click', (event) => {
+    if ( !( abbr_tooltip.contains(event.target as Node) || currentTooltip && currentTooltip.contains(event.target as Node) ) )
+      abbr_tooltip.classList.add('d-none')
+  })
+}
+
+export function addTooltips(element :HTMLElement) {
+  // important: don't call this until the element is actually part of the document, otherwise event listeners won't register
+  const abbr_tooltip = document.getElementById('abbr-tooltip') as HTMLElement
+  element.querySelectorAll('abbr').forEach((el) => {
+    const show = () => {
+      abbr_tooltip.innerText = ''+el.getAttribute('title')
+      abbr_tooltip.classList.remove('d-none')
+      computePosition( el, abbr_tooltip, {
+        placement: 'bottom-start',
+        middleware: [ offset(5), flip(), shift({ padding: 5, limiter: limitShift() }) ],
+      } ).then( ({x,y}) => {
+        Object.assign( abbr_tooltip.style, { left: `${x}px`, top: `${y}px` } )
+      } )
+      currentTooltip = el
+    }
+    el.addEventListener('click', show )
+    // the mouseover stuff is a little too intrusive IMHO (and doesn't work on mobile anyway)
+    //el.addEventListener('mouseover', show )
+    //el.addEventListener('mouseout', () => abbr_tooltip.classList.add('d-none') )
+  })
+}
 
 export function initPopup() {
   const sel_popup = document.getElementById('sel-popup') as HTMLElement

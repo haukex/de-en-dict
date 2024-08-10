@@ -40,6 +40,8 @@ sub pp { Data::Dumper->new(\@_)->Terse(1)->Purity(1)->Useqq(1)->Quotekeys(0)->So
 my $DICT_FILE = catfile($FindBin::Bin, 'de-en.txt.gz');
 my $DICT_URL = 'https://ftp.tu-chemnitz.de/pub/Local/urz/ding/de-en-devel/de-en.txt.gz';
 
+#TODO Later: Integrate abbreviations.json? (check its format, check if we're missing any annotations, and perhaps use its contents in the grammar?)
+
 # Note that single quotes (') are not treated specially because of their varied usage (and some typos in the data):
 # "can't", "hunters' parlance", "height 5' 7''", "x prime /x'/", "f';" (f-prime), and as quotes.
 

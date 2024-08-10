@@ -159,7 +159,7 @@ tbody.result tr:not(:first-child) td {
   }
 }
 
-#sel-popup {
+.popper {
   width: max-content;
   position: absolute;
   top: 0;

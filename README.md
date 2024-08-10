@@ -85,3 +85,7 @@ This project makes use of the following libraries:
 - [Floating UI](https://floating-ui.com/),
   Copyright © 2021 Floating UI contributors,
   [MIT License](https://github.com/floating-ui/floating-ui/blob/master/LICENSE).
+- Some content (abbreviation list) is taken from
+  [Beolingus Deutsch-Englisch Lexikon-Plug-in](https://tekl.de/lexikon-plug-ins/beolingus-deutsch-englisch-lexikon-plugin),
+  Copyright © 2024 Wolfgang Kreutz and TU Chemnitz,
+  [GNU GPL 3.0+](https://github.com/Tekl/beolingus-deutsch-englisch/blob/master/LICENSE).
