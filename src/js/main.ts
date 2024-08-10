@@ -140,12 +140,11 @@ async function loadDict() :Promise<string[]> {
 // when the HTML page has finished loading:
 window.addEventListener('DOMContentLoaded', async () => {
   // get a few HTML elements from the page that we need
-  const search_term = document.getElementById('search_term') as HTMLInputElement
-  const result_rows = document.getElementById('result_rows') as HTMLElement
-  const result_count = document.getElementById('result_count') as HTMLElement
+  const search_term = document.getElementById('search-term') as HTMLInputElement
+  const result_table = document.getElementById('result-table') as HTMLElement
+  const result_count = document.getElementById('result-count') as HTMLElement
   const load_fail = document.getElementById('dict-load-fail') as HTMLElement
-  // the default HTML contains the "no results" table entry, we re-use that
-  const no_results = (result_rows.children[0] as HTMLElement).cloneNode(true) as HTMLElement  // should be a tr
+  const no_results = document.getElementById('no-results') as HTMLElement
 
   // load the dictionary, disabling the input field while we do so
   search_term.setAttribute('disabled', 'disabled')
@@ -207,15 +206,14 @@ window.addEventListener('DOMContentLoaded', async () => {
       // one-letter search terms take too long and cause the app to hang, for now we simply refuse them
       search_term.classList.add('danger')
       return
-    }
-    else search_term.classList.remove('danger')
+    } else search_term.classList.remove('danger')
 
     // update page title with search term
     document.title = what ? `${TITLE_PREFIX}: ${what}` : TITLE_PREFIX
 
     // turn the search term into a regex
     const [whatPatStricter, whatPat] = makeSearchPattern(what)
-    // generate a regex that matches the search term
+    // compile the regex that matches the search term
     const whatRe = new RegExp(whatPat, 'ig')
 
     /* The following code generates a set of regular expressions used for scoring the matches.
@@ -226,7 +224,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       .flatMap((re)=>[new RegExp(re), new RegExp(re, 'i')])
     //console.debug(scoreRes)
 
-    // generate a list of tuples of the match line and its score
+    // this code performs the search
     const searchStartMs = new Date().getTime()
     // the `matches` array stores indices into the `dictLines` array for each matching line
     const matches :number[] = (() => {
@@ -245,16 +243,23 @@ window.addEventListener('DOMContentLoaded', async () => {
       // now that we've sorted, we can strip the scores out of the returned values
       return scoredMatches.map(([li, _score]) => li)
     })()
-    const searchEndRenderStartMs = new Date().getTime()
-    console.debug(`Search for ${whatRe} found ${matches.length} matches in ${searchEndRenderStartMs-searchStartMs}ms.`)
+    console.debug(`Search for ${whatRe} found ${matches.length} matches in ${new Date().getTime()-searchStartMs}ms.`)
     //console.debug(scoredMatches)
+
+    // remove all existing results
+    document.querySelectorAll('tbody.result').forEach((elem) => elem.remove())
+    // ensure the popup gets hidden (apparently needed in some browsers?)
+    if (doHidePopup) doHidePopup()
 
     // there were no results
     if (!matches.length) {
       result_count.innerText = `No matches found (dictionary holds ${dictLines.length} entries).`
-      result_rows.replaceChildren(no_results.cloneNode(true) as HTMLElement)
+      no_results.classList.remove('d-none')
       return
     }
+    // otherwise, there were matches
+    else no_results.classList.add('d-none')
+    // first, we set up some functions to render the HTML, then we call them below
 
     // function to add some formatting to result HTML
     const reformatHtml = (el :HTMLElement) => {
@@ -272,72 +277,70 @@ window.addEventListener('DOMContentLoaded', async () => {
         .replaceAll(/&lt;.+?&gt;/g, '<span class="hidden">$&</span>')
     }
 
+    // function to turn a dictionary line into a rendered <tbody>
+    const result2tbody = (matchLine :string) => {
+      // split the dictionary lines into "German :: English"
+      const trans = matchLine.split(/::/)
+      if (trans.length!=2)
+        throw new Error(`unexpected database format on line ${matchLine}`)
+      // split each entry on "|"s, should have the same number of entries on each side
+      const des = (trans[0] as string).split(/\|/)
+      const ens = (trans[1] as string).split(/\|/)
+      if (des.length!=ens.length)
+        throw new Error(`unexpected database format on line ${matchLine}`)
+
+      // generate "mailto:" link with predefined subject and body (used below)
+      const fbHref = FEEDBACK_URL
+        + '?subject=' + encodeURIComponent(FEEDBACK_SUBJECT)
+        + '&body=' + encodeURIComponent(FEEDBACK_BODY.replace('$LINE', matchLine))
+
+      // function for generating the feedback link HTML
+      const fbIcon = document.createElement('div')
+      fbIcon.classList.add('feedback-thing')
+      const fbLink = document.createElement('a')
+      fbLink.setAttribute('title', 'Send Feedback Email')
+      fbLink.setAttribute('href', fbHref)
+      fbLink.innerText = '✉️'
+      fbIcon.appendChild(fbLink)
+
+      // each result is contained in a <tbody>
+      const tbody = document.createElement('tbody')
+      tbody.classList.add('result')
+      tbody.setAttribute('data-feedback-href', fbHref)  // for later use by the popup code
+
+      // generate the HTML for each (sub-)result
+      des.forEach((de, i) => {
+        // generate the <tr> with the two <td> children
+        const tr = document.createElement('tr');
+        [de, ens[i] as string].forEach((ent) => {
+          const td = document.createElement('td')
+          td.innerText = ent.trim()
+          reformatHtml(td)
+          tr.appendChild(td)
+        })
+        // add the "feedback" button to the first <tr>
+        if (!i && ENABLE_FEEDBACK)
+          // prepend to the right <td> (<div> is floated right)
+          tr.lastElementChild?.prepend(fbIcon)
+        tbody.appendChild(tr)
+      }) // end of loop over each (sub-)result
+      return tbody
+    } // end of result2tbody
+
     // function for rendering matches
-    let displayedMatches = 0
+    let displayedMatches = 0  // holds the state between invocations of this function:
     const renderMatches = (start :number, end :number) => {
-      matches.slice(start, end).forEach((lineIndex, mi) => {
+      // loop over the chunk of lines to be displayed
+      matches.slice(start, end).forEach((lineIndex) => {
         const matchLine = dictLines[lineIndex]
         if (!matchLine)
           throw new Error(`internal error: bad lineIndex ${lineIndex}, dictLines.length=${dictLines.length}`)
-
-        // generate "mailto:" link with predefined subject and body (used below)
-        const fbHref = FEEDBACK_URL
-          + '?subject=' + encodeURIComponent(FEEDBACK_SUBJECT)
-          + '&body=' + encodeURIComponent(FEEDBACK_BODY.replace('$LINE', matchLine))
-
-        // split the dictionary lines into "German :: English"
-        const trans = matchLine.split(/::/)
-        if (trans.length!=2) {
-          console.error('unexpected database format on line', matchLine)
-          return
+        try {  // especially result2tbody may throw errors
+          result_table.appendChild(result2tbody(matchLine))
+          displayedMatches++
         }
-        // split each entry on "|"s, should have the same number of entries on each side
-        const des = (trans[0] as string).split(/\|/)
-        const ens = (trans[1] as string).split(/\|/)
-        if (des.length!=ens.length) {
-          console.error('unexpected database format on line', matchLine)
-          return
-        }
-
-        // function for generating the feedback link HTML
-        const makeFeedbackThing = () => {
-          const fbIcon = document.createElement('div')
-          fbIcon.classList.add('feedback-thing')
-          const fbLink = document.createElement('a')
-          fbLink.setAttribute('title', 'Send Feedback Email')
-          fbLink.setAttribute('href', fbHref)
-          fbLink.innerText = '✉️'
-          fbIcon.appendChild(fbLink)
-          return fbIcon
-        }
-
-        // generate the HTML for each (sub-)result
-        des.forEach((de, i) => {
-          // generate the <tr> with the two <td> children
-          const tr = document.createElement('tr');
-          [de, ens[i] as string].forEach((ent) => {
-            const td = document.createElement('td')
-            td.innerText = ent.trim()
-            reformatHtml(td)
-            tr.appendChild(td)
-          })
-          // Add a few classes used for styling the table
-          if (i) tr.classList.add('sub-result')
-          else tr.classList.add('first-result')
-          if (mi%2) tr.classList.add('odd-result')
-          // the "feedback" button on each result
-          if (!i && ENABLE_FEEDBACK)
-            // prepend to the right <td> (<div> is floated right)
-            tr.lastElementChild?.prepend(makeFeedbackThing())
-          // also store the href in an attribute on each row for use by selection popup
-          tr.setAttribute('data-feedback-href', fbHref)
-          result_rows.appendChild(tr)
-        }) // end of loop over each (sub-)result
-        result_rows.lastElementChild?.classList.add('last-subresult')
-
-        displayedMatches++
-      }) // end of loop over this chunk of results
-
+        catch (error) { console.error(error) }
+      })
       // update the text below the search box
       if (displayedMatches<matches.length) {
         result_count.innerText = `Found ${matches.length} matches, showing the first ${displayedMatches}.`
@@ -354,18 +357,9 @@ window.addEventListener('DOMContentLoaded', async () => {
         result_count.innerText = `Showing all ${matches.length} matches.`
     } // end of renderMatches
 
-    // next, we build the HTML
-    result_rows.replaceChildren()
-
-    // show the first chunk of results
+    // render the first chunk of results
     renderMatches(0, RESULT_CHUNK_SZ)
 
-    // ensure the popup gets hidden (apparently needed in some browsers?)
-    if (doHidePopup) doHidePopup()
-
-    const renderEndMs = new Date().getTime()
-    // Testing shows that searching takes way more time than rendering.
-    console.debug(`Rendering took ${renderEndMs-searchEndRenderStartMs}ms.`)
   } // end of do_search
 
   // Install event listener for input field changes

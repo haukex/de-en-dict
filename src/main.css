@@ -43,7 +43,7 @@ details ul, details ol {
   background-color: var(--bs-danger-bg-subtle);
   border-color: var(--bs-danger-border-subtle);
 }
-#search_term {
+#search-term {
   width: 100%;
 }
 .btn-more {
@@ -85,12 +85,6 @@ details ul, details ol {
   width: 100%;
   border: 1px solid var(--border);
 }
-#result-table tr {
-  background-color: var(--bg);
-}
-#result-table tr.odd-result {
-  background-color: var(--accent-bg);
-}
 #result-table th {
   text-align: center;
   white-space: nowrap;
@@ -103,21 +97,31 @@ details ul, details ol {
   vertical-align: text-top;
   width: 50%;
   font-size: 1rem;  /* Default would be 1.15rem from body */
+}
+#result-table tr {
+  background-color: var(--bg);  /* override simple.css */
+}
+tbody.result {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+tbody.result:nth-child(even) td {
+  background-color: var(--accent-bg);
+}
+tbody.result tr td {
   padding-top: 0;
   padding-bottom: 0;
 }
-#result-table tr.sub-result td {
-  padding-left: 2rem;
-}
-#result-table tr.first-result td {
-  border-top: 1px solid var(--border);
+tbody.result tr:first-child td {
   padding-top: 0.5rem;
 }
-#result-table tr.last-subresult td {
-  border-bottom: 1px solid var(--border);
+tbody.result tr:last-child td {
   padding-bottom: 0.5rem;
 }
-#result-table td.no-results {
+tbody.result tr:not(:first-child) td {
+  padding-left: 1.8rem;
+}
+#no-results td {
   text-align: center;
   font-style: italic;
   padding: 1rem 0.5rem;

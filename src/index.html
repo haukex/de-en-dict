@@ -31,9 +31,9 @@
     </div>
 
     <p>
-      <input type="text" id="search_term" placeholder="🔍 Search" disabled>
+      <input type="text" id="search-term" placeholder="🔍 Search" disabled>
     </p>
-    <figure><!-- for horiz scroll -->
+    <figure><!-- for horiz scroll (simple.css) -->
       <table id="result-table">
         <thead>
           <tr>
@@ -41,14 +41,14 @@
             <th><div class="flag-icon" id="flag-en"><div>🇺🇸</div></div> English</th>
           </tr>
         </thead>
-        <tbody id="result_rows">
+        <tbody id="no-results">
           <tr>
-            <td colspan="2" class="no-results">No results.</td>
+            <td colspan="2">No results.</td>
           </tr>
         </tbody>
       </table>
     </figure>
-    <p id="result_count">The dictionary is loading, please wait...</p>
+    <p id="result-count">The dictionary is loading, please wait...</p>
 
     <div id="sel-popup" class="d-none">
       <div>

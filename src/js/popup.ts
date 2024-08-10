@@ -29,7 +29,7 @@ export function initPopup() {
   const sel_popup = document.getElementById('sel-popup') as HTMLElement
   const popup_search = document.getElementById('popup-search') as HTMLElement
   const popup_feedback = document.getElementById('popup-feedback') as HTMLElement
-  const result_rows = document.getElementById('result_rows') as HTMLElement
+  const result_table = document.getElementById('result-table') as HTMLElement
   const popup_close = document.getElementById('popup-close') as HTMLElement
 
   let cleanup :null|(()=>void) = null  // holds state for later cleanup of autoUpdate
@@ -51,7 +51,7 @@ export function initPopup() {
         .replaceAll(/\s+/g,' ').trim()
       const range = selection.getRangeAt(0)
       // only handle selections of text inside the results table
-      if ( text.length && result_rows.contains(range.commonAncestorContainer) ) {
+      if ( text.length && result_table.contains(range.commonAncestorContainer) ) {
         // figure out the common ancestor HTMLElement of the selection
         let parent_elem :Node|null = range.commonAncestorContainer
         while ( parent_elem && !(parent_elem instanceof HTMLElement) )
@@ -60,11 +60,11 @@ export function initPopup() {
         // figure out if the selection spans only one row
         if ( parent_elem ) {
           // at this point we know parent_elem must be an HTMLElement
-          // find the closest results row
-          const tr = (parent_elem as HTMLElement).closest('#result-table tr')
-          if (tr) {
+          // find the closest result tbody
+          const tb = (parent_elem as HTMLElement).closest('#result-table tbody.result')
+          if (tb) {
             // get href for the feedback link that should be stored here for us
-            const fb = tr.getAttribute('data-feedback-href')
+            const fb = tb.getAttribute('data-feedback-href')
             if (fb) {
               popup_feedback.setAttribute('href', fb)
               popup_feedback.classList.remove('d-none')
