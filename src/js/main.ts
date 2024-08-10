@@ -408,6 +408,21 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
   })
 
+  const btnScrollTop = document.createElement('button')
+  btnScrollTop.setAttribute('id','btn-scroll-top')
+  btnScrollTop.innerText = 'Top 🡑'
+  btnScrollTop.addEventListener('click', () => window.scrollTo(0,0) )
+  //const searchBoxTop = search_term.getBoundingClientRect().y  // changes based on layout, I'll just use a fixed value
+  const updateScrollBtnVis = () => {
+    if ( window.scrollY > 60 )
+      btnScrollTop.classList.remove('d-none')
+    else
+      btnScrollTop.classList.add('d-none')
+  }
+  window.addEventListener('scroll', updateScrollBtnVis)
+  document.querySelector('main')?.appendChild(btnScrollTop)
+  updateScrollBtnVis()
+
   // Put the focus on the input field
   search_term.focus()
 })

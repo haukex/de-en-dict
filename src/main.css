@@ -49,6 +49,15 @@ details ul, details ol {
 .btn-more {
   margin-left: 1rem;
 }
+#btn-scroll-top {
+  position: fixed;
+  bottom: 1rem;
+  right: 2rem;
+  z-index: 99;
+  background-color: var(--accent-bg);
+  color: var(--text-light);
+  opacity: 0.8;
+}
 
 /* custom classes for flag icons */
 .flag-icon {
