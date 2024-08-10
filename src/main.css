@@ -24,18 +24,25 @@ details ul, details ol {
   padding-left: 1.2rem;
 }
 
-/* borrow a few classes from Bootstrap */
-.text-danger { color: rgb(220, 53, 69) }
-.text-success { color: rgb(25, 135, 84) }
-.text-secondary { color: rgb(108, 117, 125) }
-.text-info-emphasis { color: rgb(5, 81, 96) }
-.text-nowrap { white-space: nowrap; }
-@media (prefers-color-scheme: dark) {
-  .text-info-emphasis { color: rgb(110, 223, 246) }
+/* borrow a a bit from Bootstrap */
+:root {
+  --bs-danger-bg-subtle: #f8d7da;
+  --bs-danger-border-subtle: #f1aeb5;
 }
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bs-danger-bg-subtle: #2c0b0e;
+    --bs-danger-border-subtle: #842029;
+  }
+}
+.text-nowrap { white-space: nowrap; }
 .d-none { display: none !important }
 
 /* custom styles */
+.notice.danger, input.danger {
+  background-color: var(--bs-danger-bg-subtle);
+  border-color: var(--bs-danger-border-subtle);
+}
 #search_term {
   width: 100%;
 }
