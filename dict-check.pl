@@ -89,6 +89,7 @@ my $LINE_GRAMMAR = qr{
                 \N{GREEK CAPITAL LETTER OMEGA}
             ] )
             | [0-9]
+            | [ \N{SUBSCRIPT ZERO} - \N{SUBSCRIPT NINE} ]
 
             # ##### ##### Special Sequences ##### #####
             # characters we would otherwise treat specially
