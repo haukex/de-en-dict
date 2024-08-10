@@ -144,10 +144,10 @@ for (const pat of _pats) {
  * Two strings are returned: The first is the search word simply turned into a regular expression
  * (a stricter version, intended for use in giving exact matches a higher score), while the second string
  * contains mappings for the character equivalents (a looser pattern that will result in more matches).
+ *
+ * Callers are expected to have cleaned the search term with `cleanSearchTerm`.
  */
 export function makeSearchPattern(what :string) : [string, string] {
-  what = what.replaceAll(/\s+/g, ' ')
-  const stricter = escapeStringRegexp(what)
   let withEquiv = ''
   for (const part of what.split(EQUIV_PAT) ) {
     if (part in EQUIV_REPL)
@@ -155,5 +155,5 @@ export function makeSearchPattern(what :string) : [string, string] {
     else
       withEquiv += escapeStringRegexp(part)
   }
-  return [stricter, withEquiv]
+  return [escapeStringRegexp(what), withEquiv]
 }

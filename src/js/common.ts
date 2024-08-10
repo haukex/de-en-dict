@@ -55,3 +55,7 @@ async function cacheFirst(storage :CacheStorage, cacheName :string, request :Req
     return Response.error()
   }
 }
+
+export function cleanSearchTerm(what :string) {
+  return what.replaceAll(/\s+/g, ' ').trim()
+}

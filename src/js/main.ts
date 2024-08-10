@@ -21,7 +21,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-import {DB_URL, DB_VER_URL, DB_CACHE_NAME, cacheFirst} from './common'
+import {DB_URL, DB_VER_URL, DB_CACHE_NAME, cacheFirst, cleanSearchTerm} from './common'
 import {init_flags} from './flags'
 import {makeSearchPattern} from './equiv'
 import {initPopup} from './popup'
@@ -169,8 +169,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // Starts a search using a value in the URL hash, if any
   const search_from_url = () => {
-    let what = ''
-    // ?q=... overrides #q=... (see GitHub Issue #7 for why)
+    // ?q=... overrides #q=... (see GitHub Issue #7: some links to the app use '?' instead of '#')
     if ( window.location.search.length > 1 ) {
       const loc = new URL(''+window.location)
       loc.hash = '#' + loc.search.substring(1)
@@ -178,9 +177,10 @@ window.addEventListener('DOMContentLoaded', async () => {
       window.location.replace(loc)
     }
     // parse hash
+    let what = ''
     if (window.location.hash.startsWith('#q=')) {
       try {
-        what = decodeURIComponent(window.location.hash.substring('#q='.length)).trim()
+        what = cleanSearchTerm( decodeURIComponent(window.location.hash.substring('#q='.length)) )
       }
       catch (error) {
         // for example, `decodeURIComponent('%97')` causes "URIError: malformed URI sequence"
@@ -193,16 +193,23 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // Updates the URL hash, if necessary, and runs a search when the input field changes
   const search_term_changed = () => {
-    const what = search_term.value.trim()
+    const what = cleanSearchTerm( search_term.value )
     const newHash = `#q=${encodeURIComponent(what)}`
-    if (window.location.hash !== newHash) {
+    if ( window.location.hash !== newHash )
       window.history.pushState(null, '', newHash)
-    }
     do_search(what)
   }
 
   // this is our handler for running the search:
   const do_search = (what: string) => {
+    // we expect our callers to have done cleanSearchTerm(what)
+    if (what.length==1) {
+      // one-letter search terms take too long and cause the app to hang, for now we simply refuse them
+      search_term.classList.add('danger')
+      return
+    }
+    else search_term.classList.remove('danger')
+
     // update page title with search term
     document.title = what ? `${TITLE_PREFIX}: ${what}` : TITLE_PREFIX
 
