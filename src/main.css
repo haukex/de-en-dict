@@ -56,7 +56,7 @@ details ul, details ol {
   z-index: 99;
   background-color: var(--accent-bg);
   color: var(--text-light);
-  opacity: 0.8;
+  opacity: 0.9;
 }
 
 /* custom classes for flag icons */
