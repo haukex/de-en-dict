@@ -230,7 +230,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   }
 
   // Starts a search using a value in the URL hash, if any
-  const search_from_url = () => {
+  const searchFromUrl = () => {
     // ?q=... overrides #q=... (see GitHub Issue #7: some links to the app use '?' instead of '#')
     if ( window.location.search.length > 1 ) {
       const loc = new URL(''+window.location)
@@ -250,20 +250,23 @@ window.addEventListener('DOMContentLoaded', async () => {
       }
     }
     search_term.value = what
-    do_search(what)
+    doSearch(what)
   }
 
   // Updates the URL hash, if necessary, and runs a search when the input field changes
-  const search_term_changed = () => {
+  let prevWhat = 'Something the user is really unlikely to enter on their own by chance, so after initialization the first search is always performed.'
+  const searchTermMaybeChanged = () => {
     const what = cleanSearchTerm( search_term.value )
+    if ( what==prevWhat ) return
+    prevWhat = what
     const newHash = `#q=${encodeURIComponent(what)}`
     if ( window.location.hash !== newHash )
       window.history.pushState(null, '', newHash)
-    do_search(what)
+    doSearch(what)
   }
 
   // this is our handler for running the search:
-  const do_search = (what: string) => {
+  const doSearch = (what: string) => {
     // we expect our callers to have done cleanSearchTerm(what)
     if (what.length==1) {
       // one-letter search terms take too long and cause the app to hang, for now we simply refuse them
@@ -365,13 +368,13 @@ window.addEventListener('DOMContentLoaded', async () => {
   } // end of do_search
 
   // Install event listener for input field changes
-  search_term.addEventListener('change', search_term_changed)
+  search_term.addEventListener('change', searchTermMaybeChanged)
 
   // Install event listener for browser navigation updating the URL hash
-  window.addEventListener('hashchange', search_from_url)
+  window.addEventListener('hashchange', searchFromUrl)
 
   // Trigger a search upon loading
-  search_from_url()
+  searchFromUrl()
 
   // random entry link handler
   rand_entry_link.addEventListener('click', event => {
@@ -380,10 +383,29 @@ window.addEventListener('DOMContentLoaded', async () => {
     result_table.appendChild( result2tbody( dictLines[Math.floor(Math.random()*dictLines.length)] as string ) )
   })
 
-  search_term.addEventListener('keyup', evt => {
+  search_term.addEventListener('keyup', event => {
     // Escape key clears input
-    if (evt.key=='Escape')
+    if (event.key=='Escape')
       search_term.value = ''
+    else if (event.key=='Enter') {
+      event.preventDefault()
+      event.stopPropagation()
+      searchTermMaybeChanged()
+    }
+  })
+  /* 'Enter' is handled in keyup above, but we still need to prevent all of its default
+   * behavior here so it doesn't fire the "change" event and cause the search to run twice. */
+  search_term.addEventListener('keydown', event => {
+    if (event.key=='Enter') {
+      event.preventDefault()
+      event.stopPropagation()
+    }
+  })
+  search_term.addEventListener('keypress', event => {
+    if (event.key=='Enter') {
+      event.preventDefault()
+      event.stopPropagation()
+    }
   })
 
   // Put the focus on the input field
