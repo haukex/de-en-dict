@@ -24,7 +24,7 @@
 import {DB_URL, DB_VER_URL, DB_CACHE_NAME, cacheFirst, cleanSearchTerm} from './common'
 import {init_flags} from './flags'
 import {makeSearchPattern} from './equiv'
-import {initPopup, initTooltips, addTooltips} from './popup'
+import {initPopup, initTooltips, addTooltips, closeAllPopups} from './popup'
 import {default as abbreviations} from './abbreviations.json'
 
 // for the parcel development environment:
@@ -222,10 +222,9 @@ window.addEventListener('DOMContentLoaded', async () => {
   search_term.removeAttribute('disabled')
 
   // set up flag animations and selection popup handler
-  let doHidePopup :()=>void
   try {
     init_flags()
-    doHidePopup = initPopup()
+    initPopup()
     initTooltips()
   }
   // but don't let bugs blow us up
@@ -234,8 +233,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   const clearResults = () => {
     // remove all existing results
     document.querySelectorAll('tbody.result').forEach((elem) => elem.remove())
-    // ensure the popup gets hidden (apparently needed in some browsers?)
-    if (doHidePopup) doHidePopup()
+    // ensure all popups get hidden (apparently needed in some browsers?)
+    closeAllPopups()
   }
 
   // Starts a search using a value in the URL hash, if any

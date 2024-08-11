@@ -161,13 +161,15 @@ tbody.result tr:not(:first-child) td {
 
 .popper {
   width: max-content;
+  max-width: 85vw;
   position: absolute;
   top: 0;
   left: 0;
   background-color: var(--accent-bg);
   border: 1px solid var(--border);
-  padding: 0.5rem;
+  padding: 0.25rem 0.6rem;
   font-size: 0.9rem;
+  z-index: 10;
 }
 #sel-popup > a {
   display: block;
