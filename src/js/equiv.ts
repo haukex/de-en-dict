@@ -146,10 +146,12 @@ for (const pat of _pats) {
  * contains mappings for the character equivalents (a looser pattern that will result in more matches).
  *
  * Callers are expected to have cleaned the search term with `cleanSearchTerm`.
+ *
+ * **Internal Note:** Our caller expects us to return a pattern **WITHOUT** anchors or capturing groups!
  */
 export function makeSearchPattern(what :string) : [string, string] {
   let withEquiv = ''
-  for (const part of what.split(EQUIV_PAT) ) {
+  for ( const part of what.split(EQUIV_PAT) ) {
     if (part in EQUIV_REPL)
       withEquiv += EQUIV_REPL[part]  // special chars already escaped
     else

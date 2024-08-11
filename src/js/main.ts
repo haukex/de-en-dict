@@ -138,6 +138,38 @@ async function loadDict() :Promise<string[]> {
   }
 }
 
+function walkTextNodes(node :Node, callback :(txt:Text)=>Node) {
+  if (node.nodeType==Node.TEXT_NODE)
+    node.parentNode?.replaceChild(callback(node as Text), node)
+  else  // text nodes shouldn't have children, but play it safe anyway
+    node.childNodes.forEach((child) => walkTextNodes(child, callback))
+}
+
+/** This function walks the DOM tree, looking for matches of a regular expression in all
+ * found text nodes, and calling a function for all matches that should wrap them in an HTML element.
+ *
+ * @param node The node/element at which to begin the search for text nodes.
+ *  Note `Node.normalize()` is called on it.
+ * @param searchPat The pattern for which to search in the text.
+ *  May **NOT** contain anchors or capturing groups!
+ * @param wrapper A function that takes a string and wraps it in a new HTML element,
+ *  the return value is inserted in the DOM tree instead of the text.
+ * @param flags Any regex flags like `i`, but *don't* use any of `mgy`!
+ */
+function wrapTextNodeMatches(node :Node, searchPat :string, wrapper :(match:string)=>HTMLElement, flags :string = '') {
+  const splitRe = RegExp('('+searchPat+')','g'+flags)
+  const matchRe = RegExp('^(?:'+searchPat+')$',flags)
+  node.normalize()
+  walkTextNodes(node, (txt) => {
+    if ( txt.data.search(splitRe)<0 )
+      return txt
+    const df = document.createDocumentFragment()
+    for ( const part of txt.data.split(splitRe) )
+      df.appendChild( part.match(matchRe) ? wrapper(part) : document.createTextNode(part) )
+    return df
+  })
+}
+
 // function to turn a dictionary line into a rendered <tbody>
 function result2tbody (dictLine :string) {
   // split the dictionary lines into "German :: English"
@@ -176,19 +208,28 @@ function result2tbody (dictLine :string) {
     [de, ens[i] as string].forEach((ent) => {
       const td = document.createElement('td')
       td.innerText = ent.trim()
-      // add HTML markup to annotations
-      td.innerHTML = td.innerHTML
-        // we want to display annotations like `{f}` or `[...]` in different formatting
-        .replaceAll(/\{[^}]+\}|\[[^\]]+\]/g, (match) => {
-          if (Object.hasOwn(abbreviations, match)) {
-            const abb = abbreviations[match as keyof typeof abbreviations]
-            // note we control the JSON file and know it's safe to use in HTML
-            return `<abbr class="annotation" title="🇩🇪 ${abb['de']} • 🇺🇸 ${abb['en']}">${match}</abbr>`
-          }
-          return `<span class="annotation">${match}</span>`
-        })
-        // words in angle brackets are common misspellings or other cross-references that should be hidden from view
-        .replaceAll(/&lt;.+?&gt;/g, '<span class="hidden">$&</span>')
+      // we want to display annotations like `{f}` or `[...]` in different formatting
+      wrapTextNodeMatches(td, '\\{[^}]+\\}|\\[[^\\]]+\\]', (match) => {
+        if (Object.hasOwn(abbreviations, match)) {
+          const abb = abbreviations[match as keyof typeof abbreviations]
+          const e = document.createElement('abbr')
+          e.classList.add('annotation')
+          e.setAttribute('title', `🇩🇪 ${abb['de']} • 🇺🇸 ${abb['en']}`)
+          e.innerText = match
+          return e
+        }
+        const e = document.createElement('span')
+        e.classList.add('annotation')
+        e.innerText = match
+        return e
+      })
+      // words in angle brackets are common misspellings or other cross-references that should be hidden from view
+      wrapTextNodeMatches(td, '<.+?>', (match) => {
+        const e = document.createElement('span')
+        e.classList.add('hidden')
+        e.innerText = match
+        return e
+      })
       tr.appendChild(td)
     })
     // add the "feedback" button to the first <tr>
@@ -285,6 +326,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     document.title = what ? `${TITLE_PREFIX}: ${what}` : TITLE_PREFIX
 
     // turn the search term into a regex
+    // NOTE `whatPat` must not contain anchors or capturing groups, for use in `wrapTextNodeMatches`
     const [whatPatStricter, whatPat] = makeSearchPattern(what)
     // compile the regex that matches the search term
     const whatRe = new RegExp(whatPat, 'ig')
@@ -342,11 +384,11 @@ window.addEventListener('DOMContentLoaded', async () => {
           const tbody = result2tbody(matchLine)
           // highlight the search term in the match
           tbody.querySelectorAll('td').forEach((td) => {
-            // don't do highlighting if we'd potentially touch HTML characters
-            // (This is overgeneralized; in theory it'd still be possible to highlight matches that
-            // contain HTML special chars, but at the moment that's more effort than it's worth.)
-            if ( what.search(/[&<>]/)<0 )
-              td.innerHTML = td.innerHTML.replaceAll(whatRe, '<strong>$&</strong>')
+            wrapTextNodeMatches(td, whatPat, (match) => {
+              const e = document.createElement('strong')
+              e.innerText = match
+              return e
+            }, 'i')
           })
           result_table.appendChild(tbody)
           addTitleTooltips(tbody.querySelectorAll('abbr'))
