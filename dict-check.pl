@@ -1,10 +1,12 @@
 #!/usr/bin/env perl
 use 5.036;  # strict and warnings
+use open qw/:std :utf8/;
 # Debian/Ubuntu: `sudo apt install libio-socket-ssl-perl`  # depends on libnet-ssleay-perl
 use Net::SSLeay 1.49;  # for HTTP::Tiny SSL support
 use IO::Socket::SSL 1.42;  # for HTTP::Tiny SSL support
 use File::Spec::Functions qw/catfile/;
 use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
+use JSON::PP qw/decode_json/;
 use Data::Dumper ();
 use HTTP::Tiny;
 use FindBin;
@@ -39,8 +41,38 @@ sub pp { Data::Dumper->new(\@_)->Terse(1)->Purity(1)->Useqq(1)->Quotekeys(0)->So
 
 my $DICT_FILE = catfile($FindBin::Bin, 'de-en.txt.gz');
 my $DICT_URL = 'https://ftp.tu-chemnitz.de/pub/Local/urz/ding/de-en-devel/de-en.txt.gz';
+my $ABBR_FILE = catfile($FindBin::Bin, 'src', 'js', 'abbreviations.json');
 
-#TODO Later: Integrate abbreviations.json? (check its format, check if we're missing any annotations, and perhaps use its contents in the grammar?)
+# investigate abbreviations.json
+open my $jfh, '<:raw', $ABBR_FILE or die "$ABBR_FILE: $!";
+my $abbr = decode_json( do { local $/; <$jfh> } );
+close $jfh;
+while ( my ($k,$v) = each %$abbr ) {
+    $k =~ m{ \A (?:
+        \[ (?<CONTENT> [ a-z A-Z . ' \x20
+            \N{LATIN SMALL LETTER A WITH DIAERESIS}
+            \N{LATIN SMALL LETTER O WITH DIAERESIS}
+            \N{LATIN SMALL LETTER U WITH DIAERESIS}
+            \N{LATIN CAPITAL LETTER O WITH DIAERESIS}
+            ]+ )
+        \] | \{ (?&CONTENT) \} | \N{REGISTERED SIGN}
+    ) \z }msxxaan or die "bad abbr key ".pp($k);
+    my @vk = sort keys %$v;
+    die "bad abbr val ".pp($v)
+        if @vk != 2 || $vk[0] ne 'de' || $vk[1] ne 'en';
+    for my $vv ($$v{de}, $$v{en}) {
+        # IMPORTANT: shouldn't contain HTML special characters like < > & ' "
+        $vv =~ m{ \A
+            [ a-z A-Z , ; : ( ) \- \x20
+            \N{LATIN SMALL LETTER A WITH DIAERESIS}
+            \N{LATIN SMALL LETTER O WITH DIAERESIS}
+            \N{LATIN SMALL LETTER U WITH DIAERESIS}
+            \N{LATIN CAPITAL LETTER O WITH DIAERESIS}
+            \N{LATIN SMALL LETTER SHARP S}
+            ]+
+        \z }msxxaan or die "bad abbr val for key ".pp($k).": ".pp($vv);
+    }
+}
 
 # Note that single quotes (') are not treated specially because of their varied usage (and some typos in the data):
 # "can't", "hunters' parlance", "height 5' 7''", "x prime /x'/", "f';" (f-prime), and as quotes.
@@ -169,6 +201,7 @@ $$resp{success} or die "$DICT_URL $$resp{status} $$resp{reason}".($$resp{status}
 gunzip $DICT_FILE => \my $buffer or die "gunzip failed: $GunzipError\n";
 
 open my $fh, '<:raw:encoding(UTF-8)', \$buffer or die $!;
+my %seen_annot;
 my $fail_cnt = 0;
 while (my $line = <$fh>) {
     chomp($line);  # remove trailing newline
@@ -179,6 +212,8 @@ while (my $line = <$fh>) {
         my @ens = split m/\|/, $en;
         @des == @ens or die "Did not get the same number of sub-entries in ".pp($line)."\n";
         #say pp \@des, \@ens;  # debugging, helps visualize runaway regex
+        # use the same regex as JS uses to get "annotations":
+        $seen_annot{$&}++ while $line =~ /\{[^}]+\}|\[[^\]]+\]/g;
     }
     else {
         warn "Failed to parse ".pp($line)."\n";
@@ -187,3 +222,6 @@ while (my $line = <$fh>) {
 }
 close $fh;
 die "$fail_cnt failures\n" if $fail_cnt;
+
+say "Report: The following annotations are not contained in the abbreviations list:";
+say join(', ', grep {!$$abbr{$_}} sort keys %seen_annot );
