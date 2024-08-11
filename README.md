@@ -38,8 +38,8 @@ Development Environment
 - Run `make clean all` for a full rebuild with linting
 - Run `npm start` to start up the local development server (with live refresh)
 
-Thanks
-------
+Thanks ❤️
+--------
 
 - [@frituc (Frank Richter)](https://github.com/frituc)
   for the [German-English Dictionary](https://ftp.tu-chemnitz.de/pub/Local/urz/ding/de-en-devel/)
@@ -72,7 +72,7 @@ You should have received a copy of the GNU General Public License
 along with this project; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-### Used Libraries
+### Used Libraries ❤️
 
 This project makes use of the following libraries:
 

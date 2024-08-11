@@ -17,6 +17,12 @@ $|=1;
 This is a script to check the German-English Dictionary formatting.
 (It doesn't do a *full* parse because that would be too difficult.)
 
+Its purpose is to check that the format of the dictionary file is
+regular enough such that it can be processed as expected by the
+JavaScript code (e.g., each line is "German :: English", sub-entries
+are separated by "|", and that angle, square, and curly braces aren't
+nested, and so on).
+
 =head2 Author, Copyright, and License
 
 Copyright © 2024 Hauke Dämpfling (haukex@zero-g.net)

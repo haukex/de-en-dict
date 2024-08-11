@@ -453,6 +453,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       event.stopPropagation()
     }
   })
+  // keypress is deprecated, we'll include it anyway for now
   search_term.addEventListener('keypress', event => {
     if (event.key=='Enter') {
       event.preventDefault()
