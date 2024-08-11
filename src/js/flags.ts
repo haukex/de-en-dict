@@ -31,7 +31,7 @@ const FLAGS :IFlagList = { en: [ '🇺🇸', '🇬🇧', '🇦🇺', '🇳🇿' 
 
 const INTERVAL_MS = 4000
 
-export function init_flags () {
+export function initFlags () {
   ['de', 'en'].forEach(key => {
     const element = document.getElementById('flag-'+key) as HTMLElement
     // add the other flag <div>s

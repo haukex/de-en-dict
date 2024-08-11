@@ -171,12 +171,12 @@ tbody.result tr:not(:first-child) td {
   font-size: 0.9rem;
   z-index: 10;
 }
-#sel-popup > a {
+#sel-tools > a {
   display: block;
   text-decoration: none;
   width: max-content;
 }
-#popup-close {
+#sel-tools-close {
   float: right;
   margin-left: 1rem;
   cursor: pointer;

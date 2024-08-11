@@ -23,83 +23,78 @@
 
 import {computePosition, autoUpdate, shift, flip, limitShift, offset} from '@floating-ui/dom'
 
-/* Handles the "Selection Tools" popup and the "Annotation Tooltips".
- * The former is currently abbreviated "popup" and the second "tooltip".
- * That's probably too generic and confusing and I should rename them. */
+/* Handles the "Selection Tools" Popup and Tooltips for Elements with "title"s (such as <abbr>). */
 
-let cleanupPopup :null|(()=>void) = null
-let cleanupTooltip :null|(()=>void) = null
-let currentTooltipElement :Node|null = null
+let cleanupSelectionTools :null|(()=>void) = null
+let cleanupTitleTooltip :null|(()=>void) = null
+let titleTooltipSource :Node|null = null
 
-function closeTooltip() {
-  if (cleanupTooltip) {
-    const abbr_tooltip = document.getElementById('abbr-tooltip') as HTMLElement
-    abbr_tooltip.classList.add('d-none')
-    cleanupTooltip()
-    cleanupTooltip = null
-    currentTooltipElement = null
+function closeTitleTooltip() {
+  if (cleanupTitleTooltip) {
+    const title_tooltip = document.getElementById('title-tooltip') as HTMLElement
+    title_tooltip.classList.add('d-none')
+    cleanupTitleTooltip()
+    cleanupTitleTooltip = null
+    titleTooltipSource = null
   }
 }
 
-function closePopup() {
-  if (cleanupPopup) {
-    cleanupPopup()
-    const sel_popup = document.getElementById('sel-popup') as HTMLElement
-    sel_popup.classList.add('d-none')
-    cleanupPopup = null
+function closeSelectionTools() {
+  if (cleanupSelectionTools) {
+    cleanupSelectionTools()
+    const sel_tools = document.getElementById('sel-tools') as HTMLElement
+    sel_tools.classList.add('d-none')
+    cleanupSelectionTools = null
   }
 }
 
-export function closeAllPopups() {
-  closePopup()
-  closeTooltip()
-}
-
-export function initTooltips() {
-  const abbr_tooltip = document.getElementById('abbr-tooltip') as HTMLElement
+function initTitleTooltips() {
+  const title_tooltip = document.getElementById('title-tooltip') as HTMLElement
   document.addEventListener('click', (event) => {
     // clicking anywhere but the tooltip or the element that opened it closes it
-    if ( !( abbr_tooltip.contains(event.target as Node) || currentTooltipElement && currentTooltipElement.contains(event.target as Node) ) )
-      closeTooltip()
+    if ( !( title_tooltip.contains(event.target as Node) || titleTooltipSource && titleTooltipSource.contains(event.target as Node) ) )
+      closeTitleTooltip()
   })
 }
 
-export function addTooltips(element :HTMLElement) {
+export function addTitleTooltips(elements :NodeListOf<HTMLElement>) {
   // important: don't call this until the element is actually part of the document, otherwise event listeners won't register
-  const abbr_tooltip = document.getElementById('abbr-tooltip') as HTMLElement
-  element.querySelectorAll('abbr').forEach((el) => {
+  const title_tooltip = document.getElementById('title-tooltip') as HTMLElement
+  elements.forEach((el) => {
     const title = el.getAttribute('title')
     if (!title) return
     el.addEventListener('click', (event) => {
       if (event.detail>1 ) return  // not on double clicks (those would select the text)
       closeAllPopups()
-      abbr_tooltip.innerText = title
-      abbr_tooltip.classList.remove('d-none')
-      if (cleanupTooltip) cleanupTooltip()
-      cleanupTooltip = autoUpdate( el, abbr_tooltip, () => {
-        computePosition( el, abbr_tooltip, {
+      title_tooltip.innerText = title
+      title_tooltip.classList.remove('d-none')
+      cleanupTitleTooltip = autoUpdate( el, title_tooltip, () => {
+        computePosition( el, title_tooltip, {
           placement: 'bottom-start',
           middleware: [ offset(3), flip(), shift({ padding: 5, limiter: limitShift() }) ],
         } ).then( ({x,y}) => {
-          Object.assign( abbr_tooltip.style, { left: `${x}px`, top: `${y}px` } )
+          Object.assign( title_tooltip.style, { left: `${x}px`, top: `${y}px` } )
         } )
       } )
-      currentTooltipElement = el
+      titleTooltipSource = el
     } )
   })
 }
 
-export function initPopup() {
-  const sel_popup = document.getElementById('sel-popup') as HTMLElement
-  const popup_search = document.getElementById('popup-search') as HTMLElement
-  const popup_feedback = document.getElementById('popup-feedback') as HTMLElement
+function initSelectionTools() {
+  const sel_tools = document.getElementById('sel-tools') as HTMLElement
+  const sel_tools_search = document.getElementById('sel-tools-search') as HTMLElement
+  const sel_tools_feedback = document.getElementById('sel-tools-feedback') as HTMLElement
+  const sel_tools_close = document.getElementById('sel-tools-close') as HTMLElement
   const result_table = document.getElementById('result-table') as HTMLElement
-  const popup_close = document.getElementById('popup-close') as HTMLElement
 
-  popup_close.addEventListener('click', closePopup)
+  sel_tools_close.addEventListener('click', closeSelectionTools)
   document.addEventListener('selectionchange', () => {
     const selection = window.getSelection()
-    closeAllPopups()
+    /* NOTE: Clicking inside the selection tools popup changes the selection and therefore closes it,
+     * unlike the title tooltips. Is this desirable behavior? It also means that providing the "x" to
+     * close the selection tools and explicitly adding a click listener is a little redundant. */
+    closeSelectionTools()
     // something was selected (we only handle simple selections with one range)
     if ( selection && selection.rangeCount==1 ) {
       const text = selection.toString()
@@ -114,7 +109,7 @@ export function initPopup() {
         let parent_elem :Node|null = range.commonAncestorContainer
         while ( parent_elem && !(parent_elem instanceof HTMLElement) )
           parent_elem = parent_elem.parentNode
-        popup_feedback.classList.add('d-none')  // hide by default (gets shown below if applicable)
+        sel_tools_feedback.classList.add('d-none')  // hide by default (gets shown below if applicable)
         // figure out if the selection spans only one row
         if ( parent_elem ) {
           // at this point we know parent_elem must be an HTMLElement
@@ -124,24 +119,35 @@ export function initPopup() {
             // get href for the feedback link that should be stored here for us
             const fb = tb.getAttribute('data-feedback-href')
             if (fb) {
-              popup_feedback.setAttribute('href', fb)
-              popup_feedback.classList.remove('d-none')
+              sel_tools_feedback.setAttribute('href', fb)
+              sel_tools_feedback.classList.remove('d-none')
             }
           }
         }
         // set the search link href and show the div
-        popup_search.setAttribute('href', `#q=${encodeURIComponent(text)}`)
-        sel_popup.classList.remove('d-none')
+        sel_tools_search.setAttribute('href', `#q=${encodeURIComponent(text)}`)
+        sel_tools.classList.remove('d-none')
         // use Floating UI for placement
-        cleanupPopup = autoUpdate( range, sel_popup, () => {
-          computePosition( range, sel_popup, {
+        closeTitleTooltip()
+        cleanupSelectionTools = autoUpdate( range, sel_tools, () => {
+          computePosition( range, sel_tools, {
             placement: 'bottom-start',
             middleware: [ offset(5), flip(), shift({ padding: 5, limiter: limitShift() }) ],
           } ).then( ({x,y}) => {
-            Object.assign( sel_popup.style, { left: `${x}px`, top: `${y}px` } )
+            Object.assign( sel_tools.style, { left: `${x}px`, top: `${y}px` } )
           } )
         })
       }
     }
   })
+}
+
+export function initPopups() {
+  initSelectionTools()
+  initTitleTooltips()
+}
+
+export function closeAllPopups() {
+  closeSelectionTools()
+  closeTitleTooltip()
 }

@@ -22,9 +22,9 @@
  */
 
 import {DB_URL, DB_VER_URL, DB_CACHE_NAME, cacheFirst, cleanSearchTerm} from './common'
-import {init_flags} from './flags'
+import {initFlags} from './flags'
 import {makeSearchPattern} from './equiv'
-import {initPopup, initTooltips, addTooltips, closeAllPopups} from './popup'
+import {initPopups, addTitleTooltips, closeAllPopups} from './popups'
 import {default as abbreviations} from './abbreviations.json'
 
 // for the parcel development environment:
@@ -221,11 +221,10 @@ window.addEventListener('DOMContentLoaded', async () => {
   console.debug(`Loaded ${dictLines.length} dictionary lines`)
   search_term.removeAttribute('disabled')
 
-  // set up flag animations and selection popup handler
+  // set up flag animations and popups
   try {
-    init_flags()
-    initPopup()
-    initTooltips()
+    initFlags()
+    initPopups()
   }
   // but don't let bugs blow us up
   catch (error) { console.error(error) }
@@ -350,7 +349,7 @@ window.addEventListener('DOMContentLoaded', async () => {
               td.innerHTML = td.innerHTML.replaceAll(whatRe, '<strong>$&</strong>')
           })
           result_table.appendChild(tbody)
-          addTooltips(tbody)
+          addTitleTooltips(tbody.querySelectorAll('abbr'))
           displayedMatches++
         }
         catch (error) { console.error(error) }
@@ -391,7 +390,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     clearResults()
     const tbody = result2tbody( dictLines[Math.floor(Math.random()*dictLines.length)] as string )
     result_table.appendChild(tbody)
-    addTooltips(tbody)
+    addTitleTooltips(tbody.querySelectorAll('abbr'))
   })
 
   search_term.addEventListener('keyup', event => {
