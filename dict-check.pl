@@ -128,8 +128,8 @@ my $LINE_GRAMMAR = qr{
                 \N{GREEK SMALL LETTER LAMDA}
                 \N{GREEK CAPITAL LETTER OMEGA}
             ] )
-            | [0-9]
-            | [ \N{SUBSCRIPT ZERO} - \N{SUBSCRIPT NINE} ]
+            # Note subscript digits happen to be in sequence in Unicode (U+2080 - U+2089), but superscripts aren't!
+            | [ 0-9 \N{SUBSCRIPT ZERO} - \N{SUBSCRIPT NINE} \N{SUPERSCRIPT TWO} \N{SUPERSCRIPT THREE} ]
 
             # ##### ##### Special Sequences ##### #####
             # characters we would otherwise treat specially
@@ -148,7 +148,7 @@ my $LINE_GRAMMAR = qr{
             # We also treat quotation marks specially below.
             | (?!::) [ \x20 ! $ % & + , \- . / : = ? ~  ' \N{RIGHT SINGLE QUOTATION MARK}
             \N{EN DASH} \N{DEGREE SIGN} \N{SECTION SIGN} \N{HORIZONTAL ELLIPSIS} \N{MICRO SIGN}
-            \N{SUPERSCRIPT TWO} \N{SUPERSCRIPT THREE} \N{VULGAR FRACTION ONE HALF} \N{MULTIPLICATION SIGN}
+            \N{VULGAR FRACTION ONE HALF} \N{MULTIPLICATION SIGN}
             \N{EURO SIGN} \N{POUND SIGN} \N{REGISTERED SIGN} ]
         )
 
