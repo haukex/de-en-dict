@@ -21,16 +21,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-import {globalErrorLogString} from './global'
-import {initFlags} from './flags'
-import {makeSearchPattern} from './equiv'
 import {initPopups, addTitleTooltips, closeAllPopups} from './popups'
-import {loadDict} from './dict-load'
 import {wrapTextNodeMatches, cleanSearchTerm} from './utils'
+import {globalErrorLogString} from './global'
+import {makeSearchPattern} from './equiv'
 import {result2tbody} from './render'
+import {initFlags} from './flags'
+import {loadDict} from './dict-load'
 
-// for the parcel development environment:
-if (module.hot) module.hot.accept()
+if (module.hot) module.hot.accept()  // for the parcel development environment
 
 // register the Service Worker (if possible)
 if ('serviceWorker' in navigator) {
@@ -41,8 +40,27 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.addEventListener('message', event => console.debug('SW:', event.data))
 } else console.warn('Service Workers are not supported')
 
-// a couple of user-settable variables
+// constants
 const TITLE_PREFIX = 'German-English Dictionary'
+
+// "scroll to top" button
+function initScrollTop() {
+  const btnScrollTop = document.createElement('button')
+  btnScrollTop.setAttribute('id','btn-scroll-top')
+  btnScrollTop.setAttribute('title','Scroll to top of page')
+  btnScrollTop.innerText = 'Top ↑'
+  btnScrollTop.addEventListener('click', () => window.scrollTo(0,0) )
+  //const searchBoxTop = search_term.getBoundingClientRect().y  // changes based on layout, I'll just use a fixed value
+  const updateScrollBtnVis = () => {
+    if ( window.scrollY > 60 )
+      btnScrollTop.classList.remove('d-none')
+    else
+      btnScrollTop.classList.add('d-none')
+  }
+  window.addEventListener('scroll', updateScrollBtnVis)
+  document.body?.appendChild(btnScrollTop)
+  updateScrollBtnVis()
+}
 
 // when the HTML page has finished loading:
 window.addEventListener('DOMContentLoaded', async () => {
@@ -51,7 +69,6 @@ window.addEventListener('DOMContentLoaded', async () => {
   const result_table = document.getElementById('result-table') as HTMLElement
   const result_count = document.getElementById('result-count') as HTMLElement
   const no_results = document.getElementById('no-results') as HTMLElement
-  const rand_entry_link = document.getElementById('rand-entry-link') as HTMLElement
 
   // load the dictionary, disabling the input field while we do so
   search_term.setAttribute('disabled', 'disabled')
@@ -69,14 +86,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   console.debug(`Loaded ${dictLines.length} dictionary lines`)
   search_term.removeAttribute('disabled')
 
-  // set up flag animations and popups
-  try {
-    initFlags()
-    initPopups()
-  }
-  // but don't let bugs blow us up
-  catch (error) { console.error(error) }
-
+  // utility function to clear the results table
   const clearResults = () => {
     // remove all existing results
     document.querySelectorAll('tbody.result').forEach((elem) => elem.remove())
@@ -84,45 +94,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     closeAllPopups()
   }
 
-  // Starts a search using a value in the URL hash, if any
-  const searchFromUrl = () => {
-    // ?q=... overrides #q=... (see GitHub Issue #7: some links to the app use '?' instead of '#')
-    if ( window.location.search.length > 1 ) {
-      const loc = new URL(''+window.location)
-      loc.hash = '#' + loc.search.substring(1)
-      loc.search = ''
-      window.location.replace(loc)
-    }
-    // parse hash
-    let what = ''
-    if (window.location.hash.startsWith('#q=')) {
-      try {
-        what = cleanSearchTerm( decodeURIComponent(window.location.hash.substring('#q='.length)) )
-      }
-      catch (error) {
-        // for example, `decodeURIComponent('%97')` causes "URIError: malformed URI sequence"
-        console.warn('ignoring bad window.location.hash',error)
-      }
-    }
-    search_term.value = what
-    doSearch(what)
-  }
-
-  // Updates the URL hash, if necessary, and runs a search when the input field changes
-  let prevWhat = 'Something the user is really unlikely to enter on their own by chance, so after initialization the first search is always performed.'
-  const searchTermMaybeChanged = () => {
-    const what = cleanSearchTerm( search_term.value )
-    if ( what==prevWhat ) return
-    prevWhat = what
-    const newHash = `#q=${encodeURIComponent(what)}`
-    if ( window.location.hash !== newHash )
-      window.history.pushState(null, '', newHash)
-    doSearch(what)
-  }
-
   // this is our handler for running the search:
   const doSearch = (what: string) => {
-    // we expect our callers to have done cleanSearchTerm(what)
+    // NOTE we expect our callers to have done cleanSearchTerm(what)
     if (what.length==1) {
       // one-letter search terms take too long and cause the app to hang, for now we simply refuse them
       search_term.classList.add('danger')
@@ -133,20 +107,29 @@ window.addEventListener('DOMContentLoaded', async () => {
     document.title = what ? `${TITLE_PREFIX}: ${what}` : TITLE_PREFIX
 
     // turn the search term into a regex
-    // NOTE `whatPat` must not contain anchors or capturing groups, for use in `wrapTextNodeMatches`
+    // NOTE `whatPat` must not contain anchors or capturing groups, so it can be used in `wrapTextNodeMatches`
     const [whatPatStricter, whatPat] = makeSearchPattern(what)
     // compile the regex that matches the search term
     const whatRe = new RegExp(whatPat, 'ig')
 
     /* The following code generates a set of regular expressions used for scoring the matches.
      * For each regex that matches, one point is awarded. */
-    const scoreRes :RegExp[] = [ '(?:^|::\\s*)', '(?:^|::\\s*|\\|\\s*)', '::\\s*to\\s+', '\\b' ]
-      .flatMap((re)=>[re+whatPat, re+whatPatStricter])
-      .flatMap((re)=>[re, re+'\\b', re+'(?:\\s*\\{[^}|]*\\}|\\s*\\[[^\\]|]*\\]|\\s*\\([^)]\\))*\\s*(?:$|\\||;)'])
+    const scoreRes :RegExp[] = [
+      '(?:^|::\\s*)',           // term is at the very beginning of an entry (German at beginning of line or English after "::")
+      '(?:^|::\\s*|\\|\\s*)',   // +or term is at beginning of a sub-entry (after "|")
+      '::\\s*to\\s+',           // term is an English verb (":: to sprint")
+      '\\b' ]                   // term is at the beginning of a word
+      .flatMap((re)=>[re+whatPat, re+whatPatStricter]) // apply all of the above to the search pattern and its "stricter version"
+      .flatMap((re)=>[re, // for all of the above:
+        re+'\\b',               // term is at the end of a word - in combination with the above, this means whole words
+        // term is followed by braces/brackets/parens followed by the end of that entry, sub-entry, or list item
+        // https://regex101.com/r/7tBMul
+        re+'(?:\\s*\\{[^}|]*\\}|\\s*\\[[^\\]|]*\\]|\\s*\\([^)|]*\\))*\\s*(?:$|::|\\||;)'])
+      // create case-sensitive and case-insensitive regex versions of all of the above
       .flatMap((re)=>[new RegExp(re), new RegExp(re, 'i')])
     //console.debug(scoreRes)
 
-    // this code performs the search
+    // this code actually performs the search
     const searchStartMs = new Date().getTime()
     // the `matches` array stores indices into the `dictLines` array for each matching line
     const matches :number[] = (() => {
@@ -167,17 +150,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     })()
     console.debug(`Search for ${whatRe} found ${matches.length} matches in ${new Date().getTime()-searchStartMs}ms.`)
     //console.debug(scoredMatches)
-
-    clearResults()
-
-    // there were no results
-    if (!matches.length) {
-      result_count.innerText = `No matches found (dictionary holds ${dictLines.length} entries).`
-      no_results.classList.remove('d-none')
-      return
-    }
-    // otherwise, there were matches
-    else no_results.classList.add('d-none')
 
     // function for rendering matches, which we set up here, then call below
     let displayedMatches = 0  // holds the state between invocations of this function:
@@ -228,21 +200,64 @@ window.addEventListener('DOMContentLoaded', async () => {
         result_count.innerText = `Showing all ${matches.length} matches.`
     } // end of renderMatches
 
+    clearResults()
+
+    // there were no results
+    if (!matches.length) {
+      result_count.innerText = `No matches found (dictionary holds ${dictLines.length} entries).`
+      no_results.classList.remove('d-none')
+      return
+    }
+    // otherwise, there were matches
+    else no_results.classList.add('d-none')
+
     // render the first chunk of results
     renderMatches(0, 50)
 
   } // end of do_search
 
+  // Updates the URL hash, if necessary, and runs a search when the input field changes
+  let prevWhat = 'Something the user is really unlikely to enter on their own by chance, so after initialization the first search is always performed.'
+  const searchTermMaybeChanged = () => {
+    const what = cleanSearchTerm( search_term.value )
+    if ( what==prevWhat ) return
+    prevWhat = what
+    const newHash = `#q=${encodeURIComponent(what)}`
+    if ( window.location.hash !== newHash )
+      window.history.pushState(null, '', newHash)
+    doSearch(what)
+  }
   // Install event listener for input field changes
   search_term.addEventListener('change', searchTermMaybeChanged)
 
+  // Starts a search using a value in the URL hash, if any
+  const searchFromUrl = () => {
+    // ?q=... overrides #q=... (see GitHub Issue #7: some links to the app use '?' instead of '#')
+    if ( window.location.search.length > 1 ) {
+      const loc = new URL(''+window.location)
+      loc.hash = '#' + loc.search.substring(1)
+      loc.search = ''
+      window.location.replace(loc)
+    }
+    // parse hash
+    let what = ''
+    if (window.location.hash.startsWith('#q=')) {
+      try {
+        what = cleanSearchTerm( decodeURIComponent(window.location.hash.substring('#q='.length)) )
+      }
+      catch (error) {
+        // for example, `decodeURIComponent('%97')` causes "URIError: malformed URI sequence"
+        console.warn('ignoring bad window.location.hash',error)
+      }
+    }
+    search_term.value = what
+    doSearch(what)
+  }
   // Install event listener for browser navigation updating the URL hash
   window.addEventListener('hashchange', searchFromUrl)
 
-  // Trigger a search upon loading
-  searchFromUrl()
-
   // random entry link handler
+  const rand_entry_link = document.getElementById('rand-entry-link') as HTMLElement
   rand_entry_link.addEventListener('click', event => {
     event.preventDefault()
     clearResults()
@@ -251,6 +266,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     addTitleTooltips(tbody.querySelectorAll('abbr'))
   })
 
+  // search term keyboard handler
   search_term.addEventListener('keyup', event => {
     // Escape key clears input
     if (event.key=='Escape')
@@ -277,21 +293,17 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
   })
 
-  // "scroll to top" button
-  const btnScrollTop = document.createElement('button')
-  btnScrollTop.setAttribute('id','btn-scroll-top')
-  btnScrollTop.innerText = 'Top ↑'
-  btnScrollTop.addEventListener('click', () => window.scrollTo(0,0) )
-  //const searchBoxTop = search_term.getBoundingClientRect().y  // changes based on layout, I'll just use a fixed value
-  const updateScrollBtnVis = () => {
-    if ( window.scrollY > 60 )
-      btnScrollTop.classList.remove('d-none')
-    else
-      btnScrollTop.classList.add('d-none')
+  // set up flag animations and popups etc
+  try {
+    initScrollTop()
+    initFlags()
+    initPopups()
   }
-  window.addEventListener('scroll', updateScrollBtnVis)
-  document.querySelector('main')?.appendChild(btnScrollTop)
-  updateScrollBtnVis()
+  // but don't let bugs blow us up
+  catch (error) { console.error(error) }
+
+  // Trigger a search upon loading
+  searchFromUrl()
 
   // Put the focus on the input field
   search_term.focus()

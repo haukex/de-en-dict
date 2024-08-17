@@ -1,6 +1,7 @@
 {
   "files.eol": "\n",
   "files.trimTrailingWhitespace": true,
+  "editor.tabSize": 2,
   "makefile.configureOnOpen": false,
   "cSpell.language": "de,de-DE,en,en-US",
   "cSpell.words": [ "Hauke", "Dämpfling", "Daempfling" ],
