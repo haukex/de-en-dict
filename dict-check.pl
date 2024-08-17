@@ -9,6 +9,7 @@ use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
 use JSON::PP qw/decode_json/;
 use File::Temp qw/tempfile/;
 use Data::Dumper ();
+use charnames ();
 use HTTP::Tiny;
 use FindBin;
 $|=1;
@@ -50,6 +51,7 @@ my $DICT_FILE = catfile($FindBin::Bin, 'de-en.txt.gz');
 my $DICT_URL = 'https://ftp.tu-chemnitz.de/pub/Local/urz/ding/de-en-devel/de-en.txt.gz';
 my $ABBR_FILE = catfile($FindBin::Bin, 'src', 'js', 'abbreviations.json');
 my $ABBR_URL = 'https://raw.githubusercontent.com/Tekl/beolingus-deutsch-englisch/master/abbreviations.json';
+my $ALPHA_JSON = catfile($FindBin::Bin, 'src', 'js', 'alphabet.json');
 
 sub mirror ($url, $file) {
     my $resp = HTTP::Tiny->new->mirror($url, $file);
@@ -99,51 +101,86 @@ system('diff','-u',$ABBR_FILE,$tfn);
 # Note the grammar does not treat "/Abbrev/" specially, because there are too many variations of that,
 # e.g. "three eighth / 3/8 /" and "dipped [Br.] / dimmed [Am.] headlights/lights; dipped [Br.] / low [Am.] beam(s)/beam light"
 
+# REMEMBER to keep all of the special characters here in sync with equiv.ts !
+my %ALPHABET = ( re => {
+    word => [
+        # ##### ##### Letters ##### #####
+        'a-z', 'A-Z',
+        map( {charnames::string_vianame($_)}
+            'LATIN SMALL LETTER A WITH DIAERESIS',
+            'LATIN SMALL LETTER E WITH DIAERESIS',
+            'LATIN SMALL LETTER I WITH DIAERESIS',
+            'LATIN SMALL LETTER O WITH DIAERESIS',
+            'LATIN SMALL LETTER U WITH DIAERESIS',
+            'LATIN CAPITAL LETTER A WITH DIAERESIS',
+            'LATIN CAPITAL LETTER O WITH DIAERESIS',
+            'LATIN CAPITAL LETTER U WITH DIAERESIS',
+            'LATIN SMALL LETTER SHARP S',
+            'LATIN CAPITAL LETTER A WITH ACUTE',
+            'LATIN CAPITAL LETTER E WITH ACUTE',
+            'LATIN CAPITAL LETTER I WITH CIRCUMFLEX',
+            'LATIN SMALL LETTER A WITH ACUTE',
+            'LATIN SMALL LETTER E WITH ACUTE',
+            'LATIN SMALL LETTER I WITH ACUTE',
+            'LATIN SMALL LETTER O WITH ACUTE',
+            'LATIN SMALL LETTER A WITH GRAVE',
+            'LATIN SMALL LETTER E WITH GRAVE',
+            'LATIN SMALL LETTER I WITH GRAVE',
+            'LATIN SMALL LETTER O WITH GRAVE',
+            'LATIN SMALL LETTER A WITH CIRCUMFLEX',
+            'LATIN SMALL LETTER E WITH CIRCUMFLEX',
+            'LATIN SMALL LETTER I WITH CIRCUMFLEX',
+            'LATIN SMALL LETTER O WITH CIRCUMFLEX',
+            'LATIN SMALL LETTER U WITH CIRCUMFLEX',
+            'LATIN SMALL LETTER A WITH TILDE',
+            'LATIN SMALL LETTER N WITH TILDE',
+            'LATIN SMALL LETTER I WITH MACRON',
+            'LATIN SMALL LETTER C WITH CEDILLA',
+            'LATIN CAPITAL LETTER S WITH CARON',
+            'LATIN SMALL LETTER A WITH RING ABOVE',
+            'LATIN SMALL LETTER AE',
+            'GREEK SMALL LETTER ALPHA',
+            'GREEK SMALL LETTER LAMDA',
+            'GREEK CAPITAL LETTER OMEGA',
+        ),
+        # ##### ##### Digits ##### #####
+        # Note subscript digits happen to be in sequence in Unicode (U+2080 - U+2089), but superscripts aren't!
+        '0-9',
+        "\N{SUBSCRIPT ZERO}-\N{SUBSCRIPT NINE}",
+        "\N{SUPERSCRIPT TWO}",
+        "\N{SUPERSCRIPT THREE}",
+    ],
+    special => [
+        # ##### ##### Special Characters ##### #####
+        # Note double colon (::), pipe (|), and semicolon (;) are separators that we explicitly don't want to match here.
+        # We also treat quotation marks specially in the grammar, so they're not included here.
+        map( {quotemeta} ' ','!','$','%','&','+',',','-','.','/',':','=','?','~',"'",),
+        map( {charnames::string_vianame($_)}
+            'RIGHT SINGLE QUOTATION MARK',
+            'EN DASH',
+            'DEGREE SIGN',
+            'SECTION SIGN',
+            'HORIZONTAL ELLIPSIS',
+            'MICRO SIGN',
+            'VULGAR FRACTION ONE HALF',
+            'MULTIPLICATION SIGN',
+            'EURO SIGN',
+            'POUND SIGN',
+            'REGISTERED SIGN',
+        )
+    ],
+} );
+$_ = '['.join('',@$_).']' for values $ALPHABET{re}->%*;
+open my $afh, '>:raw:encoding(ASCII)', $ALPHA_JSON or die "$ALPHA_JSON: $!";
+print {$afh} JSON::PP->new->ascii->pretty->canonical->encode(\%ALPHABET);
+close $afh;
+
 my (%seen_brackets, %seen_braces);
 my $LINE_GRAMMAR = qr{
     (?(DEFINE)
         (?<TOKEN>
-            # REMEMBER to keep all of the special characters here in sync with equiv.ts !
-            (?<LETTER>
-                [ a-z A-Z
-                \N{LATIN SMALL LETTER A WITH DIAERESIS}
-                \N{LATIN SMALL LETTER E WITH DIAERESIS}
-                \N{LATIN SMALL LETTER I WITH DIAERESIS}
-                \N{LATIN SMALL LETTER O WITH DIAERESIS}
-                \N{LATIN SMALL LETTER U WITH DIAERESIS}
-                \N{LATIN CAPITAL LETTER A WITH DIAERESIS}
-                \N{LATIN CAPITAL LETTER O WITH DIAERESIS}
-                \N{LATIN CAPITAL LETTER U WITH DIAERESIS}
-                \N{LATIN SMALL LETTER SHARP S}
-                \N{LATIN CAPITAL LETTER A WITH ACUTE}
-                \N{LATIN CAPITAL LETTER E WITH ACUTE}
-                \N{LATIN CAPITAL LETTER I WITH CIRCUMFLEX}
-                \N{LATIN SMALL LETTER A WITH ACUTE}
-                \N{LATIN SMALL LETTER E WITH ACUTE}
-                \N{LATIN SMALL LETTER I WITH ACUTE}
-                \N{LATIN SMALL LETTER O WITH ACUTE}
-                \N{LATIN SMALL LETTER A WITH GRAVE}
-                \N{LATIN SMALL LETTER E WITH GRAVE}
-                \N{LATIN SMALL LETTER I WITH GRAVE}
-                \N{LATIN SMALL LETTER O WITH GRAVE}
-                \N{LATIN SMALL LETTER A WITH CIRCUMFLEX}
-                \N{LATIN SMALL LETTER E WITH CIRCUMFLEX}
-                \N{LATIN SMALL LETTER I WITH CIRCUMFLEX}
-                \N{LATIN SMALL LETTER O WITH CIRCUMFLEX}
-                \N{LATIN SMALL LETTER U WITH CIRCUMFLEX}
-                \N{LATIN SMALL LETTER A WITH TILDE}
-                \N{LATIN SMALL LETTER N WITH TILDE}
-                \N{LATIN SMALL LETTER I WITH MACRON}
-                \N{LATIN SMALL LETTER C WITH CEDILLA}
-                \N{LATIN CAPITAL LETTER S WITH CARON}
-                \N{LATIN SMALL LETTER A WITH RING ABOVE}
-                \N{LATIN SMALL LETTER AE}
-                \N{GREEK SMALL LETTER ALPHA}
-                \N{GREEK SMALL LETTER LAMDA}
-                \N{GREEK CAPITAL LETTER OMEGA}
-            ] )
-            # Note subscript digits happen to be in sequence in Unicode (U+2080 - U+2089), but superscripts aren't!
-            | [ 0-9 \N{SUBSCRIPT ZERO} - \N{SUBSCRIPT NINE} \N{SUPERSCRIPT TWO} \N{SUPERSCRIPT THREE} ]
+            # letters and digits
+            $ALPHABET{re}{word}
 
             # ##### ##### Special Sequences ##### #####
             # characters we would otherwise treat specially
@@ -157,13 +194,8 @@ my $LINE_GRAMMAR = qr{
             | (?> \( [ @ \N{CENT SIGN} \N{YEN SIGN} \N{COPYRIGHT SIGN} ] \) )
             | (?> \( \# \x20am\x20Telefon \) )  # "Rautentaste"
 
-            # ##### ##### Special Characters ##### #####
-            # Note double colon (::), pipe (|), and semicolon (;) are separators that we explicitly don't want to match here.
-            # We also treat quotation marks specially below.
-            | (?!::) [ \x20 ! $ % & + , \- . / : = ? ~  ' \N{RIGHT SINGLE QUOTATION MARK}
-            \N{EN DASH} \N{DEGREE SIGN} \N{SECTION SIGN} \N{HORIZONTAL ELLIPSIS} \N{MICRO SIGN}
-            \N{VULGAR FRACTION ONE HALF} \N{MULTIPLICATION SIGN}
-            \N{EURO SIGN} \N{POUND SIGN} \N{REGISTERED SIGN} ]
+            # special characters
+            | (?!::) $ALPHABET{re}{special}
         )
 
         (?<STRING> (

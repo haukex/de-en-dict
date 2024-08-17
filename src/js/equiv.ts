@@ -22,6 +22,8 @@
  */
 
 import escapeStringRegexp from 'escape-string-regexp'
+import {assert} from './utils'
+//import {default as alphabet} from './alphabet.json'
 
 /**
  * The following is the list of character equivalencies.
@@ -99,14 +101,10 @@ const EQUIV :[string[], string[]][] = [
   [ ['8'],                    ['₈']      ],
   [ ['9'],                    ['₉']      ],
   [ ['1/2'],                  ['½']      ],
-  [ ['*', 'x'],               ['×']      ],
+  [ ['x'],                    ['×']      ],
   [ ['(R)'],                  ['®']      ],
   [ ['(c)', '(C)'],           ['©']      ],
 ]
-
-function assert(condition: unknown, msg?: string): asserts condition {
-  if (!condition) throw new Error(msg)
-}
 
 interface IStringSetHash {
   [details: string] : Set<string>;
@@ -144,6 +142,8 @@ for (const pat of _pats) {
   )
 }
 //console.debug(EQUIV_PAT, EQUIV_REPL)
+// make sure * isn't in dict because it may get special treatment as a wildcard:
+assert(!Object.hasOwn(EQUIV_REPL, '*'))
 
 /**
  * This function takes a search word and turns it into a string suitable for use in a regular expression.
@@ -156,12 +156,20 @@ for (const pat of _pats) {
  * **Internal Note:** Our caller expects us to return a pattern **WITHOUT** anchors or capturing groups!
  */
 export function makeSearchPattern(what :string) : [string, string] {
+  let pat = ''
   let withEquiv = ''
-  for ( const part of what.split(EQUIV_PAT) ) {
-    if (part in EQUIV_REPL)
+  const parts = what.split(EQUIV_PAT)
+  // loop over by index instead of `for(const part of parts)` because I anticipate I'll need to look ahead/behind in `parts`
+  for ( let i=0; i<parts.length; i++ ) {
+    const part = parts[i] as string
+    if (part in EQUIV_REPL) {
+      pat += escapeStringRegexp(part)
       withEquiv += EQUIV_REPL[part]  // special chars already escaped
-    else
+    }
+    else {
+      pat += escapeStringRegexp(part)
       withEquiv += escapeStringRegexp(part)
+    }
   }
-  return [escapeStringRegexp(what), withEquiv]
+  return [pat, withEquiv]
 }

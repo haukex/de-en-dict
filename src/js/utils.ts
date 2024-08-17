@@ -21,6 +21,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+export function assert(condition: unknown, msg?: string): asserts condition {
+  if (!condition) throw new Error(msg)
+}
+
 export function walkTextNodes(node :Node, callback :(txt:Text)=>Node) {
   if (node.nodeType==Node.TEXT_NODE)
     node.parentNode?.replaceChild(callback(node as Text), node)
