@@ -94,6 +94,10 @@ window.addEventListener('DOMContentLoaded', async () => {
     closeAllPopups()
   }
 
+  // in doSearch below, we highlight the search term red for one character searches.
+  // any user input in the field clears that:
+  search_term.addEventListener('input', () => search_term.classList.remove('danger') )
+
   // this is our handler for running the search:
   const doSearch = (what: string) => {
     // NOTE we expect our callers to have done cleanSearchTerm(what)
@@ -269,8 +273,11 @@ window.addEventListener('DOMContentLoaded', async () => {
   // search term keyboard handler
   search_term.addEventListener('keyup', event => {
     // Escape key clears input
-    if (event.key=='Escape')
+    if (event.key=='Escape') {
       search_term.value = ''
+      search_term.classList.remove('danger')
+    }
+    // Enter key triggers search
     else if (event.key=='Enter') {
       event.preventDefault()
       event.stopPropagation()
