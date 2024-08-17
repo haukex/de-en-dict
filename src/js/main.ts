@@ -21,12 +21,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-import {cleanSearchTerm} from './common'
 import {initFlags} from './flags'
 import {makeSearchPattern} from './equiv'
 import {initPopups, addTitleTooltips, closeAllPopups} from './popups'
 import {loadDict} from './dict-load'
-import {wrapTextNodeMatches} from './utils'
+import {wrapTextNodeMatches, cleanSearchTerm} from './utils'
 import {result2tbody} from './render'
 
 // for the parcel development environment:

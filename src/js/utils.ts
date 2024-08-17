@@ -53,3 +53,6 @@ export function wrapTextNodeMatches(node :Node, searchPat :string, wrapper :(mat
   })
 }
 
+export function cleanSearchTerm(what :string) {
+  return what.replaceAll(/\s+/g, ' ').trim()
+}
