@@ -5,11 +5,21 @@ German-English Dictionary
 
 This is a browser-based client for the database of the discontinued
 ["Beolingus"](https://dict.tu-chemnitz.de) German-English Dictionary.
-It can be used in any modern browser with modern JavaScript support,
+It can be used in any up-to-date browser with modern JavaScript support,
 and it can be installed for offline use as a "Progressive Web App".
 
 Please note the word list itself is not part of this repository.
 Please send suggestions for the word list to beolingus@tu-chemnitz.de
+
+Troubleshooting
+---------------
+
+1. Please make sure you're using the **latest version** of a modern browser with modern JavaScript support,
+  such as Firefox, Chrome, Edge, or Safari (but please note the latter requires a *current* version of macOS).
+2. To make sure you're seeing the latest version of the webpage/app, please try clearing your browser's cache
+  as well as all saved data for the site "zero-g.net".
+3. Try accessing this link: <https://ftp.tu-chemnitz.de/pub/Local/urz/ding/de-en-devel/>, if you have trouble
+  doing so, then the dictionary server may be offline or possibly blocked by a firewall from your location.
 
 Technical Overview
 ------------------
