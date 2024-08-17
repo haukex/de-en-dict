@@ -48,7 +48,6 @@ const FEEDBACK_BODY = 'Hello, Hallo,\n\n'
     +'\n$LINE\n'  // the code below replaces this with the dictionary line
     +'\nMy suggestion is:\nMein Vorschlag ist:\n'
 const ENABLE_FEEDBACK = true
-const RESULT_CHUNK_SZ = 50
 const TITLE_PREFIX = 'German-English Dictionary'
 
 // this function decodes a stream of bytes (Response body) first as a gzip stream, then as UTF-8 text
@@ -399,21 +398,30 @@ window.addEventListener('DOMContentLoaded', async () => {
       // update the text below the search box
       if (displayedMatches<matches.length) {
         result_count.innerText = `Found ${matches.length} matches, showing the first ${displayedMatches}.`
-        // we haven't shown all results, show a button to load more
-        const btn_more = document.createElement('button')
-        btn_more.classList.add('btn-more')
-        btn_more.innerText = 'Show More'
-        btn_more.addEventListener('click', () => {
-          renderMatches(end, end+RESULT_CHUNK_SZ)
-        })
-        result_count.appendChild(btn_more)
+        // we haven't shown all results, make buttons to show more
+        const make_btn_more = (howMany :number) => {
+          const btn_more = document.createElement('button')
+          btn_more.classList.add('btn-more')
+          btn_more.innerText = `Show ${howMany} More`
+          btn_more.addEventListener('click', () => renderMatches(end, end+howMany) )
+          result_count.appendChild(btn_more)
+        }
+        if ( matches.length-displayedMatches < 50 )
+          make_btn_more(matches.length-displayedMatches)
+        else {
+          make_btn_more(50)
+          if ( matches.length-displayedMatches < 200 )
+            make_btn_more(matches.length-displayedMatches)
+          else
+            make_btn_more(200)
+        }
       }
       else
         result_count.innerText = `Showing all ${matches.length} matches.`
     } // end of renderMatches
 
     // render the first chunk of results
-    renderMatches(0, RESULT_CHUNK_SZ)
+    renderMatches(0, 50)
 
   } // end of do_search
 

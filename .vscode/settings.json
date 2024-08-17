@@ -1,10 +1,14 @@
 {
   "files.eol": "\n",
   "files.trimTrailingWhitespace": true,
+  "makefile.configureOnOpen": false,
   "cSpell.language": "de,de-DE,en,en-US",
   "cSpell.words": [ "Hauke", "Dämpfling", "Daempfling" ],
   "cSpell.ignoreWords": [
     "Beolingus",
   ],
-  "eslint.validate": [ "javascript", "typescript" ],
+  "eslint.validate": [
+    "javascript",
+    "typescript"
+  ],
 }
