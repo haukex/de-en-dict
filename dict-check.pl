@@ -86,6 +86,7 @@ while ( my ($k,$v) = each %$abbr ) {
 # Note the grammar does not treat "/Abbrev/" specially, because there are too many variations of that,
 # e.g. "three eighth / 3/8 /" and "dipped [Br.] / dimmed [Am.] headlights/lights; dipped [Br.] / low [Am.] beam(s)/beam light"
 
+my (%seen_brackets, %seen_braces);
 my $LINE_GRAMMAR = qr{
     (?(DEFINE)
         (?<TOKEN>
@@ -159,10 +160,10 @@ my $LINE_GRAMMAR = qr{
             | (?&TOKEN)*+
         )*+ )
 
-        (?<PARENTHESES>  (?> \( (?&STRING) ( ; (?&STRING) )*+ \) )  )
-        (?<BRACKETS>     (?> \[ (?&STRING) ( ; (?&STRING) )*+ \] )  )
+        (?<PARENTHESES>            (?> \( (?&STRING) ( ; (?&STRING) )*+ \) ) )
+        (?<BRACKETS> (?<_BRACKETS> (?> \[ (?&STRING) ( ; (?&STRING) )*+ \] ) )(?{$seen_brackets{$^N}++}) )
 
-        (?<BRACES>  (?> \{
+        (?<BRACES> (?<_BRACES> (?> \{
             (?<IN_BRACE_STR>  (
                 (?> \(  # "to swing {swung (swang [obs.]); swung}"
                     (?<ONLY_BRACKET_STR> ( (?&BRACKETS) | (?&STRING) )* )
@@ -171,7 +172,7 @@ my $LINE_GRAMMAR = qr{
                 | (?&BRACKETS)  # "to clothe {clothed, clad [obs.]; clothed, clad [obs.]}"
                 | (?&STRING) )*  )
             ( ; (?&IN_BRACE_STR) )*
-        \} ) )
+        \} ) )(?{$seen_braces{$^N}++}) )
 
         (?<ANGLES>  (?> \<
             (?<IN_ANGLE_STR> (
@@ -207,7 +208,6 @@ $$resp{success} or die "$DICT_URL $$resp{status} $$resp{reason}".($$resp{status}
 gunzip $DICT_FILE => \my $buffer or die "gunzip failed: $GunzipError\n";
 
 open my $fh, '<:raw:encoding(UTF-8)', \$buffer or die $!;
-my %seen_annot;
 my $fail_cnt = 0;
 while (my $line = <$fh>) {
     chomp($line);  # remove trailing newline
@@ -219,7 +219,6 @@ while (my $line = <$fh>) {
         @des == @ens or die "Did not get the same number of sub-entries in ".pp($line)."\n";
         #say pp \@des, \@ens;  # debugging, helps visualize runaway regex
         # use the same regex as JS uses to get "annotations":
-        $seen_annot{$&}++ while $line =~ /\{[^}]+\}|\[[^\]]+\]/g;
     }
     else {
         warn "Failed to parse ".pp($line)."\n";
@@ -227,7 +226,10 @@ while (my $line = <$fh>) {
     }
 }
 close $fh;
-die "$fail_cnt failures\n" if $fail_cnt;
 
 say "Report: The following annotations are not contained in the abbreviations list:";
-say join(', ', grep {!$$abbr{$_}} sort keys %seen_annot );
+#TODO Later: entries like "{swam; swum}" are conjugations that we could filter here
+my @notseen = grep {!$$abbr{$_}} sort keys %seen_brackets, keys %seen_braces;
+say join(', ', @notseen );
+
+die "$fail_cnt failures\n" if $fail_cnt;
