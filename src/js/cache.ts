@@ -21,6 +21,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+import {reportError} from './global'
 export {DB_URL, DB_VER_URL, DB_CACHE_NAME, cacheFirst}
 
 /* The URLs from which to load the dictionary and version information.
@@ -51,7 +52,7 @@ async function cacheFirst(storage :CacheStorage, cacheName :string, request :Req
     await cache.put(request, responseFromNetwork.clone())
     return responseFromNetwork
   } catch (error) {
-    console.error(`Failed to fetch ${request}`, error)
+    reportError(error, `cacheFirst ${request.method} ${request.url}`)
     return Response.error()
   }
 }

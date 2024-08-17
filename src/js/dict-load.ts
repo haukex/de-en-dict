@@ -21,6 +21,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+import {reportError} from './global'
 import {DB_URL, DB_VER_URL, DB_CACHE_NAME, cacheFirst} from './cache'
 
 // this function decodes a stream of bytes (Response body) first as a gzip stream, then as UTF-8 text
@@ -96,7 +97,7 @@ export async function loadDict() :Promise<string[]> {
     // load the dictionary from the cache or the network
     const dictResp = await cacheFirst(caches, DB_CACHE_NAME, dbReq)
     if ( !dictResp.ok || !dictResp.body )
-      throw new Error('Failed to load dict')
+      throw new Error(`${dictResp.url} ${dictResp.type} ${dictResp.status} ${dictResp.statusText}`)
     // unpack the dictionary file
     return (await gunzipUTF8(dictResp.body))
       // this fixes an oversight that I guess happened on conversion from CP1252 to UTF-8 (?)
@@ -104,7 +105,7 @@ export async function loadDict() :Promise<string[]> {
       // split the text into lines, trim the lines, remove blank lines and comments
       .split(/\r?\n|\r(?!\n)/g).map((line) => line.trim()).filter((line) => line.length && !line.startsWith('#'))
   } catch (error) {
-    console.error(error)
+    reportError(error, 'loadDict')
     // our callers will see an empty response as an error:
     return []
   }

@@ -21,6 +21,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+import {globalErrorLogString} from './global'
 import {initFlags} from './flags'
 import {makeSearchPattern} from './equiv'
 import {initPopups, addTitleTooltips, closeAllPopups} from './popups'
@@ -49,7 +50,6 @@ window.addEventListener('DOMContentLoaded', async () => {
   const search_term = document.getElementById('search-term') as HTMLInputElement
   const result_table = document.getElementById('result-table') as HTMLElement
   const result_count = document.getElementById('result-count') as HTMLElement
-  const load_fail = document.getElementById('dict-load-fail') as HTMLElement
   const no_results = document.getElementById('no-results') as HTMLElement
   const rand_entry_link = document.getElementById('rand-entry-link') as HTMLElement
 
@@ -58,6 +58,11 @@ window.addEventListener('DOMContentLoaded', async () => {
   const dictLines = await loadDict()
   if (!dictLines.length) {
     // error, display the corresponding message box
+    const load_fail = document.getElementById('dict-load-fail') as HTMLElement
+    const error_log = document.getElementById('error-log') as HTMLElement
+    error_log.innerText = navigator.userAgent
+      +'\n$Id$\n'
+      +globalErrorLogString()
     load_fail.classList.remove('d-none')
     return
   }
@@ -96,7 +101,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       }
       catch (error) {
         // for example, `decodeURIComponent('%97')` causes "URIError: malformed URI sequence"
-        console.log('ignoring bad window.location.hash',error)
+        console.warn('ignoring bad window.location.hash',error)
       }
     }
     search_term.value = what

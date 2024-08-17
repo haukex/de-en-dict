@@ -76,7 +76,7 @@ async function activate() {
   // activate this Service Worker on existing pages
   await self.clients.claim()
   console.debug('SW activated')
-  sendMsg('activate done')
+  sendMsg(`activate done (version ${version})`)
 }
 self.addEventListener('activate', e => e.waitUntil(activate()))
 
