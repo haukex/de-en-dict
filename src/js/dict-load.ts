@@ -21,7 +21,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-import {DB_URL, DB_VER_URL, DB_CACHE_NAME, cacheFirst} from './common'
+import {DB_URL, DB_VER_URL, DB_CACHE_NAME, cacheFirst} from './cache'
 
 // this function decodes a stream of bytes (Response body) first as a gzip stream, then as UTF-8 text
 async function gunzipUTF8(stream :ReadableStream) {
