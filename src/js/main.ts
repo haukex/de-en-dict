@@ -120,12 +120,13 @@ window.addEventListener('DOMContentLoaded', async () => {
      * For each regex that matches, one point is awarded. */
     const scoreRes :RegExp[] = [
       '(?:^|::\\s*)',           // term is at the very beginning of an entry (German at beginning of line or English after "::")
+      '(?:^|::\\s*)',           // in fact, this is important enough to give it double points
       '(?:^|::\\s*|\\|\\s*)',   // +or term is at beginning of a sub-entry (after "|")
       '::\\s*to\\s+',           // term is an English verb (":: to sprint")
       '\\b' ]                   // term is at the beginning of a word
       .flatMap((re)=>[re+whatPat, re+whatPatStricter]) // apply all of the above to the search pattern and its "stricter version"
       .flatMap((re)=>[re, // for all of the above:
-        re+'\\b',               // term is at the end of a word - in combination with the above, this means whole words
+        re+'\\b', re+'\\b',     // term is at the end of a word - in combination with the above, this means whole words, so double points
         // term is followed by braces/brackets/parens followed by the end of that entry, sub-entry, or list item
         // https://regex101.com/r/7tBMul
         re+'(?:\\s*\\{[^}|]*\\}|\\s*\\[[^\\]|]*\\]|\\s*\\([^)|]*\\))*\\s*(?:$|::|\\||;)'])
