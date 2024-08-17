@@ -27,6 +27,7 @@ import {makeSearchPattern} from './equiv'
 import {initPopups, addTitleTooltips, closeAllPopups} from './popups'
 import {default as abbreviations} from './abbreviations.json'
 import {loadDict} from './dict-load'
+import {wrapTextNodeMatches} from './utils'
 
 // for the parcel development environment:
 if (module.hot) module.hot.accept()
@@ -50,38 +51,6 @@ const FEEDBACK_BODY = 'Hello, Hallo,\n\n'
     +'\nMy suggestion is:\nMein Vorschlag ist:\n'
 const ENABLE_FEEDBACK = true
 const TITLE_PREFIX = 'German-English Dictionary'
-
-function walkTextNodes(node :Node, callback :(txt:Text)=>Node) {
-  if (node.nodeType==Node.TEXT_NODE)
-    node.parentNode?.replaceChild(callback(node as Text), node)
-  else  // text nodes shouldn't have children, but play it safe anyway
-    node.childNodes.forEach((child) => walkTextNodes(child, callback))
-}
-
-/** This function walks the DOM tree, looking for matches of a regular expression in all
- * found text nodes, and calling a function for all matches that should wrap them in an HTML element.
- *
- * @param node The node/element at which to begin the search for text nodes.
- *  Note `Node.normalize()` is called on it.
- * @param searchPat The pattern for which to search in the text.
- *  May **NOT** contain anchors or capturing groups!
- * @param wrapper A function that takes a string and wraps it in a new HTML element,
- *  the return value is inserted in the DOM tree instead of the text.
- * @param flags Any regex flags like `i`, but *don't* use any of `mgy`!
- */
-function wrapTextNodeMatches(node :Node, searchPat :string, wrapper :(match:string)=>HTMLElement, flags :string = '') {
-  const splitRe = RegExp('('+searchPat+')','g'+flags)
-  const matchRe = RegExp('^(?:'+searchPat+')$',flags)
-  node.normalize()
-  walkTextNodes(node, (txt) => {
-    if ( txt.data.search(splitRe)<0 )
-      return txt
-    const df = document.createDocumentFragment()
-    for ( const part of txt.data.split(splitRe) )
-      df.appendChild( part.match(matchRe) ? wrapper(part) : document.createTextNode(part) )
-    return df
-  })
-}
 
 // function to turn a dictionary line into a rendered <tbody>
 function result2tbody (dictLine :string) {
