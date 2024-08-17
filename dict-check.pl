@@ -176,9 +176,12 @@ my $LINE_GRAMMAR = qr{
         (?<PARENTHESES>            (?> \( (?&STRING) ( ; (?&STRING) )*+ \) ) )
         (?<BRACKETS> (?<_BRACKETS> (?> \[ (?&STRING) ( ; (?&STRING) )*+ \] ) )(?{$seen_brackets{$^N}++}) )
 
+        # NOTE: As a general rule determined by visual inspection of %seen_braces,
+        # it seems that all braces with semicolons are English conjugations, except for "{prp; ...}"
+        # For example: "{swam; swum}", "to swing {swung (swang [obs.]); swung}"
         (?<BRACES> (?<_BRACES> (?> \{
             (?<IN_BRACE_STR>  (
-                (?> \(  # "to swing {swung (swang [obs.]); swung}"
+                (?> \(
                     (?<ONLY_BRACKET_STR> ( (?&BRACKETS) | (?&STRING) )* )
                     ( ; (?&ONLY_BRACKET_STR) )*
                 \) )
@@ -238,8 +241,7 @@ while (my $line = <$fh>) {
 close $fh;
 
 say "Report: The following annotations are not contained in the abbreviations list:";
-#TODO Later: entries like "{swam; swum}" are conjugations that we could filter here
-my @notseen = grep {!$$abbr{$_}} sort keys %seen_brackets, keys %seen_braces;
-say join(', ', @notseen );
+# see the notes on braces in the grammar above: the following filter removes most conjugations
+say join ', ', grep {!$$abbr{$_}} sort keys %seen_brackets, grep {/^{prp;/||!/;/} keys %seen_braces;
 
 die "$fail_cnt failures\n" if $fail_cnt;
