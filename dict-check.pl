@@ -7,6 +7,7 @@ use IO::Socket::SSL 1.42;  # for HTTP::Tiny SSL support
 use File::Spec::Functions qw/catfile/;
 use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
 use JSON::PP qw/decode_json/;
+use File::Temp qw/tempfile/;
 use Data::Dumper ();
 use HTTP::Tiny;
 use FindBin;
@@ -48,6 +49,12 @@ sub pp { Data::Dumper->new(\@_)->Terse(1)->Purity(1)->Useqq(1)->Quotekeys(0)->So
 my $DICT_FILE = catfile($FindBin::Bin, 'de-en.txt.gz');
 my $DICT_URL = 'https://ftp.tu-chemnitz.de/pub/Local/urz/ding/de-en-devel/de-en.txt.gz';
 my $ABBR_FILE = catfile($FindBin::Bin, 'src', 'js', 'abbreviations.json');
+my $ABBR_URL = 'https://raw.githubusercontent.com/Tekl/beolingus-deutsch-englisch/master/abbreviations.json';
+
+sub mirror ($url, $file) {
+    my $resp = HTTP::Tiny->new->mirror($url, $file);
+    $$resp{success} or die "$url $$resp{status} $$resp{reason}".($$resp{status}==599 ? ": $$resp{content}" : '');
+}
 
 # investigate abbreviations.json
 open my $jfh, '<:raw', $ABBR_FILE or die "$ABBR_FILE: $!";
@@ -79,6 +86,12 @@ while ( my ($k,$v) = each %$abbr ) {
         \z }msxxaan or die "bad abbr val for key ".pp($k).": ".pp($vv);
     }
 }
+
+# compare our version to the one at Tekl/beolingus-deutsch-englisch
+my ($tfh,$tfn) = tempfile(UNLINK=>1,SUFFIX=>'.json');
+close $tfh;
+mirror($ABBR_URL, $tfn);
+system('diff','-u',$ABBR_FILE,$tfn);
 
 # Note that single quotes (') are not treated specially because of their varied usage (and some typos in the data):
 # "can't", "hunters' parlance", "height 5' 7''", "x prime /x'/", "f';" (f-prime), and as quotes.
@@ -202,11 +215,8 @@ my $LINE_GRAMMAR = qr{
     \A (?<LEFT> (?&ENTRY) ) :: (?<RIGHT> (?&ENTRY) ) \z
 }msxxaan;
 
-my $resp = HTTP::Tiny->new->mirror($DICT_URL, $DICT_FILE);
-$$resp{success} or die "$DICT_URL $$resp{status} $$resp{reason}".($$resp{status}==599 ? ": $$resp{content}" : '');
-
+mirror($DICT_URL, $DICT_FILE);
 gunzip $DICT_FILE => \my $buffer or die "gunzip failed: $GunzipError\n";
-
 open my $fh, '<:raw:encoding(UTF-8)', \$buffer or die $!;
 my $fail_cnt = 0;
 while (my $line = <$fh>) {
