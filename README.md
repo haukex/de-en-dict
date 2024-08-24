@@ -59,6 +59,8 @@ Thanks ❤️
 - [@Tekl (Wolfgang Kreutz)](https://github.com/Tekl), author of the
   [macOS Beolingus German-English Dictionary Plugin](https://tekl.de/lexikon-plug-ins/beolingus-deutsch-englisch-lexikon-plugin),
   for [suggesting searching via URL query](https://github.com/haukex/de-en-dict/issues/7)
+- [@darmuent (Helmut)](https://github.com/darmuent), for a
+  [correction](https://github.com/haukex/de-en-dict/issues/27)
 
 Author, Copyright, and License
 ------------------------------
