@@ -275,5 +275,6 @@ close $fh;
 say "Report: The following annotations are not contained in the abbreviations list:";
 # see the notes on braces in the grammar above: the following filter removes most conjugations
 say join ', ', grep {!$$abbr{$_}} sort keys %seen_brackets, grep {/^{prp;/||!/;/} keys %seen_braces;
+#TODO Later: Items from this annotation report could be added to abbreviations.json.
 
 die "$fail_cnt failures\n" if $fail_cnt;
