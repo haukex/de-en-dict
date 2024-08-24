@@ -14,9 +14,9 @@ Please send suggestions for the word list to beolingus@tu-chemnitz.de
 Troubleshooting
 ---------------
 
-1. Please make sure you're using the **latest version** of a modern browser with modern JavaScript support,
+1. Please make sure you're using the *latest version* of a modern browser with modern JavaScript support,
   such as Firefox, Chrome, Edge, or Safari (but please note the latter requires a *current* version of macOS).
-2. To make sure you're seeing the latest version of the webpage/app, please try clearing your browser's cache
+2. To make sure you're seeing the latest version of the page/app, please try clearing your browser's cache
   as well as all saved data for the site "zero-g.net".
 3. Try accessing this link: <https://ftp.tu-chemnitz.de/pub/Local/urz/ding/de-en-devel/>, if you have trouble
   doing so, then the dictionary server may be offline or possibly blocked by a firewall from your location.
@@ -61,6 +61,7 @@ Thanks ❤️
   for [suggesting searching via URL query](https://github.com/haukex/de-en-dict/issues/7)
 - [@darmuent (Helmut)](https://github.com/darmuent), for a
   [correction](https://github.com/haukex/de-en-dict/issues/27)
+- Several (anonymous) people who sent bug reports and suggestions.
 
 Author, Copyright, and License
 ------------------------------
