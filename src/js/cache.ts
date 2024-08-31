@@ -52,6 +52,7 @@ async function cacheFirst(storage :CacheStorage, cacheName :string, request :Req
     await cache.put(request, responseFromNetwork.clone())
     return responseFromNetwork
   } catch (error) {
+    //TODO Later: using reportError here doesn't make sense when calling it from the service worker
     reportError(error, `cacheFirst ${request.method} ${request.url}`)
     return Response.error()
   }

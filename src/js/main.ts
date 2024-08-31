@@ -24,6 +24,8 @@
 import {initPopups, addTitleTooltips, closeAllPopups} from './popups'
 import {wrapTextNodeMatches, cleanSearchTerm} from './utils'
 import {globalErrorLogString} from './global'
+import {initInputFieldKeys} from './keyboard'
+import {initScrollTop} from './scroll-top'
 import {result2tbody} from './render'
 import {searchDict} from './dict-search'
 import {initFlags} from './flags'
@@ -40,56 +42,6 @@ if ('serviceWorker' in navigator) {
   )
   navigator.serviceWorker.addEventListener('message', event => console.debug('SW:', event.data))
 } else console.warn('Service Workers are not supported')
-
-/** Set up a "scroll to top button". Don't call this util the document is loaded. */
-function initScrollTop() {
-  const btnScrollTop = document.createElement('button')
-  btnScrollTop.setAttribute('id','btn-scroll-top')
-  btnScrollTop.setAttribute('title','Scroll to top of page')
-  btnScrollTop.innerText = 'Top ↑'
-  btnScrollTop.addEventListener('click', () => window.scrollTo(0,0) )
-  //const searchBoxTop = search_term.getBoundingClientRect().y  // changes based on layout, I'll just use a fixed value
-  const updateScrollBtnVis = () => {
-    if ( window.scrollY > 60 )
-      btnScrollTop.classList.remove('d-none')
-    else
-      btnScrollTop.classList.add('d-none')
-  }
-  window.addEventListener('scroll', updateScrollBtnVis)
-  document.body?.appendChild(btnScrollTop)
-  updateScrollBtnVis()
-}
-
-function initInputFieldKeys(elem :HTMLInputElement, onEnter :()=>void) {
-  elem.addEventListener('keyup', event => {
-    // Escape key clears input
-    if (event.key=='Escape') {
-      elem.value = ''
-      elem.classList.remove('danger')
-    }
-    // Enter key triggers search
-    else if (event.key=='Enter') {
-      event.preventDefault()
-      event.stopPropagation()
-      onEnter()
-    }
-  })
-  /* 'Enter' is handled in keyup above, but we still need to prevent all of its default
-   * behavior here so it doesn't fire the "change" event and cause the search to run twice. */
-  elem.addEventListener('keydown', event => {
-    if (event.key=='Enter') {
-      event.preventDefault()
-      event.stopPropagation()
-    }
-  })
-  // keypress is deprecated, we'll include it anyway for now
-  elem.addEventListener('keypress', event => {
-    if (event.key=='Enter') {
-      event.preventDefault()
-      event.stopPropagation()
-    }
-  })
-}
 
 // when the HTML page has finished loading:
 window.addEventListener('DOMContentLoaded', async () => {
@@ -133,9 +85,10 @@ window.addEventListener('DOMContentLoaded', async () => {
   search_term.addEventListener('input', () => search_term.classList.remove('danger') )
 
   // this is our handler for running the search:
+  // IMPORTANT: we expect callers to have done cleanSearchTerm(what)
   const doSearch = (what: string) => {
-    // NOTE we expect our callers to have done cleanSearchTerm(what)
     if (what.length==1) {
+      // NOTE initInputFieldKeys also removes 'danger'
       // one-letter search terms take too long and cause the app to hang, for now we simply refuse them
       search_term.classList.add('danger')
       return
@@ -203,9 +156,8 @@ window.addEventListener('DOMContentLoaded', async () => {
       no_results.classList.remove('d-none')
       return
     }
-    // otherwise, there were matches
-    else no_results.classList.add('d-none')
-
+    // else, there were matches
+    no_results.classList.add('d-none')
     // render the first chunk of results
     renderMatches(0, 50)
 
