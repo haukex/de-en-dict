@@ -100,6 +100,17 @@ window.addEventListener('DOMContentLoaded', async () => {
     // actually run the search
     const [whatPat, matches] = searchDict(dictLines, what)
 
+    clearResults()
+
+    // there were no results
+    if (!matches.length) {
+      result_count.innerText = 'No matches found (' + ( dictLines.length
+        ? `dictionary holds ${dictLines.length} entries).` : 'dictionary has not loaded).' )
+      no_results.classList.remove('d-none')
+      return
+    }
+    else no_results.classList.add('d-none')  // there are matches
+
     // function for rendering matches, which we set up here, then call below
     let displayedMatches = 0  // holds the state between invocations of this function:
     const renderMatches = (start :number, end :number) => {
@@ -148,16 +159,6 @@ window.addEventListener('DOMContentLoaded', async () => {
         result_count.innerText = `Showing all ${matches.length} matches.`
     } // end of renderMatches
 
-    clearResults()
-
-    // there were no results
-    if (!matches.length) {
-      result_count.innerText = `No matches found (dictionary holds ${dictLines.length} entries).`
-      no_results.classList.remove('d-none')
-      return
-    }
-    // else, there were matches
-    no_results.classList.add('d-none')
     // render the first chunk of results
     renderMatches(0, 50)
 
@@ -209,6 +210,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   rand_entry_link.addEventListener('click', event => {
     event.preventDefault()
     clearResults()
+    if (!dictLines.length) return
     const randLine = dictLines[Math.floor(Math.random()*dictLines.length)]
     assert(randLine)
     const tbody = result2tbody(randLine)

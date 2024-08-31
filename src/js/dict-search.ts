@@ -30,8 +30,8 @@ import {makeSearchPattern} from './equiv'
  *  and an array of indices pointing into the matches in the `dictLines` array.
  */
 export function searchDict(dictLines :string[], what :string): [string, number[]] {
-  // if the search term is empty, don't produce any results
-  if (!what.length) return ['', []]
+  // if the search term or dictionary are empty, don't produce any results
+  if (!what.length || !dictLines.length) return ['', []]
 
   // turn the search term into a regex
   // NOTE `whatPat` must not contain anchors or capturing groups, so it can be used in `wrapTextNodeMatches`
