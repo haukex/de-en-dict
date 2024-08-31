@@ -24,8 +24,8 @@
 import {initPopups, addTitleTooltips, closeAllPopups} from './popups'
 import {wrapTextNodeMatches, cleanSearchTerm} from './utils'
 import {globalErrorLogString} from './global'
-import {makeSearchPattern} from './equiv'
 import {result2tbody} from './render'
+import {searchDict} from './dict-search'
 import {initFlags} from './flags'
 import {loadDict} from './dict-load'
 
@@ -110,51 +110,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     // update page title with search term
     document.title = what ? `${TITLE_PREFIX}: ${what}` : TITLE_PREFIX
 
-    // turn the search term into a regex
-    // NOTE `whatPat` must not contain anchors or capturing groups, so it can be used in `wrapTextNodeMatches`
-    const [whatPatStricter, whatPat] = makeSearchPattern(what)
-    // compile the regex that matches the search term
-    const whatRe = new RegExp(whatPat, 'ig')
-
-    /* The following code generates a set of regular expressions used for scoring the matches.
-     * For each regex that matches, one point is awarded. */
-    const scoreRes :RegExp[] = [
-      '(?:^|::\\s*)',           // term is at the very beginning of an entry (German at beginning of line or English after "::")
-      '(?:^|::\\s*)',           // in fact, this is important enough to give it double points
-      '(?:^|::\\s*|\\|\\s*)',   // +or term is at beginning of a sub-entry (after "|")
-      '::\\s*to\\s+',           // term is an English verb (":: to sprint")
-      '\\b' ]                   // term is at the beginning of a word
-      .flatMap((re)=>[re+whatPat, re+whatPatStricter]) // apply all of the above to the search pattern and its "stricter version"
-      .flatMap((re)=>[re, // for all of the above:
-        re+'\\b', re+'\\b',     // term is at the end of a word - in combination with the above, this means whole words, so double points
-        // term is followed by braces/brackets/parens followed by the end of that entry, sub-entry, or list item
-        // https://regex101.com/r/7tBMul
-        re+'(?:\\s*\\{[^}|]*\\}|\\s*\\[[^\\]|]*\\]|\\s*\\([^)|]*\\))*\\s*(?:$|::|\\||;)'])
-      // create case-sensitive and case-insensitive regex versions of all of the above
-      .flatMap((re)=>[new RegExp(re), new RegExp(re, 'i')])
-    //console.debug(scoreRes)
-
-    // this code actually performs the search
-    const searchStartMs = new Date().getTime()
-    // the `matches` array stores indices into the `dictLines` array for each matching line
-    const matches :number[] = (() => {
-      // if the search term is empty, don't produce any results
-      if (!what.length) return []
-      // build an array of tuples, each element being the matching line's index and its score
-      const scoredMatches :[number,number][] = (
-        // apply the regex to each dictionary line, returning the line's index if it matches
-        dictLines.flatMap((line, i) => line.match(whatRe) ? [i] : [])
-          // for each match, store the line's index...
-          .map(li => [li,
-            // ... and match it against each scoring regex, giving one point per match, and summing the scores
-            scoreRes.map((re):number=>dictLines[li]?.match(re)?1:0).reduce((a,b)=>a+b,0) ]) )
-      // sort the scored matches (note sort should be stable in modern JS)
-      scoredMatches.sort((a,b) => b[1]-a[1])
-      // now that we've sorted, we can strip the scores out of the returned values
-      return scoredMatches.map(([li, _score]) => li)
-    })()
-    console.debug(`Search for ${whatRe} found ${matches.length} matches in ${new Date().getTime()-searchStartMs}ms.`)
-    //console.debug(scoredMatches)
+    // actually run the search
+    const [whatPat, matches] = searchDict(dictLines, what)
 
     // function for rendering matches, which we set up here, then call below
     let displayedMatches = 0  // holds the state between invocations of this function:
