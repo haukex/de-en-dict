@@ -60,6 +60,37 @@ function initScrollTop() {
   updateScrollBtnVis()
 }
 
+function initInputFieldKeys(elem :HTMLInputElement, onEnter :()=>void) {
+  elem.addEventListener('keyup', event => {
+    // Escape key clears input
+    if (event.key=='Escape') {
+      elem.value = ''
+      elem.classList.remove('danger')
+    }
+    // Enter key triggers search
+    else if (event.key=='Enter') {
+      event.preventDefault()
+      event.stopPropagation()
+      onEnter()
+    }
+  })
+  /* 'Enter' is handled in keyup above, but we still need to prevent all of its default
+   * behavior here so it doesn't fire the "change" event and cause the search to run twice. */
+  elem.addEventListener('keydown', event => {
+    if (event.key=='Enter') {
+      event.preventDefault()
+      event.stopPropagation()
+    }
+  })
+  // keypress is deprecated, we'll include it anyway for now
+  elem.addEventListener('keypress', event => {
+    if (event.key=='Enter') {
+      event.preventDefault()
+      event.stopPropagation()
+    }
+  })
+}
+
 // when the HTML page has finished loading:
 window.addEventListener('DOMContentLoaded', async () => {
   // get a few HTML elements from the page that we need
@@ -233,44 +264,11 @@ window.addEventListener('DOMContentLoaded', async () => {
     addTitleTooltips(tbody.querySelectorAll('abbr'))
   })
 
-  // search term keyboard handler
-  search_term.addEventListener('keyup', event => {
-    // Escape key clears input
-    if (event.key=='Escape') {
-      search_term.value = ''
-      search_term.classList.remove('danger')
-    }
-    // Enter key triggers search
-    else if (event.key=='Enter') {
-      event.preventDefault()
-      event.stopPropagation()
-      searchTermMaybeChanged()
-    }
-  })
-  /* 'Enter' is handled in keyup above, but we still need to prevent all of its default
-   * behavior here so it doesn't fire the "change" event and cause the search to run twice. */
-  search_term.addEventListener('keydown', event => {
-    if (event.key=='Enter') {
-      event.preventDefault()
-      event.stopPropagation()
-    }
-  })
-  // keypress is deprecated, we'll include it anyway for now
-  search_term.addEventListener('keypress', event => {
-    if (event.key=='Enter') {
-      event.preventDefault()
-      event.stopPropagation()
-    }
-  })
-
-  // set up flag animations and popups etc
-  try {
-    initScrollTop()
-    initFlags()
-    initPopups()
-  }
-  // but don't let bugs blow us up
-  catch (error) { console.error(error) }
+  // initialize various things
+  initInputFieldKeys(search_term, searchTermMaybeChanged)
+  initScrollTop()
+  initFlags()
+  initPopups()
 
   // Trigger a search upon loading
   searchFromUrl()
