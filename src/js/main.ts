@@ -28,6 +28,7 @@ import {result2tbody} from './render'
 import {searchDict} from './dict-search'
 import {initFlags} from './flags'
 import {loadDict} from './dict-load'
+import {assert} from './utils'
 
 if (module.hot) module.hot.accept()  // for the parcel development environment
 
@@ -39,9 +40,6 @@ if ('serviceWorker' in navigator) {
   )
   navigator.serviceWorker.addEventListener('message', event => console.debug('SW:', event.data))
 } else console.warn('Service Workers are not supported')
-
-// constants
-const TITLE_PREFIX = 'German-English Dictionary'
 
 // "scroll to top" button
 function initScrollTop() {
@@ -65,18 +63,27 @@ function initScrollTop() {
 // when the HTML page has finished loading:
 window.addEventListener('DOMContentLoaded', async () => {
   // get a few HTML elements from the page that we need
-  const search_term = document.getElementById('search-term') as HTMLInputElement
-  const result_table = document.getElementById('result-table') as HTMLElement
-  const result_count = document.getElementById('result-count') as HTMLElement
-  const no_results = document.getElementById('no-results') as HTMLElement
+  const search_term = document.getElementById('search-term')
+  assert(search_term instanceof HTMLInputElement)
+  const result_table = document.getElementById('result-table')
+  assert(result_table)
+  const result_count = document.getElementById('result-count')
+  assert(result_count)
+  const no_results = document.getElementById('no-results')
+  assert(no_results)
+  const title_el = document.querySelector('title')
+  assert(title_el)
+  const title_text = title_el.innerText
 
   // load the dictionary, disabling the input field while we do so
   search_term.setAttribute('disabled', 'disabled')
   const dictLines = await loadDict()
   if (!dictLines.length) {
     // error, display the corresponding message box
-    const load_fail = document.getElementById('dict-load-fail') as HTMLElement
-    const error_log = document.getElementById('error-log') as HTMLElement
+    const load_fail = document.getElementById('dict-load-fail')
+    assert(load_fail)
+    const error_log = document.getElementById('error-log')
+    assert(error_log)
     error_log.innerText = navigator.userAgent
       +'\n$Id$\n'
       +globalErrorLogString()
@@ -108,7 +115,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     } else search_term.classList.remove('danger')
 
     // update page title with search term
-    document.title = what ? `${TITLE_PREFIX}: ${what}` : TITLE_PREFIX
+    document.title = what.length ? `${title_text}: ${what}` : title_text
 
     // actually run the search
     const [whatPat, matches] = searchDict(dictLines, what)
@@ -119,8 +126,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       // loop over the chunk of lines to be displayed
       matches.slice(start, end).forEach((lineIndex) => {
         const matchLine = dictLines[lineIndex]
-        if (!matchLine)
-          throw new Error(`internal error: bad lineIndex ${lineIndex}, dictLines.length=${dictLines.length}`)
+        assert(matchLine)
         try {  // especially result2tbody may throw errors
           const tbody = result2tbody(matchLine)
           // highlight the search term in the match
@@ -219,11 +225,14 @@ window.addEventListener('DOMContentLoaded', async () => {
   window.addEventListener('hashchange', searchFromUrl)
 
   // random entry link handler
-  const rand_entry_link = document.getElementById('rand-entry-link') as HTMLElement
+  const rand_entry_link = document.getElementById('rand-entry-link')
+  assert(rand_entry_link)
   rand_entry_link.addEventListener('click', event => {
     event.preventDefault()
     clearResults()
-    const tbody = result2tbody( dictLines[Math.floor(Math.random()*dictLines.length)] as string )
+    const randLine = dictLines[Math.floor(Math.random()*dictLines.length)]
+    assert(randLine)
+    const tbody = result2tbody(randLine)
     result_table.appendChild(tbody)
     addTitleTooltips(tbody.querySelectorAll('abbr'))
   })
