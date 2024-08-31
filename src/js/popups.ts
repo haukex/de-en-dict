@@ -22,6 +22,7 @@
  */
 
 import {computePosition, autoUpdate, shift, flip, limitShift, offset} from '@floating-ui/dom'
+import {assert} from './utils'
 
 /* Handles the "Selection Tools" Popup and Tooltips for Elements with "title"s (such as <abbr>). */
 
@@ -31,25 +32,30 @@ let titleTooltipSource :Node|null = null
 
 function closeTitleTooltip() {
   if (cleanupTitleTooltip) {
-    const title_tooltip = document.getElementById('title-tooltip') as HTMLElement
-    title_tooltip.classList.add('d-none')
-    cleanupTitleTooltip()
-    cleanupTitleTooltip = null
-    titleTooltipSource = null
+    const title_tooltip = document.getElementById('title-tooltip')
+    if (title_tooltip) {
+      title_tooltip.classList.add('d-none')
+      cleanupTitleTooltip()
+      cleanupTitleTooltip = null
+      titleTooltipSource = null
+    }
   }
 }
 
 function closeSelectionTools() {
   if (cleanupSelectionTools) {
     cleanupSelectionTools()
-    const sel_tools = document.getElementById('sel-tools') as HTMLElement
-    sel_tools.classList.add('d-none')
-    cleanupSelectionTools = null
+    const sel_tools = document.getElementById('sel-tools')
+    if (sel_tools) {
+      sel_tools.classList.add('d-none')
+      cleanupSelectionTools = null
+    }
   }
 }
 
 function initTitleTooltips() {
-  const title_tooltip = document.getElementById('title-tooltip') as HTMLElement
+  const title_tooltip = document.getElementById('title-tooltip')
+  assert(title_tooltip)
   document.addEventListener('click', (event) => {
     // clicking anywhere but the tooltip or the element that opened it closes it
     if ( !( title_tooltip.contains(event.target as Node) || titleTooltipSource && titleTooltipSource.contains(event.target as Node) ) )
@@ -57,9 +63,11 @@ function initTitleTooltips() {
   })
 }
 
+/** Add title tooltips to all of the given elements. Don't call this until after `initTitleTooltips`. */
 export function addTitleTooltips(elements :NodeListOf<HTMLElement>) {
   // important: don't call this until the element is actually part of the document, otherwise event listeners won't register
-  const title_tooltip = document.getElementById('title-tooltip') as HTMLElement
+  const title_tooltip = document.getElementById('title-tooltip')
+  assert(title_tooltip)
   elements.forEach((el) => {
     const title = el.getAttribute('title')
     if (!title) return
@@ -82,11 +90,12 @@ export function addTitleTooltips(elements :NodeListOf<HTMLElement>) {
 }
 
 function initSelectionTools() {
-  const sel_tools = document.getElementById('sel-tools') as HTMLElement
-  const sel_tools_search = document.getElementById('sel-tools-search') as HTMLElement
-  const sel_tools_feedback = document.getElementById('sel-tools-feedback') as HTMLElement
-  const sel_tools_close = document.getElementById('sel-tools-close') as HTMLElement
-  const result_table = document.getElementById('result-table') as HTMLElement
+  const sel_tools = document.getElementById('sel-tools')
+  const sel_tools_search = document.getElementById('sel-tools-search')
+  const sel_tools_feedback = document.getElementById('sel-tools-feedback')
+  const sel_tools_close = document.getElementById('sel-tools-close')
+  const result_table = document.getElementById('result-table')
+  assert( sel_tools && sel_tools_search && sel_tools_feedback && sel_tools_close && result_table )
 
   sel_tools_close.addEventListener('click', closeSelectionTools)
   document.addEventListener('selectionchange', () => {
@@ -114,7 +123,7 @@ function initSelectionTools() {
         if ( parent_elem ) {
           // at this point we know parent_elem must be an HTMLElement
           // find the closest result tbody
-          const tb = (parent_elem as HTMLElement).closest('#result-table tbody.result')
+          const tb = parent_elem.closest('#result-table tbody.result')
           if (tb) {
             // get href for the feedback link that should be stored here for us
             const fb = tb.getAttribute('data-feedback-href')
@@ -142,6 +151,7 @@ function initSelectionTools() {
   })
 }
 
+/** Initialize the popups. Don't call this until the document is loaded. */
 export function initPopups() {
   initSelectionTools()
   initTitleTooltips()

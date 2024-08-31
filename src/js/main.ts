@@ -41,7 +41,7 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.addEventListener('message', event => console.debug('SW:', event.data))
 } else console.warn('Service Workers are not supported')
 
-// "scroll to top" button
+/** Set up a "scroll to top button". Don't call this util the document is loaded. */
 function initScrollTop() {
   const btnScrollTop = document.createElement('button')
   btnScrollTop.setAttribute('id','btn-scroll-top')
@@ -64,15 +64,11 @@ function initScrollTop() {
 window.addEventListener('DOMContentLoaded', async () => {
   // get a few HTML elements from the page that we need
   const search_term = document.getElementById('search-term')
-  assert(search_term instanceof HTMLInputElement)
   const result_table = document.getElementById('result-table')
-  assert(result_table)
   const result_count = document.getElementById('result-count')
-  assert(result_count)
   const no_results = document.getElementById('no-results')
-  assert(no_results)
   const title_el = document.querySelector('title')
-  assert(title_el)
+  assert( search_term instanceof HTMLInputElement && result_table && result_count && no_results && title_el )
   const title_text = title_el.innerText
 
   // load the dictionary, disabling the input field while we do so

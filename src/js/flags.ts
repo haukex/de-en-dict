@@ -23,6 +23,8 @@
 
 /* This just provides the code for the flag icon switching. */
 
+import {assert} from './utils'
+
 interface IFlagList { de: string[], en: string[] }
 
 /* That these lists are off by one is kind of nice because it means
@@ -31,9 +33,11 @@ const FLAGS :IFlagList = { en: [ '🇺🇸', '🇬🇧', '🇦🇺', '🇳🇿' 
 
 const INTERVAL_MS = 4000
 
+/** Initialize the flag icon switching. Don't call this until the document is loaded. */
 export function initFlags () {
   ['de', 'en'].forEach(key => {
-    const element = document.getElementById('flag-'+key) as HTMLElement
+    const element = document.getElementById('flag-'+key)
+    assert(element)
     // add the other flag <div>s
     FLAGS[key as keyof IFlagList].forEach((flagStr, i) => {
       if (!i) return  // the HTML already contains the <div> for the first flag
@@ -47,11 +51,13 @@ export function initFlags () {
     setInterval(() => {
       const flags = element.children
       // change the currently active <div> to inactive
-      const curDiv = flags.item(idx) as HTMLElement
+      const curDiv = flags.item(idx)
+      assert(curDiv)
       curDiv.classList.add('flag-icon-inactive')
       // update pointer and set next <div> to active
       idx = (idx+1)%flags.length
-      const nextDiv = flags.item(idx) as HTMLElement
+      const nextDiv = flags.item(idx)
+      assert(nextDiv)
       nextDiv.classList.remove('flag-icon-inactive')
     }, INTERVAL_MS)
   })
