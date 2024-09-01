@@ -23,7 +23,6 @@
 
 import {initPopups, addTitleTooltips, closeAllPopups} from './popups'
 import {wrapTextNodeMatches, cleanSearchTerm} from './utils'
-import {globalErrorLogString} from './global'
 import {initInputFieldKeys} from './keyboard'
 import {initScrollTop} from './scroll-top'
 import {result2tbody} from './render'
@@ -34,6 +33,8 @@ import {assert} from './utils'
 
 if (module.hot) module.hot.accept()  // for the parcel development environment
 
+const GIT_ID = '$Id$'
+
 // register the Service Worker (if possible)
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register(new URL('../sw/sw.ts', import.meta.url), {type: 'module', scope: '/'}).then(
@@ -43,6 +44,18 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.addEventListener('message', event => console.debug('SW:', event.data))
 } else console.warn('Service Workers are not supported')
 
+/* Start loading the dictionary right away.
+ * Note `dictLines` not being empty indicates the dictionary has loaded,
+ * while `dictError` being a true value indicates there was an error loading the dictionary.
+ * Also note that `loadDict()` may modify `dictLines` twice, see its documentation. */
+const dictLines :string[] = []
+let dictError :Error|unknown
+let dictCallback :(()=>void)|null
+loadDict(dictLines)
+  .catch(error => dictError = error ? error : 'unknown error')
+  .finally(() => { if (dictCallback) dictCallback() })
+//TODO: handle the 'dictionary_updated' message sent by dictLoad on asynchronous dict update
+
 // when the HTML page has finished loading:
 window.addEventListener('DOMContentLoaded', async () => {
   // get a few HTML elements from the page that we need
@@ -50,27 +63,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   const result_table = document.getElementById('result-table')
   const result_count = document.getElementById('result-count')
   const no_results = document.getElementById('no-results')
-  const title_el = document.querySelector('title')
-  assert( search_term instanceof HTMLInputElement && result_table && result_count && no_results && title_el )
-  const title_text = title_el.innerText
-
-  // load the dictionary, disabling the input field while we do so
-  search_term.setAttribute('disabled', 'disabled')
-  const dictLines = await loadDict()
-  if (!dictLines.length) {
-    // error, display the corresponding message box
-    const load_fail = document.getElementById('dict-load-fail')
-    assert(load_fail)
-    const error_log = document.getElementById('error-log')
-    assert(error_log)
-    error_log.innerText = navigator.userAgent
-      +'\n$Id$\n'
-      +globalErrorLogString()
-    load_fail.classList.remove('d-none')
-    return
-  }
-  console.debug(`Loaded ${dictLines.length} dictionary lines`)
-  search_term.removeAttribute('disabled')
+  assert( search_term instanceof HTMLInputElement && result_table && result_count && no_results )
+  const orig_title_text = document.title
 
   // utility function to clear the results table
   const clearResults = () => {
@@ -85,8 +79,12 @@ window.addEventListener('DOMContentLoaded', async () => {
   search_term.addEventListener('input', () => search_term.classList.remove('danger') )
 
   // this is our handler for running the search:
-  // IMPORTANT: we expect callers to have done cleanSearchTerm(what)
-  const doSearch = (what: string) => {
+  let prevWhat = 'Something the user is really unlikely to enter on their own by chance, so after initialization the first search is always performed.'
+  const doSearch = (raw_what: string, updateHash :boolean) => {
+    const what = cleanSearchTerm(raw_what)
+    if ( what===prevWhat ) return
+    prevWhat = what
+
     if (what.length==1) {
       // NOTE initInputFieldKeys also removes 'danger'
       // one-letter search terms take too long and cause the app to hang, for now we simply refuse them
@@ -95,7 +93,12 @@ window.addEventListener('DOMContentLoaded', async () => {
     } else search_term.classList.remove('danger')
 
     // update page title with search term
-    document.title = what.length ? `${title_text}: ${what}` : title_text
+    document.title = what.length ? `${orig_title_text}: ${what}` : orig_title_text
+    if (updateHash) {
+      const newHash = `#q=${encodeURIComponent(what)}`
+      if ( window.location.hash !== newHash )
+        window.history.pushState(null, '', newHash)
+    }
 
     // actually run the search
     const [whatPat, matches] = searchDict(dictLines, what)
@@ -164,19 +167,11 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   } // end of do_search
 
-  // Updates the URL hash, if necessary, and runs a search when the input field changes
-  let prevWhat = 'Something the user is really unlikely to enter on their own by chance, so after initialization the first search is always performed.'
-  const searchTermMaybeChanged = () => {
-    const what = cleanSearchTerm( search_term.value )
-    if ( what==prevWhat ) return
-    prevWhat = what
-    const newHash = `#q=${encodeURIComponent(what)}`
-    if ( window.location.hash !== newHash )
-      window.history.pushState(null, '', newHash)
-    doSearch(what)
-  }
+  // Helper to run the search from the input field
+  const searchFromInput = () => doSearch(search_term.value, true)
+
   // Install event listener for input field changes
-  search_term.addEventListener('change', searchTermMaybeChanged)
+  search_term.addEventListener('change', searchFromInput)
 
   // Starts a search using a value in the URL hash, if any
   const searchFromUrl = () => {
@@ -199,7 +194,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       }
     }
     search_term.value = what
-    doSearch(what)
+    doSearch(what, false)
   }
   // Install event listener for browser navigation updating the URL hash
   window.addEventListener('hashchange', searchFromUrl)
@@ -219,14 +214,30 @@ window.addEventListener('DOMContentLoaded', async () => {
   })
 
   // initialize various things
-  initInputFieldKeys(search_term, searchTermMaybeChanged)
+  initInputFieldKeys(search_term, searchFromInput)
   initScrollTop()
   initFlags()
   initPopups()
 
-  // Trigger a search upon loading
-  searchFromUrl()
-
-  // Put the focus on the input field
-  search_term.focus()
+  // what happens when the dictionary loads or a load error occurs:
+  dictCallback = () => {
+    if (dictLines.length) {
+      search_term.removeAttribute('disabled')
+      // Trigger a search upon loading
+      searchFromUrl()
+      // Put the focus on the input field
+      search_term.focus()
+    }
+    else {
+      // error, display the corresponding message box
+      const load_fail = document.getElementById('dict-load-fail')
+      assert(load_fail)
+      const error_log = document.getElementById('error-log')
+      assert(error_log)
+      error_log.innerText = navigator.userAgent + '\n' + GIT_ID + '\n' + ( dictError ? dictError : 'unknown error' )
+      load_fail.classList.remove('d-none')
+    }
+  }
+  // call the callback immediately if the dict has already loaded by now
+  if (dictLines.length || dictError) dictCallback()
 })

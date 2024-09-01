@@ -31,7 +31,7 @@ declare var self: ServiceWorkerGlobalScope
 // manifest is a list of the static resources that belong to the webapp
 // version is a hash calculated by parcel for the static resources
 import {manifest, version} from '@parcel/service-worker'
-import {DB_URL, DB_VER_URL, DB_CACHE_NAME, cacheFirst} from '../js/cache'
+import {DB_URL, DB_VER_URL, DB_CACHE_NAME} from '../js/global'
 
 /* The name of the cache, dependent on the current version, so that when the version changes,
  * the previous cache is discarded and resources are fetched again. */
@@ -93,3 +93,24 @@ self.addEventListener('fetch', event => {
     sendMsg(`fetch: NOT Intercepting ${event.request.method} ${event.request.url}`)
   }
 })
+
+/* This function checks for the existence of a request URL in the specified cache,
+ * returning it if it is found, otherwise it goes out to the network and stores the result in the cache. */
+async function cacheFirst(storage :CacheStorage, cacheName :string, request :Request) {
+  try {
+    const cache = await storage.open(cacheName)
+    const responseFromCache = await cache.match(request)
+    if (responseFromCache) {
+      console.debug(`cache HIT ${cacheName} ${request.method} ${request.url}`)
+      return responseFromCache
+    } // else
+    console.debug(`cache MISS ${cacheName} ${request.method} ${request.url}`)
+    const responseFromNetwork = await fetch(request)
+    await cache.put(request, responseFromNetwork.clone())
+    return responseFromNetwork
+  } catch (error) {
+    console.error(error)
+    sendMsg(`cacheFirst: ERROR ${error}`)
+    return Response.error()
+  }
+}

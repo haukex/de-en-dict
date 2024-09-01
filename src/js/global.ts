@@ -21,15 +21,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-/// For debugging.
-const globalErrorLog :[Date, Error, string][] = []
+/* The URLs from which to load the dictionary and version information.
+ * I have permission to use the ftp.tu-chemnitz.de server from Frank Richter.
+ * It now sends CORS headers so we can access it. */
+export const DB_URL = 'https://ftp.tu-chemnitz.de/pub/Local/urz/ding/de-en-devel/de-en.txt.gz'
+export const DB_VER_URL = 'https://ftp.tu-chemnitz.de/pub/Local/urz/ding/de-en-devel/sha256sums.txt'
+// The following is my (Hauke's) mirror; manually updated so it may not be up-to-date.
+//const DB_URL = 'https://bl0.zero-g.net/de-en.txt.gz'
+//const DB_VER_URL = 'https://bl0.zero-g.net/sha256sums.txt'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function reportError(error :any, context :string) {
-  console.error(context, error)
-  globalErrorLog.push([new Date(), error instanceof Error ? error : new Error(error), context])
-}
-
-export function globalErrorLogString() {
-  return globalErrorLog.map((v) => `[${v[0].toISOString()}] ${v[2]}: ${v[1]}`).join('\n')
-}
+/* The name of the cache in which to store the dictionary.
+ * Note the main script takes care of checking for cache freshness. */
+export const DB_CACHE_NAME = 'DeEnDict'
