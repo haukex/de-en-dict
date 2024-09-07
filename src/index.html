@@ -34,6 +34,7 @@
     </div>
 
     <p>
+      <!-- Note it's important the input box is disabled by default! -->
       <input type="text" id="search-term" placeholder="🔍 Search" disabled>
     </p>
     <figure><!-- for horiz scroll (simple.css) -->
@@ -44,14 +45,31 @@
             <th><div class="flag-icon" id="flag-en"><div>🇺🇸</div></div> English</th>
           </tr>
         </thead>
-        <tbody id="no-results">
+        <tbody id="no-results" class="d-none">
           <tr>
             <td colspan="2">No results. <a href="#" id="rand-entry-link">Show a random entry.</a></td>
           </tr>
         </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="2" id="table-footer">
+              <div>
+                <!-- If the user's JS support is old/broken, show them a hopefully helpful message.
+                    (JS should be replacing this message immediately on page load.) -->
+                <span id="dict-status">The dictionary should be loading automatically. For help, see "Feedback" below.</span>
+                <span id="dict-upd-status"></span>
+                <span id="search-status"></span>
+              </div>
+              <div id="dict-prog-div" class="d-none">
+                <label for="dict-progress">Dictionary download status:</label>
+                <progress id="dict-progress"></progress>
+              </div>
+            </td>
+          </tr>
+        </tfoot>
       </table>
     </figure>
-    <p id="result-count">The dictionary is loading, please wait...</p>
+    <div id="more-buttons"></div>
 
     <div id="title-tooltip" class="popper d-none">...</div>
 

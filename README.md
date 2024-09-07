@@ -61,7 +61,12 @@ Thanks ❤️
   for [suggesting searching via URL query](https://github.com/haukex/de-en-dict/issues/7)
 - [@darmuent (Helmut)](https://github.com/darmuent), for a
   [correction](https://github.com/haukex/de-en-dict/issues/27)
-- Several (anonymous) people who sent bug reports and suggestions.
+- [@christophfriedrich (Christoph Friedrich)](https://github.com/christophfriedrich)
+  for [suggesting better dictionary loading behavior](https://github.com/haukex/de-en-dict/issues/31)
+- Several (anonymous) people who sent bug reports and suggestions,
+  and several people who emailed me expressing their thanks!
+
+It is all much appreciated!
 
 Author, Copyright, and License
 ------------------------------

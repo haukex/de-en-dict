@@ -22,7 +22,42 @@
  */
 
 import {DB_URL, DB_VER_URL, DB_CACHE_NAME} from './global'
+import {MessageType} from './types'
 import {assert} from './utils'
+
+type ProgressCb = (percent :number)=>void
+
+class ProgressTransformer extends TransformStream<Uint8Array, Uint8Array> {
+  constructor(totalBytes :number, callback :ProgressCb, intervalMs :number = 100) {
+    let curBytes = 0
+    let nextUpdateTimeMs = new Date().getTime() + intervalMs
+    super({
+      async start() {
+        //console.debug(`ProgressTransformer: start at ${curBytes} of ${totalBytes} (${100*curBytes/totalBytes}%)`)
+        try { callback(0) }
+        catch (error) { console.error(error) }
+      },
+      async transform(chunk, controller) {
+        controller.enqueue(chunk)
+        curBytes += chunk.byteLength
+        //console.debug(`ProgressTransformer: transform at ${curBytes} of ${totalBytes} (${100*curBytes/totalBytes}%)`)
+        const nowMs = new Date().getTime()
+        if (nowMs >= nextUpdateTimeMs) {
+          nextUpdateTimeMs = nowMs + intervalMs
+          try { callback( 100*curBytes/totalBytes ) }
+          catch (error) { console.error(error) }
+        }
+      },
+      async flush() {
+        //console.debug(`ProgressTransformer: flush at ${curBytes} of ${totalBytes} (${100*curBytes/totalBytes}%)`)
+        try { callback(100) }
+        catch (error) { console.error(error) }
+        if (curBytes != totalBytes)
+          console.warn(`ProgressTransformer expected ${totalBytes} but got ${curBytes}`)
+      }
+    })
+  }
+}
 
 /** Decodes a stream of bytes (Response body) first as a gzip stream, then as UTF-8 text. */
 async function gunzipUTF8(stream :ReadableStream<Uint8Array>): Promise<string> {
@@ -89,10 +124,17 @@ async function doesDictNeedUpdate(): Promise<boolean> {
  */
 export async function loadDict(target :string[]): Promise<void> {
   // Helper function to copy response data to target line array.
-  const response2lines = async (resp :Response): Promise<void> => {
+  const response2lines = async (resp :Response, progCb :boolean): Promise<void> => {
     assert(resp.body)
+    const rawCl = resp.headers.get('Content-Length')
+    const rs = rawCl && progCb
+      ? resp.body.pipeThrough(new ProgressTransformer(parseInt(rawCl), percent => {
+        const m :MessageType = { type: 'dict-load', percent: percent }
+        postMessage(m)
+      }))
+      : resp.body
     // decode the body, split the text into lines, trim the lines, remove blank lines and comments
-    const dictLines = (await gunzipUTF8(resp.body))
+    const dictLines = (await gunzipUTF8(rs))
       .split(/\r?\n|\r(?!\n)/g).map((line) => line.trim()).filter((line) => line.length && !line.startsWith('#'))
     if (dictLines.length <= 1)
       throw new Error(`Dictionary data was empty? (${dictLines.length} lines)`)
@@ -103,36 +145,41 @@ export async function loadDict(target :string[]): Promise<void> {
   }
 
   // Helper function to fetch dictionary from network (no cache) and update cache and target.
-  const getDictFromNet = async (): Promise<void> => {
+  const getDictFromNet = async (progCb :boolean): Promise<void> => {
     // (note service worker is special-cased to not intercept this URL so it won't be cached)
     const dictFromNet = await fetch(DB_URL)
     const msg = `${dictFromNet.url} ${dictFromNet.type} ${dictFromNet.status} ${dictFromNet.statusText}`
     if (dictFromNet.ok && dictFromNet.body) console.debug(msg)
     else throw new Error(msg)
     // (clone because Response body can only be read once per request)
-    await response2lines(dictFromNet.clone());  // update the target with this response
+    const dictForCache = dictFromNet.clone()
+    await response2lines(dictFromNet, progCb);  // update the target with this response
     // don't store the response in cache until we know it was processed without error
-    (await caches.open(DB_CACHE_NAME)).put(DB_URL, dictFromNet)  // save the response to the cache
+    (await caches.open(DB_CACHE_NAME)).put(DB_URL, dictForCache)  // save the response to the cache
   }
 
   // Check if the dictionary is in the cache.
   const dictFromCache = await (await caches.open(DB_CACHE_NAME)).match(DB_URL)
   if (dictFromCache) {
     console.debug('The dictionary data is in the cache, using that first, and will check for update in background.')
+    // Schedule the dictionary update check for background execution.
     setTimeout(async () => {
       if (await doesDictNeedUpdate()) {
         console.debug('Dictionary needs update, starting background update.')
+        const m :MessageType = { type: 'dict-upd', status: 'loading' }
+        postMessage(m)
         try {
           // Note this will "hot swap" the dictionary data into the array holding the lines.
-          await getDictFromNet()
-          postMessage('dictionary_updated', window.origin)
+          await getDictFromNet(false)
+          const m :MessageType = { type: 'dict-upd', status: 'done' }
+          postMessage(m)
         }
         catch (error) { console.warn('Failed to get dictionary update.', error) }
       }
       else console.debug('Dictionary doesn\'t appear to need an update.')
     }, 500)
     // This may throw an error, so call it last.
-    await response2lines(dictFromCache)
+    await response2lines(dictFromCache, true)
   }
   else {
     console.debug('The dictionary data is not in the cache, fetching it now.')
@@ -140,6 +187,6 @@ export async function loadDict(target :string[]): Promise<void> {
     // (the only goal is fetching the version info from the network, so we don't care about the return value)
     setTimeout(doesDictNeedUpdate, 500)
     // This may throw an error, so call it last.
-    await getDictFromNet()
+    await getDictFromNet(true)
   }
 }

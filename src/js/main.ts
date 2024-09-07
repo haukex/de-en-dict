@@ -27,6 +27,7 @@ import {initInputFieldKeys} from './keyboard'
 import {initScrollTop} from './scroll-top'
 import {result2tbody} from './render'
 import {searchDict} from './dict-search'
+import {isMessage} from './types'
 import {initFlags} from './flags'
 import {loadDict} from './dict-load'
 import {assert} from './utils'
@@ -54,16 +55,21 @@ let dictCallback :(()=>void)|null
 loadDict(dictLines)
   .catch(error => dictError = error ? error : 'unknown error')
   .finally(() => { if (dictCallback) dictCallback() })
-//TODO: handle the 'dictionary_updated' message sent by dictLoad on asynchronous dict update
 
 // when the HTML page has finished loading:
 window.addEventListener('DOMContentLoaded', async () => {
   // get a few HTML elements from the page that we need
   const search_term = document.getElementById('search-term')
   const result_table = document.getElementById('result-table')
-  const result_count = document.getElementById('result-count')
+  const dict_status = document.getElementById('dict-status')
+  const dict_upd_status = document.getElementById('dict-upd-status')
+  const search_status = document.getElementById('search-status')
   const no_results = document.getElementById('no-results')
-  assert( search_term instanceof HTMLInputElement && result_table && result_count && no_results )
+  const more_buttons = document.getElementById('more-buttons')
+  const dict_prog_div = document.getElementById('dict-prog-div')
+  const dict_progress = document.getElementById('dict-progress')
+  assert( search_term instanceof HTMLInputElement && result_table && dict_status && dict_upd_status && search_status && no_results
+    && more_buttons && dict_prog_div && dict_progress )
   const orig_title_text = document.title
 
   // utility function to clear the results table
@@ -72,6 +78,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     document.querySelectorAll('tbody.result').forEach((elem) => elem.remove())
     // ensure all popups get hidden (apparently needed in some browsers?)
     closeAllPopups()
+    // clear status
+    search_status.innerText = ''
+    more_buttons.replaceChildren()
   }
 
   // in doSearch below, we highlight the search term red for one character searches.
@@ -80,9 +89,11 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // this is our handler for running the search:
   let prevWhat = 'Something the user is really unlikely to enter on their own by chance, so after initialization the first search is always performed.'
-  const doSearch = (raw_what: string, updateHash :boolean) => {
+  const doSearch = (raw_what: string, fromInputNotUrl :boolean) => {
     const what = cleanSearchTerm(raw_what)
-    if ( what===prevWhat ) return
+    // updating the hash always forces a search:
+    // (for example, this is important if the hash was changed during the dictionary load for some reason)
+    if ( fromInputNotUrl && what===prevWhat ) return
     prevWhat = what
 
     if (what.length==1) {
@@ -94,7 +105,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     // update page title with search term
     document.title = what.length ? `${orig_title_text}: ${what}` : orig_title_text
-    if (updateHash) {
+    if (fromInputNotUrl) {  // the term came from the input box, not hash, so update the hash
       const newHash = `#q=${encodeURIComponent(what)}`
       if ( window.location.hash !== newHash )
         window.history.pushState(null, '', newHash)
@@ -107,8 +118,6 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     // there were no results
     if (!matches.length) {
-      result_count.innerText = 'No matches found (' + ( dictLines.length
-        ? `dictionary holds ${dictLines.length} entries).` : 'dictionary has not loaded).' )
       no_results.classList.remove('d-none')
       return
     }
@@ -137,16 +146,18 @@ window.addEventListener('DOMContentLoaded', async () => {
         }
         catch (error) { console.error(error) }
       })
-      // update the text below the search box
+
+      // update the status bar and "more" buttons
+      more_buttons.replaceChildren()
       if (displayedMatches<matches.length) {
-        result_count.innerText = `Found ${matches.length} matches, showing the first ${displayedMatches}.`
+        search_status.innerText = `Found ${matches.length} matches, showing the first ${displayedMatches}.`
         // we haven't shown all results, make buttons to show more
         const make_btn_more = (howMany :number) => {
           const btn_more = document.createElement('button')
           btn_more.classList.add('btn-more')
           btn_more.innerText = `Show ${howMany} More`
           btn_more.addEventListener('click', () => renderMatches(end, end+howMany) )
-          result_count.appendChild(btn_more)
+          more_buttons.appendChild(btn_more)
         }
         if ( matches.length-displayedMatches < 50 )
           make_btn_more(matches.length-displayedMatches)
@@ -159,7 +170,8 @@ window.addEventListener('DOMContentLoaded', async () => {
         }
       }
       else
-        result_count.innerText = `Showing all ${matches.length} matches.`
+        search_status.innerText = `Showing all ${matches.length} matches.`
+
     } // end of renderMatches
 
     // render the first chunk of results
@@ -211,6 +223,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     const tbody = result2tbody(randLine)
     result_table.appendChild(tbody)
     addTitleTooltips(tbody.querySelectorAll('abbr'))
+    search_status.innerText = 'Showing a random entry.'
   })
 
   // initialize various things
@@ -219,11 +232,38 @@ window.addEventListener('DOMContentLoaded', async () => {
   initFlags()
   initPopups()
 
+  // handle background progress updates from the dictionary loader
+  window.addEventListener('message', event => {
+    if (isMessage(event.data)) {
+      if (event.data.type === 'dict-load') {
+        dict_progress.setAttribute('value', event.data.percent.toString())
+        dict_progress.setAttribute('max', '100')
+        dict_progress.innerText = event.data.percent.toFixed(1)+'%'
+        if (event.data.percent<100) {
+          dict_status.innerText = 'The dictionary is loading, please wait...'
+          dict_prog_div.classList.remove('d-none')
+        }
+        else
+          dict_prog_div.classList.add('d-none')
+      }
+      else if (event.data.type === 'dict-upd') {
+        if (event.data.status === 'loading')
+          dict_upd_status.innerText = '(Updating in background...)'
+        else {
+          dict_upd_status.innerText = ''
+          if (event.data.status === 'done')
+            dict_status.innerText = `Dictionary holds ${dictLines.length} entries (updated in background).`
+        }
+      }
+    }
+  })
+
   // what happens when the dictionary loads or a load error occurs:
   dictCallback = () => {
     if (dictLines.length) {
+      dict_status.innerText = `Dictionary holds ${dictLines.length} entries.`
       search_term.removeAttribute('disabled')
-      // Trigger a search upon loading
+      // Trigger a search upon loading (the input field was disabled until now)
       searchFromUrl()
       // Put the focus on the input field
       search_term.focus()
@@ -236,6 +276,8 @@ window.addEventListener('DOMContentLoaded', async () => {
       assert(error_log)
       error_log.innerText = navigator.userAgent + '\n' + GIT_ID + '\n' + ( dictError ? dictError : 'unknown error' )
       load_fail.classList.remove('d-none')
+      dict_status.innerText = 'Dictionary load failure! See error message above.'
+      dict_prog_div.classList.add('d-none')
     }
   }
   // call the callback immediately if the dict has already loaded by now

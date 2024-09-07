@@ -50,7 +50,7 @@ details ul, details ol {
   width: 100%;
 }
 .btn-more {
-  margin-left: 1rem;
+  margin: 0.5rem 0.5rem 0.5rem 1rem;
 }
 #btn-scroll-top {
   position: fixed;
@@ -96,6 +96,7 @@ details ul, details ol {
 #result-table {
   width: 100%;
   border: 1px solid var(--border);
+  margin-bottom: 0.5rem;
 }
 #result-table th {
   text-align: center;
@@ -138,6 +139,20 @@ tbody.result tr:not(:first-child) td {
   font-style: italic;
   padding: 1rem 0.5rem;
   font-size: 1.15rem;
+}
+#result-table tfoot {
+  border-top: 1px solid var(--border);
+}
+#result-table tfoot td {
+  font-style: italic;
+  color: var(--text-light);
+  padding: 0.5rem 0.7rem;
+}
+#dict-prog-div {
+  margin-top: 1rem;
+}
+#more-buttons {
+  margin-bottom: 2rem;
 }
 
 /* custom classes for feedback icon */
