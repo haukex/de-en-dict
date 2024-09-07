@@ -21,11 +21,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-export type MessageType =
-    { type: 'dict-prog', percent :number }
-  | { type: 'dict-upd',  status :'loading'|'done' }
+// We need to trick TypeScript into realizing that `self` isn't a `Window` in this file.
+// eslint-disable-next-line no-var
+declare var self: DedicatedWorkerGlobalScope
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function isMessage(obj :any): obj is MessageType {
-  return 'type' in obj && ( obj.type === 'dict-prog' || obj.type === 'dict-upd' )
-}
+export {}  // this dummy is needed as long as there are no `import`s
+
+self.addEventListener('message', event => {
+  //TODO: this is just a dummy
+  console.debug(`Worker Rx: ${event.data}`)
+  postMessage(`Replying to ${event.data}`)
+})

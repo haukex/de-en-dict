@@ -25,10 +25,8 @@ import {DB_URL, DB_VER_URL, DB_CACHE_NAME} from './global'
 import {MessageType} from './types'
 import {assert} from './utils'
 
-type ProgressCb = (percent :number)=>void
-
 class ProgressTransformer extends TransformStream<Uint8Array, Uint8Array> {
-  constructor(totalBytes :number, callback :ProgressCb, intervalMs :number = 100) {
+  constructor(totalBytes :number, callback :(percent :number)=>void, intervalMs :number = 100) {
     let curBytes = 0
     let nextUpdateTimeMs = new Date().getTime() + intervalMs
     super({
@@ -129,7 +127,7 @@ export async function loadDict(target :string[]): Promise<void> {
     const rawCl = resp.headers.get('Content-Length')
     const rs = rawCl && progCb
       ? resp.body.pipeThrough(new ProgressTransformer(parseInt(rawCl), percent => {
-        const m :MessageType = { type: 'dict-load', percent: percent }
+        const m :MessageType = { type: 'dict-prog', percent: percent }
         postMessage(m)
       }))
       : resp.body

@@ -8,7 +8,7 @@ dist/index.html: lint src/index.html src/*/*.ts package*.json src/*/tsconfig.jso
 .PHONY: lint
 lint:
 	cd src/js && npx tsc --noEmit
-	cd src/sw && npx tsc --noEmit
+	cd src/workers && npx tsc --noEmit
 	npx eslint src/*/*.ts
 
 .PHONY: clean

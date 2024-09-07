@@ -38,12 +38,19 @@ const GIT_ID = '$Id$'
 
 // register the Service Worker (if possible)
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register(new URL('../sw/sw.ts', import.meta.url), {type: 'module', scope: '/'}).then(
+  navigator.serviceWorker.register(new URL('../workers/sw.ts', import.meta.url), {type: 'module', scope: '/'}).then(
     (registration) => console.debug('SW register ok', registration),
     (error) => console.error('Service Worker registration failed', error),
   )
   navigator.serviceWorker.addEventListener('message', event => console.debug('SW:', event.data))
 } else console.warn('Service Workers are not supported')
+
+const worker = new Worker(new URL('../workers/worker.ts', import.meta.url), {type: 'module'})
+worker.addEventListener('message', event => {
+  //TODO: this is just a dummy
+  console.debug(`Rx from Worker: ${event.data}`)
+})
+worker.postMessage('Hello!')
 
 /* Start loading the dictionary right away.
  * Note `dictLines` not being empty indicates the dictionary has loaded,
@@ -239,25 +246,26 @@ window.addEventListener('DOMContentLoaded', async () => {
   dict_status.innerText = 'The dictionary is loading, please wait...'
   window.addEventListener('message', event => {
     // NOTE that messages may still arrive even after dictCallback!
-    if (isMessage(event.data)) {
-      if (event.data.type === 'dict-load') {
-        dict_progress.setAttribute('value', event.data.percent.toString())
-        dict_progress.setAttribute('max', '100')
-        dict_progress.innerText = event.data.percent.toFixed(1)+'%'
-        if (event.data.percent<100)
-          dict_prog_div.classList.remove('d-none')
-        else
-          dict_prog_div.classList.add('d-none')
+    if (!isMessage(event.data)) return
+    switch (event.data.type) {
+    case 'dict-prog':
+      dict_progress.setAttribute('value', event.data.percent.toString())
+      dict_progress.setAttribute('max', '100')
+      dict_progress.innerText = event.data.percent.toFixed(1)+'%'
+      if (event.data.percent<100)
+        dict_prog_div.classList.remove('d-none')
+      else
+        dict_prog_div.classList.add('d-none')
+      break
+    case 'dict-upd':
+      if (event.data.status === 'loading')
+        dict_upd_status.innerText = '(Updating in background...)'
+      else {
+        dict_upd_status.innerText = ''
+        if (event.data.status === 'done')
+          dict_status.innerText = `Dictionary holds ${dictLines.length} entries (updated in background).`
       }
-      else if (event.data.type === 'dict-upd') {
-        if (event.data.status === 'loading')
-          dict_upd_status.innerText = '(Updating in background...)'
-        else {
-          dict_upd_status.innerText = ''
-          if (event.data.status === 'done')
-            dict_status.innerText = `Dictionary holds ${dictLines.length} entries (updated in background).`
-        }
-      }
+      break
     }
   })
 
