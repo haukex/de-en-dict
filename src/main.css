@@ -169,6 +169,9 @@ tbody.result tr:not(:first-child) td {
   text-decoration: none;
   opacity: 50%;
 }
+.feedback-thing a>span::after {
+  content: '✉️';
+}
 .feedback-thing a:hover {
   opacity: 100%;
 }

@@ -130,8 +130,6 @@ function initSelectionTools() {
     // something was selected (we only handle simple selections with one range)
     if ( selection && selection.rangeCount==1 ) {
       const text = selection.toString()
-        // remove the feedback icon in case the user selected it
-        .replaceAll(/[\uFE0F\u2709]/g,'')
         // normalize whitespace
         .replaceAll(/\s+/g,' ').trim()
       const range = selection.getRangeAt(0)

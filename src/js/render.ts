@@ -58,7 +58,7 @@ export function result2tbody (dictLine :string) {
   const fbLink = document.createElement('a')
   fbLink.setAttribute('title', 'Send Feedback Email')
   fbLink.setAttribute('href', fbHref)
-  fbLink.innerText = '✉️'
+  fbLink.appendChild(document.createElement('span'))  // icon is injected by CSS here
   fbIcon.appendChild(fbLink)
 
   // each result is contained in a <tbody>
