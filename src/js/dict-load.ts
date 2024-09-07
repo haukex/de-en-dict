@@ -163,6 +163,10 @@ export async function loadDict(target :string[]): Promise<void> {
   if (dictFromCache) {
     console.debug('The dictionary data is in the cache, using that first, and will check for update in background.')
     // Schedule the dictionary update check for background execution.
+    /* If there was a reliable way to detect metered connections, the update check could be skipped here.
+     * See https://developer.mozilla.org/en-US/docs/Web/API/NetworkInformation
+     * but see also the various discussions at https://github.com/WICG/netinfo/issues?q=metered
+     * and the relaunch attempt at https://github.com/tomayac/netinfo/blob/relaunch/README.md */
     setTimeout(async () => {
       if (await doesDictNeedUpdate()) {
         console.debug('Dictionary needs update, starting background update.')

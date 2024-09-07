@@ -72,6 +72,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     && more_buttons && dict_prog_div && dict_progress )
   const orig_title_text = document.title
 
+  // should already be set in the HTML, but let's be paranoid
+  search_term.setAttribute('disabled','disabled')
+
   // utility function to clear the results table
   const clearResults = () => {
     // remove all existing results

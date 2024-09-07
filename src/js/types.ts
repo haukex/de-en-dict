@@ -27,5 +27,5 @@ export type MessageType =
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isMessage(obj :any): obj is MessageType {
-  return Object.hasOwn(obj, 'type') && ( obj.type === 'dict-load' || obj.type === 'dict-upd' )
+  return 'type' in obj && ( obj.type === 'dict-load' || obj.type === 'dict-upd' )
 }
