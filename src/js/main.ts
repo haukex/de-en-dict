@@ -233,16 +233,16 @@ window.addEventListener('DOMContentLoaded', async () => {
   initPopups()
 
   // handle background progress updates from the dictionary loader
+  dict_status.innerText = 'The dictionary is loading, please wait...'
   window.addEventListener('message', event => {
+    // NOTE that messages may still arrive even after dictCallback!
     if (isMessage(event.data)) {
       if (event.data.type === 'dict-load') {
         dict_progress.setAttribute('value', event.data.percent.toString())
         dict_progress.setAttribute('max', '100')
         dict_progress.innerText = event.data.percent.toFixed(1)+'%'
-        if (event.data.percent<100) {
-          dict_status.innerText = 'The dictionary is loading, please wait...'
+        if (event.data.percent<100)
           dict_prog_div.classList.remove('d-none')
-        }
         else
           dict_prog_div.classList.add('d-none')
       }
