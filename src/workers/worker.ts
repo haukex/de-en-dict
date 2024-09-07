@@ -27,6 +27,8 @@ declare var self: DedicatedWorkerGlobalScope
 
 export {}  // this dummy is needed as long as there are no `import`s
 
+if (module.hot) module.hot.accept()  // for the parcel development environment
+
 self.addEventListener('message', event => {
   //TODO: this is just a dummy
   console.debug(`Worker Rx: ${event.data}`)
