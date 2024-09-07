@@ -61,6 +61,11 @@ details ul, details ol {
   color: var(--text-light);
   opacity: 0.9;
 }
+a.busy-link {
+  color: grey;
+  cursor: wait;
+  text-decoration: none;
+}
 
 /* custom classes for flag icons */
 .flag-icon {

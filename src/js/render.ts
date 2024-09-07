@@ -23,6 +23,7 @@
 
 import {default as abbreviations} from './abbreviations.json'
 import {wrapTextNodeMatches} from './utils'
+import {ANNOTATION_PAT} from './global'
 
 // a couple of user-settable variables
 const FEEDBACK_URL = 'mailto:beolingus@tu-chemnitz.de'  // as requested by Frank Richter
@@ -69,11 +70,12 @@ export function result2tbody (dictLine :string) {
   des.forEach((de, i) => {
     // generate the <tr> with the two <td> children
     const tr = document.createElement('tr');
-    [de, ens[i] as string].forEach((ent) => {
+    [de, ens[i] as string].forEach((ent, li) => {
       const td = document.createElement('td')
+      td.setAttribute('lang', li?'en':'de')  // note this is also used by the selection popup
       td.innerText = ent.trim()
-      // we want to display annotations like `{f}` or `[...]` in different formatting
-      wrapTextNodeMatches(td, '\\{[^}]+\\}|\\[[^\\]]+\\]', (match) => {
+      // we want to display annotations in different formatting
+      wrapTextNodeMatches(td, ANNOTATION_PAT, (match) => {
         if (Object.hasOwn(abbreviations, match)) {
           const abb = abbreviations[match as keyof typeof abbreviations]
           const e = document.createElement('abbr')

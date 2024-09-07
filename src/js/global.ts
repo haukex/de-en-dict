@@ -33,3 +33,7 @@ export const DB_VER_URL = 'https://ftp.tu-chemnitz.de/pub/Local/urz/ding/de-en-d
 /* The name of the cache in which to store the dictionary.
  * Note the main script takes care of checking for cache freshness. */
 export const DB_CACHE_NAME = 'DeEnDict'
+
+/** A regexp pattern for annotations like `{f}` or `[...]` */
+// NOTE this is used in wrapTextNodeMatches, see that function for restrictions on the regexp!
+export const ANNOTATION_PAT = '\\{[^}]+\\}|\\[[^\\]]+\\]'

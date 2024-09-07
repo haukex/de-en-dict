@@ -22,6 +22,7 @@
  */
 
 import {computePosition, autoUpdate, shift, flip, limitShift, offset} from '@floating-ui/dom'
+import {ANNOTATION_PAT} from './global'
 import {assert} from './utils'
 
 /* Handles the "Selection Tools" Popup and Tooltips for Elements with "title"s (such as <abbr>). */
@@ -29,6 +30,9 @@ import {assert} from './utils'
 let cleanupSelectionTools :null|(()=>void) = null
 let cleanupTitleTooltip :null|(()=>void) = null
 let titleTooltipSource :Node|null = null
+
+const canSpeak = 'speechSynthesis' in window
+const ANNOTATION_RE = new RegExp(ANNOTATION_PAT, 'g')
 
 function closeTitleTooltip() {
   if (cleanupTitleTooltip) {
@@ -93,9 +97,28 @@ function initSelectionTools() {
   const sel_tools = document.getElementById('sel-tools')
   const sel_tools_search = document.getElementById('sel-tools-search')
   const sel_tools_feedback = document.getElementById('sel-tools-feedback')
+  const sel_tools_speak = document.getElementById('sel-tools-speak')
   const sel_tools_close = document.getElementById('sel-tools-close')
   const result_table = document.getElementById('result-table')
-  assert( sel_tools && sel_tools_search && sel_tools_feedback && sel_tools_close && result_table )
+  assert( sel_tools && sel_tools_search && sel_tools_feedback && sel_tools_speak && sel_tools_close && result_table )
+
+  let utterance = new SpeechSynthesisUtterance('This is an example of speech synthesis.')
+  utterance.lang = 'en'
+  sel_tools_speak.addEventListener('click', event => {
+    event.preventDefault()
+    if (!canSpeak) return  // this shouldn't happen
+    // if paused (which I'm not sure is possible here?), cancel whatever was paused
+    if (window.speechSynthesis.paused) {
+      window.speechSynthesis.cancel()
+      // it's unclear to me from the documentation whether cancel() unpauses, so let's be explicit:
+      window.speechSynthesis.resume()
+    }
+    // if the speech synthesis is currently not busy, speak
+    if (!( window.speechSynthesis.speaking && !window.speechSynthesis.paused || window.speechSynthesis.pending )) {
+      window.speechSynthesis.speak(utterance)
+      sel_tools_speak.classList.add('busy-link')
+    }
+  })
 
   sel_tools_close.addEventListener('click', closeSelectionTools)
   document.addEventListener('selectionchange', () => {
@@ -119,6 +142,7 @@ function initSelectionTools() {
         while ( parent_elem && !(parent_elem instanceof HTMLElement) )
           parent_elem = parent_elem.parentNode
         sel_tools_feedback.classList.add('d-none')  // hide by default (gets shown below if applicable)
+        sel_tools_speak.classList.add('d-none')
         // figure out if the selection spans only one row
         if ( parent_elem ) {
           // at this point we know parent_elem must be an HTMLElement
@@ -130,6 +154,20 @@ function initSelectionTools() {
             if (fb) {
               sel_tools_feedback.setAttribute('href', fb)
               sel_tools_feedback.classList.remove('d-none')
+            }
+          }
+          if (canSpeak) {
+            // find the closest td
+            const td = parent_elem.closest('#result-table tbody.result td')
+            if (td) {
+              const lang = td.getAttribute('lang')
+              if (lang) {
+                sel_tools_speak.classList.remove('d-none')
+                utterance = new SpeechSynthesisUtterance(text.replaceAll(ANNOTATION_RE, ''))
+                utterance.lang = lang
+                utterance.addEventListener('end',   () => sel_tools_speak.classList.remove('busy-link') )
+                utterance.addEventListener('error', () => sel_tools_speak.classList.remove('busy-link') )
+              }
             }
           }
         }
