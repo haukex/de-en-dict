@@ -21,6 +21,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+/* Utility functions and types common to both the main thread and the web workers */
+
+export function assert(condition: unknown, msg?: string): asserts condition {
+  if (!condition) throw new Error(msg)
+}
+
 export type MessageType =
     { type: 'dict-prog', percent :number }
   | { type: 'dict-upd',  status :'loading'|'done' }

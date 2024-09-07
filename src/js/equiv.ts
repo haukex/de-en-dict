@@ -22,7 +22,7 @@
  */
 
 import escapeStringRegexp from 'escape-string-regexp'
-import {assert} from './utils'
+import {assert} from './common'
 //import {default as alphabet} from './alphabet.json'
 
 /**

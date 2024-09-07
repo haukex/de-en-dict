@@ -23,7 +23,7 @@
 
 import {computePosition, autoUpdate, shift, flip, limitShift, offset} from '@floating-ui/dom'
 import {ANNOTATION_PAT} from './global'
-import {assert} from './utils'
+import {assert} from './common'
 
 /* Handles the "Selection Tools" Popup and Tooltips for Elements with "title"s (such as <abbr>). */
 

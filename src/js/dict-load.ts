@@ -22,8 +22,7 @@
  */
 
 import {DB_URL, DB_VER_URL, DB_CACHE_NAME} from './global'
-import {MessageType} from './types'
-import {assert} from './utils'
+import {MessageType, assert} from './common'
 
 class ProgressTransformer extends TransformStream<Uint8Array, Uint8Array> {
   constructor(totalBytes :number, callback :(percent :number)=>void, intervalMs :number = 100) {

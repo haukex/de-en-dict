@@ -24,13 +24,12 @@
 import {initPopups, addTitleTooltips, closeAllPopups} from './popups'
 import {wrapTextNodeMatches, cleanSearchTerm} from './utils'
 import {initInputFieldKeys} from './keyboard'
+import {assert, isMessage} from './common'
 import {initScrollTop} from './scroll-top'
 import {result2tbody} from './render'
 import {searchDict} from './dict-search'
-import {isMessage} from './types'
 import {initFlags} from './flags'
 import {loadDict} from './dict-load'
-import {assert} from './utils'
 
 if (module.hot) module.hot.accept()  // for the parcel development environment
 

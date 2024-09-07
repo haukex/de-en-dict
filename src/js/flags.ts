@@ -23,7 +23,7 @@
 
 /* This just provides the code for the flag icon switching. */
 
-import {assert} from './utils'
+import {assert} from './common'
 
 interface IFlagList { de: string[], en: string[] }
 
