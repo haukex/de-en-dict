@@ -46,7 +46,6 @@ export type MessageType =
   | { type: 'dict-upd', status :'loading'|'done' }
   | { type: 'search', what :string }
   | { type: 'search-prog', percent :number }
-  | { type: 'search-err', error ?:Error|unknown }
   | { type: 'results', whatPat :string, matches :string[] }
   | { type: 'status-req' }
   | { type: 'worker-status', state :WorkerState, error ?:Error|unknown }

@@ -27,7 +27,7 @@ declare var self: DedicatedWorkerGlobalScope
 
 import {loadDict} from './dict-load'
 import {searchDict} from './dict-search'
-import {MessageType, isMessage, WorkerState, assert} from '../js/common'
+import {MessageType, isMessage, WorkerState} from '../js/common'
 
 if (module.hot) module.hot.accept()  // for the parcel development environment
 
@@ -42,18 +42,15 @@ self.addEventListener('message', event => {
     postMessage(m)
   }
   else if ( state === WorkerState.Ready && event.data.type === 'search' ) {
+    // searchDict sends its own progress reports
     const [whatPat, matches] = searchDict(dictLines, event.data.what)
-    const m :MessageType = {
-      type: 'results', whatPat: whatPat,
-      matches: matches.map( i=>{
-        assert(dictLines[i])
-        return dictLines[i]
-      }) }
+    const m :MessageType = { type: 'results', whatPat: whatPat, matches: matches }
     postMessage(m)
   }
 })
 
 try {
+  // loadDict sends its own progress reports
   await loadDict(dictLines)
   state = WorkerState.Ready
 }

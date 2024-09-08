@@ -22,14 +22,23 @@
  */
 
 import {makeSearchPattern} from './equiv'
+import {MessageType} from '../js/common'
+
+/* Let's say a slow search is 10s to search 200,000 lines, that means 20,000 lines/s.
+ * A report every 100ms would means that we should send a report every 2000 lines.
+ * Increasing the value below means more progress reports for *really* slow searches,
+ * so more user-friendly, but decreasing the value means faster searches overall. */
+const CHECK_INTERVAL_LINES = 500
+const INITIAL_REPORT_MS = 500
+const REPORT_INTERVAL_MS = 100
 
 /** This function actually performs the dictionary search.
  *
  * @param what The search term.
  * @returns A tuple consisting of the search pattern turned into a regex (string, via `makeSearchPattern`),
- *  and an array of indices pointing into the matches in the `dictLines` array.
+ *  and an array of matches from the `dictLines` array.
  */
-export function searchDict(dictLines :string[], what :string): [string, number[]] {
+export function searchDict(dictLines :string[], what :string): [string, string[]] {
   // if the search term or dictionary are empty, don't produce any results
   if (!what.length || !dictLines.length) return ['', []]
 
@@ -59,24 +68,49 @@ export function searchDict(dictLines :string[], what :string): [string, number[]
   //console.debug(scoreRes)
 
   const searchStartMs = new Date().getTime()
+  let linesUntilCheck = CHECK_INTERVAL_LINES
+  let searchNextReportMs = searchStartMs + INITIAL_REPORT_MS
+  let sentLt100Report = false
 
   // this code actually performs the search
-  // first build an array of tuples, each element being the matching line's index and its score
-  const scoredMatches :[number,number][] = (
-    // apply the regex to each dictionary line, returning the line's index if it matches
-    dictLines.flatMap((line, i) => line.match(whatRe) ? [i] : [])
-      // for each match, store the line's index...
-      .map(li => [li,
+  // first build an array of tuples, each element being the matching line and its score
+  const scoredMatches :[string,number][] = []
+  dictLines.forEach( (line, li) => {
+    // apply the regex to each dictionary line
+    if (line.match(whatRe))
+      // for each match, store the line...
+      scoredMatches.push( [line,
         // ... and match it against each scoring regex, giving one point per match, and summing the scores
-        scoreRes.map((re):number=>dictLines[li]?.match(re)?1:0).reduce((a,b)=>a+b,0) ]) )
+        scoreRes.map((re):number=>line.match(re)?1:0).reduce((a,b)=>a+b,0) ])
+
+    // see if it's time to check how long we've been searching
+    // (I assume a subtraction every iteration is faster than getting the current time each iteration)
+    if ( ! --linesUntilCheck ) {
+      linesUntilCheck = CHECK_INTERVAL_LINES
+      // check how long we've been searching
+      const nowMs = new Date().getTime()
+      if ( nowMs >= searchNextReportMs ) {
+        searchNextReportMs = nowMs + REPORT_INTERVAL_MS
+        // interval has passed, fire off a progress report
+        const percent = 100*(li+1)/dictLines.length
+        const m :MessageType = { type: 'search-prog', percent: percent }
+        postMessage(m)
+        sentLt100Report = percent<100
+      }
+    }
+  })
   // sort the scored matches (note sort should be stable in modern JS)
   scoredMatches.sort((a,b) => b[1]-a[1])
   //console.debug(scoredMatches)
   // now that we've sorted, we can strip the scores out of the returned values
-  // so the `matches` array stores indices into the `dictLines` array for each matching line
-  const matches :number[] = scoredMatches.map(([li, _score]) => li)
+  const matches :string[] = scoredMatches.map(([line, _score]) => line)
 
   console.debug(`Search for ${whatRe} found ${matches.length} matches in ${new Date().getTime()-searchStartMs}ms.`)
+  // if we sent a progress report <100% previously, make sure to send a 100% one
+  if (sentLt100Report) {
+    const m :MessageType = { type: 'search-prog', percent: 100 }
+    postMessage(m)
+  }
 
   return [whatPat, matches]
 }
