@@ -114,32 +114,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     search_progress.classList.add('d-none')
   }
 
-  // this is our handler for running the search:
-  let prevWhat = 'Something the user is really unlikely to enter on their own by chance, so after initialization the first search is always performed.'
-  const doSearch = (raw_what: string, fromInputNotUrl :boolean) => {
-    if ( state !== MainState.Ready ) return
-
-    const what = cleanSearchTerm(raw_what)
-    // updating the hash always forces a search:
-    // (for example, this is important if the hash was changed during the dictionary load for some reason)
-    if ( fromInputNotUrl && what===prevWhat ) return
-    prevWhat = what
-
-    // update page title with search term
-    document.title = what.length ? `${orig_title_text}: ${what}` : orig_title_text
-    if (fromInputNotUrl) {  // the term came from the input box, not hash, so update the hash
-      const newHash = `#q=${encodeURIComponent(what)}`
-      if ( window.location.hash !== newHash )
-        window.history.pushState(null, '', newHash)
-    }
-
-    // request the search from our worker thread
-    updateState(MainState.Searching)
-    timerId = window.setTimeout(() => updateState(MainState.Error), SEARCH_TIMEOUT_MS)
-    const m :MessageType = { type: 'search', what: what }
-    worker.postMessage(m)
-  }
-
   // handler for search results received from worker
   const gotSearchResults = (whatPat :string, matches :string[]) => {
     clearResults()
@@ -225,6 +199,41 @@ window.addEventListener('DOMContentLoaded', async () => {
     doSearch(what, false)
   }
 
+  // handler for when we get the random entry back
+  const gotRandLine = (randLine :string) => {
+    clearResults()
+    const tbody = result2tbody(randLine)
+    result_table.appendChild(tbody)
+    addTitleTooltips(tbody.querySelectorAll('abbr'))
+    search_status.innerText = 'Showing a random entry.'
+  }
+
+  // this is our handler for running the search:
+  let prevWhat = 'Something the user is really unlikely to enter on their own by chance, so after initialization the first search is always performed.'
+  const doSearch = (raw_what: string, fromInputNotUrl :boolean) => {
+    if ( state !== MainState.Ready ) return
+
+    const what = cleanSearchTerm(raw_what)
+    // updating the hash always forces a search:
+    // (for example, this is important if the hash was changed during the dictionary load for some reason)
+    if ( fromInputNotUrl && what===prevWhat ) return
+    prevWhat = what
+
+    // update page title with search term
+    document.title = what.length ? `${orig_title_text}: ${what}` : orig_title_text
+    if (fromInputNotUrl) {  // the term came from the input box, not hash, so update the hash
+      const newHash = `#q=${encodeURIComponent(what)}`
+      if ( window.location.hash !== newHash )
+        window.history.pushState(null, '', newHash)
+    }
+
+    // request the search from our worker thread
+    updateState(MainState.Searching)
+    timerId = window.setTimeout(() => updateState(MainState.Error), SEARCH_TIMEOUT_MS)
+    const m :MessageType = { type: 'search', what: what }
+    worker.postMessage(m)
+  }
+
   // random entry link handler
   rand_entry_link.addEventListener('click', event => {
     event.preventDefault()
@@ -234,14 +243,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     const m :MessageType = { type: 'get-rand' }
     worker.postMessage(m)
   })
-  // handler for when we get the random entry back
-  const gotRandLine = (randLine :string) => {
-    clearResults()
-    const tbody = result2tbody(randLine)
-    result_table.appendChild(tbody)
-    addTitleTooltips(tbody.querySelectorAll('abbr'))
-    search_status.innerText = 'Showing a random entry.'
-  }
 
   // Helper to run the search from the input field
   const searchFromInput = () => doSearch(search_term.value, true)
@@ -353,7 +354,10 @@ window.addEventListener('DOMContentLoaded', async () => {
       setTimeout(timeoutHandler, INIT_TIMEOUT_MS)
       const m :MessageType = { type: 'status-req' }
       worker.postMessage(m)
-    } else updateState(MainState.Error)
+    } else {
+      error_log.innerText = navigator.userAgent + '\n' + GIT_ID + '\n' + 'Timed out waiting for response from worker.'
+      updateState(MainState.Error)
+    }
   }
   updateState(MainState.AwaitingDict)
   timerId = window.setTimeout(timeoutHandler, INIT_TIMEOUT_MS)
