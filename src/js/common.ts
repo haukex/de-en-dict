@@ -27,9 +27,29 @@ export function assert(condition: unknown, msg?: string): asserts condition {
   if (!condition) throw new Error(msg)
 }
 
+export enum MainState {
+  Init,
+  AwaitingDict,
+  Error,
+  Ready,
+  Searching,
+}
+
+export enum WorkerState {
+  LoadingDict,
+  Error,
+  Ready,
+}
+
 export type MessageType =
     { type: 'dict-prog', percent :number }
-  | { type: 'dict-upd',  status :'loading'|'done' }
+  | { type: 'dict-upd', status :'loading'|'done' }
+  | { type: 'search', what :string }
+  | { type: 'search-prog', percent :number }
+  | { type: 'search-err', error ?:Error|unknown }
+  | { type: 'results', whatPat :string, matches :string[] }
+  | { type: 'status-req' }
+  | { type: 'worker-status', state :WorkerState, error ?:Error|unknown }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isMessage(obj :any): obj is MessageType {

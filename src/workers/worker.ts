@@ -25,12 +25,39 @@
 // eslint-disable-next-line no-var
 declare var self: DedicatedWorkerGlobalScope
 
-export {}  // this dummy is needed as long as there are no `import`s
+import {loadDict} from './dict-load'
+import {searchDict} from './dict-search'
+import {MessageType, isMessage, WorkerState, assert} from '../js/common'
 
 if (module.hot) module.hot.accept()  // for the parcel development environment
 
+let state :WorkerState = WorkerState.LoadingDict
+const dictLines :string[] = []
+let dictError :Error|unknown = null
+
 self.addEventListener('message', event => {
-  //TODO: this is just a dummy
-  console.debug(`Worker Rx: ${event.data}`)
-  postMessage(`Replying to ${event.data}`)
+  if (!isMessage(event.data)) return
+  if ( event.data.type === 'status-req' ) {
+    const m :MessageType = { type: 'worker-status', state: state, error: dictError }
+    postMessage(m)
+  }
+  else if ( state === WorkerState.Ready && event.data.type === 'search' ) {
+    const [whatPat, matches] = searchDict(dictLines, event.data.what)
+    const m :MessageType = {
+      type: 'results', whatPat: whatPat,
+      matches: matches.map( i=>{
+        assert(dictLines[i])
+        return dictLines[i]
+      }) }
+    postMessage(m)
+  }
 })
+
+try {
+  await loadDict(dictLines)
+  state = WorkerState.Ready
+}
+catch (error) {
+  dictError = error ? error : 'unknown error'
+  state = WorkerState.Error
+}

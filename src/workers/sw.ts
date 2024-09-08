@@ -31,7 +31,7 @@ declare var self: ServiceWorkerGlobalScope
 // manifest is a list of the static resources that belong to the webapp
 // version is a hash calculated by parcel for the static resources
 import {manifest, version} from '@parcel/service-worker'
-import {DB_URL, DB_VER_URL, DB_CACHE_NAME} from '../js/global'
+import {DB_URL, DB_VER_URL, DB_CACHE_NAME} from './consts'
 
 if (module.hot) module.hot.accept()  // for the parcel development environment
 

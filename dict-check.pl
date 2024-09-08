@@ -51,7 +51,7 @@ my $DICT_FILE = catfile($FindBin::Bin, 'de-en.txt.gz');
 my $DICT_URL = 'https://ftp.tu-chemnitz.de/pub/Local/urz/ding/de-en-devel/de-en.txt.gz';
 my $ABBR_FILE = catfile($FindBin::Bin, 'src', 'js', 'abbreviations.json');
 my $ABBR_URL = 'https://raw.githubusercontent.com/Tekl/beolingus-deutsch-englisch/master/abbreviations.json';
-my $ALPHA_JSON = catfile($FindBin::Bin, 'src', 'js', 'alphabet.json');
+my $ALPHA_JSON = catfile($FindBin::Bin, 'src', 'workers', 'alphabet.json');
 
 sub mirror ($url, $file) {
     my $resp = HTTP::Tiny->new->mirror($url, $file);
