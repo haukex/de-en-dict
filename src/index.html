@@ -33,9 +33,18 @@
       <pre><code id="error-log">No errors yet.</code></pre>
     </div>
 
+    <div class="d-none notice danger" id="search-timeout">
+      <strong>⚠️&nbsp;The search timed out!</strong>
+      <hr>
+      If your computer is under heavy load, please reload the page to try again.
+      Otherwise, see <a href="https://github.com/haukex/de-en-dict?tab=readme-ov-file#troubleshooting" target="_blank">this link</a>
+      for potential troubleshooting steps.
+    </div>
+
     <p>
       <!-- Note it's important the input box is disabled by default! -->
       <input type="text" id="search-term" placeholder="🔍 Search" disabled>
+      <progress id="search-progress" max="100" class="d-none"></progress>
     </p>
     <figure><!-- for horiz scroll (simple.css) -->
       <table id="result-table">
@@ -62,7 +71,7 @@
               </div>
               <div id="dict-prog-div" class="d-none">
                 <label for="dict-progress">Dictionary download status:</label>
-                <progress id="dict-progress"></progress>
+                <progress id="dict-progress" max="100"></progress>
               </div>
             </td>
           </tr>

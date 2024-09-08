@@ -21,19 +21,19 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+import {assert, isMessage, MainState, MessageType, WorkerState} from './common'
 import {initPopups, addTitleTooltips, closeAllPopups} from './popups'
 import {wrapTextNodeMatches, cleanSearchTerm} from './utils'
 import {initInputFieldKeys} from './keyboard'
-import {assert, isMessage} from './common'
 import {initScrollTop} from './scroll-top'
 import {result2tbody} from './render'
-import {searchDict} from './dict-search'
 import {initFlags} from './flags'
-import {loadDict} from './dict-load'
 
 if (module.hot) module.hot.accept()  // for the parcel development environment
 
 const GIT_ID = '$Id$'
+const INIT_TIMEOUT_MS = 2000
+const SEARCH_TIMEOUT_MS = 2000
 
 // register the Service Worker (if possible)
 if ('serviceWorker' in navigator) {
@@ -44,28 +44,22 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.addEventListener('message', event => console.debug('SW:', event.data))
 } else console.warn('Service Workers are not supported')
 
-const worker = new Worker(new URL('../workers/worker.ts', import.meta.url), {type: 'module'})
-worker.addEventListener('message', event => {
-  //TODO: this is just a dummy
-  console.debug(`Rx from Worker: ${event.data}`)
-})
-worker.postMessage('Hello!')
+// variable for our state machine
+let state = MainState.Init
 
-/* Start loading the dictionary right away.
- * Note `dictLines` not being empty indicates the dictionary has loaded,
- * while `dictError` being a true value indicates there was an error loading the dictionary.
- * Also note that `loadDict()` may modify `dictLines` twice, see its documentation. */
-const dictLines :string[] = []
-let dictError :Error|unknown
-let dictCallback :(()=>void)|null
-loadDict(dictLines)
-  .catch(error => dictError = error ? error : 'unknown error')
-  .finally(() => { if (dictCallback) dictCallback() })
+// initialize the worker
+const worker = new Worker(new URL('../workers/worker.ts', import.meta.url), {type: 'module'})
 
 // when the HTML page has finished loading:
 window.addEventListener('DOMContentLoaded', async () => {
-  // get a few HTML elements from the page that we need
+  // make sure we're in the correct state (i.e. that this handler isn't called twice)
+  if ( state !== MainState.Init )
+    throw new Error(`DOMContentLoaded in state ${MainState[state]}`)
+
+  // get all of the HTML elements from the page that we need
   const search_term = document.getElementById('search-term')
+  const search_progress = document.getElementById('search-progress')
+  const search_timeout = document.getElementById('search-timeout')
   const result_table = document.getElementById('result-table')
   const dict_status = document.getElementById('dict-status')
   const dict_upd_status = document.getElementById('dict-upd-status')
@@ -74,12 +68,39 @@ window.addEventListener('DOMContentLoaded', async () => {
   const more_buttons = document.getElementById('more-buttons')
   const dict_prog_div = document.getElementById('dict-prog-div')
   const dict_progress = document.getElementById('dict-progress')
+  const rand_entry_link = document.getElementById('rand-entry-link')
+  const dict_load_fail = document.getElementById('dict-load-fail')
+  const error_log = document.getElementById('error-log')
   assert( search_term instanceof HTMLInputElement && result_table && dict_status && dict_upd_status && search_status && no_results
-    && more_buttons && dict_prog_div && dict_progress )
+    && more_buttons && dict_prog_div && dict_progress && search_progress && search_timeout && rand_entry_link && dict_load_fail && error_log )
   const orig_title_text = document.title
 
-  // should already be set in the HTML, but let's be paranoid
-  search_term.setAttribute('disabled','disabled')
+  // variables to keep state
+  let dictLinesLen = 0
+  let timerId :number
+
+  // updates the state and UI correspondingly
+  const updateState = (newState :MainState) => {
+    if ( newState === MainState.Ready ) {
+      search_term.removeAttribute('disabled')
+      rand_entry_link.classList.remove('busy-link')
+      search_term.focus()
+    }
+    else {
+      search_term.setAttribute('disabled','disabled')
+      rand_entry_link.classList.add('busy-link')
+    }
+    if ( newState === MainState.Error ) {
+      if ( state === MainState.AwaitingDict )
+        dict_load_fail.classList.remove('d-none')
+      else if ( state === MainState.Searching )
+        search_timeout.classList.remove('d-none')
+    }
+    search_progress.classList.add('d-none')
+    state = newState
+  }
+  // call this immediately (note the input box should already be disabled in HTML, but there are other things to update)
+  updateState(state)
 
   // utility function to clear the results table
   const clearResults = () => {
@@ -90,27 +111,19 @@ window.addEventListener('DOMContentLoaded', async () => {
     // clear status
     search_status.innerText = ''
     more_buttons.replaceChildren()
+    search_progress.classList.add('d-none')
   }
-
-  // in doSearch below, we highlight the search term red for one character searches.
-  // any user input in the field clears that:
-  search_term.addEventListener('input', () => search_term.classList.remove('danger') )
 
   // this is our handler for running the search:
   let prevWhat = 'Something the user is really unlikely to enter on their own by chance, so after initialization the first search is always performed.'
   const doSearch = (raw_what: string, fromInputNotUrl :boolean) => {
+    if ( state !== MainState.Ready ) return
+
     const what = cleanSearchTerm(raw_what)
     // updating the hash always forces a search:
     // (for example, this is important if the hash was changed during the dictionary load for some reason)
     if ( fromInputNotUrl && what===prevWhat ) return
     prevWhat = what
-
-    if (what.length==1) {
-      // NOTE initInputFieldKeys also removes 'danger'
-      // one-letter search terms take too long and cause the app to hang, for now we simply refuse them
-      search_term.classList.add('danger')
-      return
-    } else search_term.classList.remove('danger')
 
     // update page title with search term
     document.title = what.length ? `${orig_title_text}: ${what}` : orig_title_text
@@ -120,25 +133,25 @@ window.addEventListener('DOMContentLoaded', async () => {
         window.history.pushState(null, '', newHash)
     }
 
-    // actually run the search
-    const [whatPat, matches] = searchDict(dictLines, what)
+    // request the search from our worker thread
+    updateState(MainState.Searching)
+    timerId = window.setTimeout(() => updateState(MainState.Error), SEARCH_TIMEOUT_MS)
+    const m :MessageType = { type: 'search', what: what }
+    worker.postMessage(m)
+  }
 
+  // handler for search results received from worker
+  const gotSearchResults = (whatPat :string, matches :string[]) => {
     clearResults()
-
-    // there were no results
-    if (!matches.length) {
-      no_results.classList.remove('d-none')
-      return
-    }
-    else no_results.classList.add('d-none')  // there are matches
+    // check if there were any matches
+    no_results.classList.toggle('d-none', !!matches.length)
+    if (!matches.length) return
 
     // function for rendering matches, which we set up here, then call below
     let displayedMatches = 0  // holds the state between invocations of this function:
     const renderMatches = (start :number, end :number) => {
       // loop over the chunk of lines to be displayed
-      matches.slice(start, end).forEach((lineIndex) => {
-        const matchLine = dictLines[lineIndex]
-        assert(matchLine)
+      matches.slice(start, end).forEach((matchLine) => {
         try {  // especially result2tbody may throw errors
           const tbody = result2tbody(matchLine)
           // highlight the search term in the match
@@ -186,13 +199,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     // render the first chunk of results
     renderMatches(0, 50)
 
-  } // end of do_search
-
-  // Helper to run the search from the input field
-  const searchFromInput = () => doSearch(search_term.value, true)
-
-  // Install event listener for input field changes
-  search_term.addEventListener('change', searchFromInput)
+  } // end of gotSearchResults
 
   // Starts a search using a value in the URL hash, if any
   const searchFromUrl = () => {
@@ -217,23 +224,27 @@ window.addEventListener('DOMContentLoaded', async () => {
     search_term.value = what
     doSearch(what, false)
   }
-  // Install event listener for browser navigation updating the URL hash
-  window.addEventListener('hashchange', searchFromUrl)
 
   // random entry link handler
-  const rand_entry_link = document.getElementById('rand-entry-link')
-  assert(rand_entry_link)
   rand_entry_link.addEventListener('click', event => {
     event.preventDefault()
+    if ( state !== MainState.Ready ) return
+    updateState(MainState.Searching)
+    timerId = window.setTimeout(() => updateState(MainState.Error), SEARCH_TIMEOUT_MS)
+    const m :MessageType = { type: 'get-rand' }
+    worker.postMessage(m)
+  })
+  // handler for when we get the random entry back
+  const gotRandLine = (randLine :string) => {
     clearResults()
-    if (!dictLines.length) return
-    const randLine = dictLines[Math.floor(Math.random()*dictLines.length)]
-    assert(randLine)
     const tbody = result2tbody(randLine)
     result_table.appendChild(tbody)
     addTitleTooltips(tbody.querySelectorAll('abbr'))
     search_status.innerText = 'Showing a random entry.'
-  })
+  }
+
+  // Helper to run the search from the input field
+  const searchFromInput = () => doSearch(search_term.value, true)
 
   // initialize various things
   initInputFieldKeys(search_term, searchFromInput)
@@ -241,55 +252,111 @@ window.addEventListener('DOMContentLoaded', async () => {
   initFlags()
   initPopups()
 
-  // handle background progress updates from the dictionary loader
-  dict_status.innerText = 'The dictionary is loading, please wait...'
-  window.addEventListener('message', event => {
-    // NOTE that messages may still arrive even after dictCallback!
+  // Install event listener for browser navigation updating the URL hash
+  window.addEventListener('hashchange', searchFromUrl)
+
+  // Install event listener for input field changes
+  search_term.addEventListener('change', searchFromInput)
+
+  // set up the handler for messages we get from the worker
+  worker.addEventListener('message', event => {
     if (!isMessage(event.data)) return
-    switch (event.data.type) {
-    case 'dict-prog':
-      dict_progress.setAttribute('value', event.data.percent.toString())
-      dict_progress.setAttribute('max', '100')
-      dict_progress.innerText = event.data.percent.toFixed(1)+'%'
-      if (event.data.percent<100)
-        dict_prog_div.classList.remove('d-none')
-      else
+    // -------------------------{ worker-status }-------------------------
+    if ( event.data.type === 'worker-status' ) {
+      dictLinesLen = event.data.dictLinesLen
+      if (event.data.state !== WorkerState.LoadingDict)
         dict_prog_div.classList.add('d-none')
-      break
-    case 'dict-upd':
+      // ---------------[ LoadingDict ]---------------
+      if (event.data.state === WorkerState.LoadingDict) {
+        if ( state === MainState.AwaitingDict ) {
+          dict_status.innerText = 'The dictionary is loading, please wait...'
+          // we now know the dictionary is loading, and we don't know how often progress will be reported
+          window.clearTimeout(timerId)
+        } else console.warn(`Unexpected worker state LoadingDict in state ${MainState[state]}`)
+      }
+      // ---------------[ Ready ]---------------
+      else if (event.data.state === WorkerState.Ready) {
+        if ( state === MainState.AwaitingDict ) {
+          dict_status.innerText = `Dictionary holds ${dictLinesLen} entries.`
+          updateState(MainState.Ready)
+          // Trigger a search upon loading (the input field was disabled until now)
+          searchFromUrl()
+        } else if ( state !== MainState.Ready )
+          console.warn(`Unexpected worker state Ready in state ${MainState[state]}`)
+      }
+      // ---------------[ Error ]---------------
+      else if (event.data.state === WorkerState.Error) {
+        if ( state !== MainState.AwaitingDict )
+          console.warn(`Unexpected worker state Error in state ${MainState[state]}`)
+        // error, display the corresponding message box
+        error_log.innerText = navigator.userAgent + '\n' + GIT_ID + '\n' + event.data.error
+        dict_load_fail.classList.remove('d-none')
+        dict_status.innerText = 'Dictionary load failure! See error message above.'
+        updateState(MainState.Error)
+      }
+    }
+    // -------------------------{ dict-prog }-------------------------
+    else if ( event.data.type == 'dict-prog' ) {
+      // we received a dict loading status report, which we can ignore if we're not waiting for the dict
+      if ( state === MainState.AwaitingDict ) {
+        dict_progress.setAttribute('value', event.data.percent.toString())
+        dict_prog_div.classList.toggle('d-none', event.data.percent>=100)
+      } //else console.warn(`Unexpected dictionary progress in state ${MainState[state]}`)
+    }
+    // -------------------------{ search-prog }-------------------------
+    else if ( event.data.type === 'search-prog' ) {
+      // we received a search status report, which we can ignore if we're not actually searching
+      if ( state === MainState.Searching ) {
+        search_progress.setAttribute('value', event.data.percent.toString())
+        search_progress.classList.toggle('d-none', event.data.percent>=100)
+        clearTimeout(timerId)
+        timerId = window.setTimeout(() => updateState(MainState.Error), SEARCH_TIMEOUT_MS)
+      } //else console.warn(`Unexpected search progress in state ${MainState[state]}`)
+    }
+    // -------------------------{ dict-upd }-------------------------
+    else if ( event.data.type === 'dict-upd' ) {
+      // we received the information that the dictionary was asynchronously updated
+      // since all we're doing is updating some texts, it doesn't matter what state we're in
+      dictLinesLen = event.data.dictLinesLen
       if (event.data.status === 'loading')
         dict_upd_status.innerText = '(Updating in background...)'
       else {
         dict_upd_status.innerText = ''
         if (event.data.status === 'done')
-          dict_status.innerText = `Dictionary holds ${dictLines.length} entries (updated in background).`
+          dict_status.innerText = `Dictionary holds ${dictLinesLen} entries (updated in background).`
       }
-      break
     }
-  })
+    // -------------------------{ results }-------------------------
+    else if ( event.data.type === 'results' ) {
+      // we got some search results
+      if ( state === MainState.Searching ) {
+        window.clearTimeout(timerId)
+        gotSearchResults(event.data.whatPat, event.data.matches)
+        updateState(MainState.Ready)
+      } else console.error(`Unexpected search results in state ${MainState[state]}`)
+    }
+    // -------------------------{ rand-line }-------------------------
+    else if ( event.data.type === 'rand-line' ) {
+      // we got a random line
+      if ( state === MainState.Searching ) {
+        window.clearTimeout(timerId)
+        gotRandLine(event.data.line)
+        updateState(MainState.Ready)
+      } else console.error(`Unexpected random line in state ${MainState[state]}`)
+    }
+  })  // end of worker message handler
 
-  // what happens when the dictionary loads or a load error occurs:
-  dictCallback = () => {
-    if (dictLines.length) {
-      dict_status.innerText = `Dictionary holds ${dictLines.length} entries.`
-      search_term.removeAttribute('disabled')
-      // Trigger a search upon loading (the input field was disabled until now)
-      searchFromUrl()
-      // Put the focus on the input field
-      search_term.focus()
-    }
-    else {
-      // error, display the corresponding message box
-      const load_fail = document.getElementById('dict-load-fail')
-      assert(load_fail)
-      const error_log = document.getElementById('error-log')
-      assert(error_log)
-      error_log.innerText = navigator.userAgent + '\n' + GIT_ID + '\n' + ( dictError ? dictError : 'unknown error' )
-      load_fail.classList.remove('d-none')
-      dict_status.innerText = 'Dictionary load failure! See error message above.'
-      dict_prog_div.classList.add('d-none')
-    }
+  // now that we're ready, ask the worker for its state
+  let loadDictRetries = 0
+  const timeoutHandler = () => {
+    if ( state === MainState.AwaitingDict && ++loadDictRetries<3 ) {
+      setTimeout(timeoutHandler, INIT_TIMEOUT_MS)
+      const m :MessageType = { type: 'status-req' }
+      worker.postMessage(m)
+    } else updateState(MainState.Error)
   }
-  // call the callback immediately if the dict has already loaded by now
-  if (dictLines.length || dictError) dictCallback()
+  updateState(MainState.AwaitingDict)
+  timerId = window.setTimeout(timeoutHandler, INIT_TIMEOUT_MS)
+  const m :MessageType = { type: 'status-req' }
+  worker.postMessage(m)
 })

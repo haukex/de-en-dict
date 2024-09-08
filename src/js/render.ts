@@ -23,7 +23,7 @@
 
 import {default as abbreviations} from './abbreviations.json'
 import {wrapTextNodeMatches} from './utils'
-import {ANNOTATION_PAT} from './global'
+import {ANNOTATION_PAT} from './common'
 
 // a couple of user-settable variables
 const FEEDBACK_URL = 'mailto:beolingus@tu-chemnitz.de'  // as requested by Frank Richter

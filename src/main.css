@@ -62,7 +62,7 @@ details ul, details ol {
   opacity: 0.9;
 }
 a.busy-link {
-  color: grey;
+  color: var(--text-light);
   cursor: wait;
   text-decoration: none;
 }

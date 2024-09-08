@@ -29,12 +29,7 @@ export function initScrollTop() {
   btnScrollTop.innerText = 'Top ↑'
   btnScrollTop.addEventListener('click', () => window.scrollTo(0,0) )
   //const searchBoxTop = search_term.getBoundingClientRect().y  // changes based on layout, I'll just use a fixed value
-  const updateScrollBtnVis = () => {
-    if ( window.scrollY > 60 )
-      btnScrollTop.classList.remove('d-none')
-    else
-      btnScrollTop.classList.add('d-none')
-  }
+  const updateScrollBtnVis = () => btnScrollTop.classList.toggle('d-none', window.scrollY <= 60)
   window.addEventListener('scroll', updateScrollBtnVis)
   document.body?.appendChild(btnScrollTop)
   updateScrollBtnVis()

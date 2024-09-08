@@ -167,12 +167,12 @@ export async function loadDict(target :string[]): Promise<void> {
     setTimeout(async () => {
       if (await doesDictNeedUpdate()) {
         console.debug('Dictionary needs update, starting background update.')
-        const m :MessageType = { type: 'dict-upd', status: 'loading' }
+        const m :MessageType = { type: 'dict-upd', status: 'loading', dictLinesLen: target.length }
         postMessage(m)
         try {
           // Note this will "hot swap" the dictionary data into the array holding the lines.
           await getDictFromNet(false)
-          const m :MessageType = { type: 'dict-upd', status: 'done' }
+          const m :MessageType = { type: 'dict-upd', status: 'done', dictLinesLen: target.length }
           postMessage(m)
         }
         catch (error) { console.warn('Failed to get dictionary update.', error) }

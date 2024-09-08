@@ -17,7 +17,7 @@
     ^            V                      V
 +---|-------> Ready                    Ready <---------+
 |   |            |                      |              |
-|   |         [user] ---[search]------> |              |
+|   |         [user] --[search/rand]--> |              |
 |   |            |                      |              |
 |   |            V                      V              |
 |   |     Searching      <-[progress]- (Searching)     |
@@ -65,7 +65,8 @@
     - When there is an error loading the dictionary, transition to `Error`.
     - When the dictionary is loaded successfully, transition to the next state:
 3. `Ready`
-    - Idle state. On reception of a search request, perform the search.
+    - Idle state. On reception of a search request, perform the search;
+      or when receiving a request for a random entry, send one back.
 4. The search operation is synchronous, so there is no need for a corresponding state.
     - Periodic status updates may be sent if the search is slow.
     - The results are sent back on completion of the search.

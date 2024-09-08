@@ -23,6 +23,10 @@
 
 /* Utility functions and types common to both the main thread and the web workers */
 
+/** A regexp pattern for annotations like `{f}` or `[...]` */
+// NOTE this is used in wrapTextNodeMatches, see that function for restrictions on the regexp!
+export const ANNOTATION_PAT = '\\{[^}]+\\}|\\[[^\\]]+\\]'
+
 export function assert(condition: unknown, msg?: string): asserts condition {
   if (!condition) throw new Error(msg)
 }
@@ -43,14 +47,17 @@ export enum WorkerState {
 
 export type MessageType =
     { type: 'dict-prog', percent :number }
-  | { type: 'dict-upd', status :'loading'|'done' }
+  | { type: 'dict-upd', status :'loading'|'done', dictLinesLen :number }
   | { type: 'search', what :string }
   | { type: 'search-prog', percent :number }
+  | { type: 'get-rand' }
+  | { type: 'rand-line', line :string }
   | { type: 'results', whatPat :string, matches :string[] }
   | { type: 'status-req' }
-  | { type: 'worker-status', state :WorkerState, error ?:Error|unknown }
+  | { type: 'worker-status', state :WorkerState, dictLinesLen :number, error ?:Error|unknown }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isMessage(obj :any): obj is MessageType {
-  return 'type' in obj && ( obj.type === 'dict-prog' || obj.type === 'dict-upd' )
+  return 'type' in obj && ['dict-prog','dict-upd','search','search-prog','get-rand','rand-line',
+    'results','status-req','worker-status'].includes(obj.type)
 }

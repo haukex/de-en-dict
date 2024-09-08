@@ -25,9 +25,9 @@
 // eslint-disable-next-line no-var
 declare var self: DedicatedWorkerGlobalScope
 
-import {loadDict} from './dict-load'
+import {MessageType, isMessage, WorkerState, assert} from '../js/common'
 import {searchDict} from './dict-search'
-import {MessageType, isMessage, WorkerState} from '../js/common'
+import {loadDict} from './dict-load'
 
 if (module.hot) module.hot.accept()  // for the parcel development environment
 
@@ -35,26 +35,41 @@ let state :WorkerState = WorkerState.LoadingDict
 const dictLines :string[] = []
 let dictError :Error|unknown = null
 
+const sendMyState = () => {
+  const m :MessageType = { type: 'worker-status', state: state, dictLinesLen: dictLines.length, error: dictError }
+  postMessage(m)
+}
+
 self.addEventListener('message', event => {
   if (!isMessage(event.data)) return
-  if ( event.data.type === 'status-req' ) {
-    const m :MessageType = { type: 'worker-status', state: state, error: dictError }
-    postMessage(m)
+  // the main thread asked to know our status
+  if ( event.data.type === 'status-req' )
+    sendMyState()
+  // the user initiated a search
+  else if ( event.data.type === 'search' ) {
+    if ( state === WorkerState.Ready ) {
+      // searchDict sends its own progress reports
+      const [whatPat, matches] = searchDict(dictLines, event.data.what)
+      const m :MessageType = { type: 'results', whatPat: whatPat, matches: matches }
+      postMessage(m)
+    } else console.warn(`Ignoring search request in state ${WorkerState[state]}`)
   }
-  else if ( state === WorkerState.Ready && event.data.type === 'search' ) {
-    // searchDict sends its own progress reports
-    const [whatPat, matches] = searchDict(dictLines, event.data.what)
-    const m :MessageType = { type: 'results', whatPat: whatPat, matches: matches }
-    postMessage(m)
+  // the user requested a random entry
+  else if ( event.data.type === 'get-rand' ) {
+    if ( state === WorkerState.Ready ) {
+      const randLine = dictLines[Math.floor(Math.random()*dictLines.length)]
+      assert(randLine)
+      const m :MessageType = { type: 'rand-line', line: randLine }
+      postMessage(m)
+    } else console.warn(`Ignoring random line request in state ${WorkerState[state]}`)
   }
 })
 
-try {
-  // loadDict sends its own progress reports
-  await loadDict(dictLines)
-  state = WorkerState.Ready
-}
-catch (error) {
-  dictError = error ? error : 'unknown error'
-  state = WorkerState.Error
-}
+// loadDict sends its own progress reports
+loadDict(dictLines)
+  .then(() => {
+    state = WorkerState.Ready
+  }, error => {
+    dictError = error ? error : 'unknown error'
+    state = WorkerState.Error
+  }).finally(sendMyState)

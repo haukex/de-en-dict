@@ -27,7 +27,6 @@ export function initInputFieldKeys(elem :HTMLInputElement, onEnter :()=>void) {
     // Escape key clears input
     if (event.key=='Escape') {
       elem.value = ''
-      elem.classList.remove('danger')  // see main.ts for why this is here
     }
     // Enter key triggers search
     else if (event.key=='Enter') {
