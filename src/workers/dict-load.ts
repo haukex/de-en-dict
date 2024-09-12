@@ -25,14 +25,17 @@ import {DB_URL, DB_VER_URL, DB_CACHE_NAME} from './consts'
 import {MessageType, assert} from '../js/common'
 
 class ProgressTransformer extends TransformStream<Uint8Array, Uint8Array> {
-  constructor(totalBytes :number, callback :(percent :number)=>void, intervalMs :number = 100) {
+  constructor(totalBytes :number, callback :(percent :number)=>void, intervalMs :number = 100, initialDelayMs :number = 500,
+    reportZeroPercent :boolean = false) {
     let curBytes = 0
-    let nextUpdateTimeMs = new Date().getTime() + intervalMs
+    let nextUpdateTimeMs = new Date().getTime() + initialDelayMs
     super({
       async start() {
         //console.debug(`ProgressTransformer: start at ${curBytes} of ${totalBytes} (${100*curBytes/totalBytes}%)`)
-        try { callback(0) }
-        catch (error) { console.error(error) }
+        if (reportZeroPercent) {
+          try { callback(0) }
+          catch (error) { console.error(error) }
+        }
       },
       async transform(chunk, controller) {
         controller.enqueue(chunk)
