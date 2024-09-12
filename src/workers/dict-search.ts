@@ -26,9 +26,10 @@ import {MessageType} from '../js/common'
 
 /* Let's say a slow search is 10s to search 200,000 lines, that means 20,000 lines/s.
  * A report every 100ms would means that we should send a report every 2000 lines.
- * Increasing the value below means more progress reports for *really* slow searches,
- * so more user-friendly, but decreasing the value means faster searches overall. */
+ * Decreasing this value means more progress reports for *really* slow searches,
+ * so more user-friendly in that way, but it also means slower searches overall. */
 const CHECK_INTERVAL_LINES = 500
+
 const INITIAL_REPORT_MS = 500
 const REPORT_INTERVAL_MS = 100
 
