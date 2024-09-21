@@ -22,7 +22,7 @@
  */
 
 import {makeSearchPattern} from './equiv'
-import {MessageType} from '../js/common'
+import {WorkerMessageType} from '../js/common'
 
 /* Let's say a slow search is 10s to search 200,000 lines, that means 20,000 lines/s.
  * A report every 100ms would means that we should send a report every 2000 lines.
@@ -94,7 +94,7 @@ export function searchDict(dictLines :string[], what :string): [string, string[]
         searchNextReportMs = nowMs + REPORT_INTERVAL_MS
         // interval has passed, fire off a progress report
         const percent = 100*(li+1)/dictLines.length
-        const m :MessageType = { type: 'search-prog', percent: percent }
+        const m :WorkerMessageType = { type: 'search-prog', percent: percent }
         postMessage(m)
         sentLt100Report = percent<100
       }
@@ -109,7 +109,7 @@ export function searchDict(dictLines :string[], what :string): [string, string[]
   console.debug(`Search for ${whatRe} found ${matches.length} matches in ${new Date().getTime()-searchStartMs}ms.`)
   // if we sent a progress report <100% previously, make sure to send a 100% one
   if (sentLt100Report) {
-    const m :MessageType = { type: 'search-prog', percent: 100 }
+    const m :WorkerMessageType = { type: 'search-prog', percent: 100 }
     postMessage(m)
   }
 

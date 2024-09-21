@@ -45,19 +45,28 @@ export enum WorkerState {
   Ready,
 }
 
-export type MessageType =
+/// Messages from the worker
+export type WorkerMessageType =
     { type: 'dict-prog', percent :number }
   | { type: 'dict-upd', status :'loading'|'done', dictLinesLen :number }
-  | { type: 'search', what :string }
-  | { type: 'search-prog', percent :number }
-  | { type: 'get-rand' }
-  | { type: 'rand-line', line :string }
-  | { type: 'results', whatPat :string, matches :string[] }
-  | { type: 'status-req' }
   | { type: 'worker-status', state :WorkerState, dictLinesLen :number, error ?:Error|unknown }
+  | { type: 'search-prog', percent :number }
+  | { type: 'results', whatPat :string, matches :string[] }
+  | { type: 'rand-line', line :string }
+
+/// Messages from the main thread
+export type MainMessageType =
+    { type: 'status-req' }
+  | { type: 'search', what :string }
+  | { type: 'get-rand' }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function isMessage(obj :any): obj is MessageType {
-  return 'type' in obj && ['dict-prog','dict-upd','search','search-prog','get-rand','rand-line',
-    'results','status-req','worker-status'].includes(obj.type)
+export function isWorkerMessage(obj :any): obj is WorkerMessageType {
+  return 'type' in obj && ['dict-prog','dict-upd','worker-status','search-prog','results',
+    'rand-line'].includes(obj.type)
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function isMainMessage(obj :any): obj is MainMessageType {
+  return 'type' in obj && ['status-req','search','get-rand'].includes(obj.type)
 }

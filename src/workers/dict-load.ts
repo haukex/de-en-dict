@@ -22,7 +22,7 @@
  */
 
 import {DB_URL, DB_VER_URL, DB_CACHE_NAME} from './consts'
-import {MessageType, assert} from '../js/common'
+import {WorkerMessageType, assert} from '../js/common'
 
 class ProgressTransformer extends TransformStream<Uint8Array, Uint8Array> {
   constructor(totalBytes :number, callback :(percent :number)=>void, intervalMs :number = 100, initialDelayMs :number = 500,
@@ -129,7 +129,7 @@ export async function loadDict(target :string[]): Promise<void> {
     const rawCl = resp.headers.get('Content-Length')
     const rs = rawCl && progCb
       ? resp.body.pipeThrough(new ProgressTransformer(parseInt(rawCl), percent => {
-        const m :MessageType = { type: 'dict-prog', percent: percent }
+        const m :WorkerMessageType = { type: 'dict-prog', percent: percent }
         postMessage(m)
       }))
       : resp.body
@@ -170,12 +170,12 @@ export async function loadDict(target :string[]): Promise<void> {
     setTimeout(async () => {
       if (await doesDictNeedUpdate()) {
         console.debug('Dictionary needs update, starting background update.')
-        const m :MessageType = { type: 'dict-upd', status: 'loading', dictLinesLen: target.length }
+        const m :WorkerMessageType = { type: 'dict-upd', status: 'loading', dictLinesLen: target.length }
         postMessage(m)
         try {
           // Note this will "hot swap" the dictionary data into the array holding the lines.
           await getDictFromNet(false)
-          const m :MessageType = { type: 'dict-upd', status: 'done', dictLinesLen: target.length }
+          const m :WorkerMessageType = { type: 'dict-upd', status: 'done', dictLinesLen: target.length }
           postMessage(m)
         }
         catch (error) { console.warn('Failed to get dictionary update.', error) }

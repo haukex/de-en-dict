@@ -13,7 +13,8 @@
 			"nonFreePackages": true
 		},
 		// https://github.com/devcontainers/features/tree/main/src/node
-		"ghcr.io/devcontainers/features/node:1": {}
+		"ghcr.io/devcontainers/features/node:1": {},
+		"ghcr.io/haukex/devcontainer-features/perl:1": {}
 	},
 	"forwardPorts": [ 1234 ],
 	"postCreateCommand": "make installdeps"

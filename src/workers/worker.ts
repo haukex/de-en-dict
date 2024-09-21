@@ -25,7 +25,7 @@
 // eslint-disable-next-line no-var
 declare var self: DedicatedWorkerGlobalScope
 
-import {MessageType, isMessage, WorkerState, assert} from '../js/common'
+import {WorkerMessageType, isMainMessage, WorkerState, assert} from '../js/common'
 import {searchDict} from './dict-search'
 import {loadDict} from './dict-load'
 
@@ -36,12 +36,12 @@ const dictLines :string[] = []
 let dictError :Error|unknown = null
 
 const sendMyState = () => {
-  const m :MessageType = { type: 'worker-status', state: state, dictLinesLen: dictLines.length, error: dictError }
+  const m :WorkerMessageType = { type: 'worker-status', state: state, dictLinesLen: dictLines.length, error: dictError }
   postMessage(m)
 }
 
 self.addEventListener('message', event => {
-  if (!isMessage(event.data)) return
+  if (!isMainMessage(event.data)) return
   // the main thread asked to know our status
   if ( event.data.type === 'status-req' )
     sendMyState()
@@ -50,7 +50,7 @@ self.addEventListener('message', event => {
     if ( state === WorkerState.Ready ) {
       // searchDict sends its own progress reports
       const [whatPat, matches] = searchDict(dictLines, event.data.what)
-      const m :MessageType = { type: 'results', whatPat: whatPat, matches: matches }
+      const m :WorkerMessageType = { type: 'results', whatPat: whatPat, matches: matches }
       postMessage(m)
     } else console.warn(`Ignoring search request in state ${WorkerState[state]}`)
   }
@@ -59,7 +59,7 @@ self.addEventListener('message', event => {
     if ( state === WorkerState.Ready ) {
       const randLine = dictLines[Math.floor(Math.random()*dictLines.length)]
       assert(randLine)
-      const m :MessageType = { type: 'rand-line', line: randLine }
+      const m :WorkerMessageType = { type: 'rand-line', line: randLine }
       postMessage(m)
     } else console.warn(`Ignoring random line request in state ${WorkerState[state]}`)
   }
