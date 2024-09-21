@@ -107,3 +107,6 @@ This project makes use of the following libraries:
   [Beolingus Deutsch-Englisch Lexikon-Plug-in](https://tekl.de/lexikon-plug-ins/beolingus-deutsch-englisch-lexikon-plugin),
   Copyright © 2024 Wolfgang Kreutz and TU Chemnitz,
   [GNU GPL 3.0+](https://github.com/Tekl/beolingus-deutsch-englisch/blob/master/LICENSE).
+- An LRU class was adapted from
+  [this StackOverflow answer](https://stackoverflow.com/a/46432113)
+  by user [odinho - Velmont](https://github.com/Velmont).

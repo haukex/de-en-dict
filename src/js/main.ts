@@ -28,6 +28,7 @@ import {initInputFieldKeys} from './keyboard'
 import {initScrollTop} from './scroll-top'
 import {result2tbody} from './render'
 import {initFlags} from './flags'
+import {LRUCache} from './lru'
 
 if (module.hot) module.hot.accept()  // for the parcel development environment
 
@@ -80,6 +81,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   // variables to keep state
   let dictLinesLen = 0
   let timerId :number
+  const searchCache = new LRUCache<string, [string, string[]]>(10)
 
   // updates the state and UI correspondingly
   const updateState = (newState :MainState) => {
@@ -121,7 +123,10 @@ window.addEventListener('DOMContentLoaded', async () => {
   }
 
   // handler for search results received from worker
-  const gotSearchResults = (whatPat :string, matches :string[]) => {
+  const gotSearchResults = (origWhat :string, whatPat :string, matches :string[]) => {
+    // save results in cache
+    searchCache.set(origWhat, [whatPat, matches])
+
     clearResults()
     // check if there were any matches
     no_results.classList.toggle('d-none', !!matches.length)
@@ -235,6 +240,15 @@ window.addEventListener('DOMContentLoaded', async () => {
         window.history.pushState(null, '', newHash)
     }
 
+    // before going to dict, check our cache
+    const cached = searchCache.get(what)
+    if ( cached !== undefined ) {
+      const [cachedWhatPat, cachedMatches] = cached
+      console.debug(`Search for /${cachedWhatPat}/ had ${cachedMatches.length} results in cache.`)
+      gotSearchResults(what, cachedWhatPat, cachedMatches)
+      return
+    }
+
     // request the search from our worker thread
     updateState(MainState.Searching)
     timerId = window.setTimeout(() => updateState(MainState.Error), SEARCH_TIMEOUT_MS)
@@ -341,7 +355,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       // we got some search results
       if ( state === MainState.Searching ) {
         window.clearTimeout(timerId)
-        gotSearchResults(event.data.whatPat, event.data.matches)
+        gotSearchResults(event.data.what, event.data.whatPat, event.data.matches)
         updateState(MainState.Ready)
       } else console.error(`Unexpected search results in state ${MainState[state]}`)
     }

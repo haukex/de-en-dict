@@ -51,7 +51,7 @@ export type WorkerMessageType =
   | { type: 'dict-upd', status :'loading'|'done', dictLinesLen :number }
   | { type: 'worker-status', state :WorkerState, dictLinesLen :number, error ?:Error|unknown }
   | { type: 'search-prog', percent :number }
-  | { type: 'results', whatPat :string, matches :string[] }
+  | { type: 'results', what :string, whatPat :string, matches :string[] }
   | { type: 'rand-line', line :string }
 
 /// Messages from the main thread

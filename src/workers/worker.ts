@@ -50,7 +50,7 @@ self.addEventListener('message', event => {
     if ( state === WorkerState.Ready ) {
       // searchDict sends its own progress reports
       const [whatPat, matches] = searchDict(dictLines, event.data.what)
-      const m :WorkerMessageType = { type: 'results', whatPat: whatPat, matches: matches }
+      const m :WorkerMessageType = { type: 'results', what :event.data.what, whatPat: whatPat, matches: matches }
       postMessage(m)
     } else console.warn(`Ignoring search request in state ${WorkerState[state]}`)
   }
