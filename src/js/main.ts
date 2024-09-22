@@ -105,7 +105,6 @@ window.addEventListener('DOMContentLoaded', async () => {
       if ( state === MainState.AwaitingDict )
         dict_load_fail.classList.remove('d-none')
       else if ( state === MainState.Searching )
-        //TODO: The timeout error was not showing? (see other To-Do's)
         search_timeout.classList.remove('d-none')
     }
     search_progress.classList.add('d-none')
@@ -231,6 +230,13 @@ window.addEventListener('DOMContentLoaded', async () => {
     doSearch(what, false)
   }
 
+  // handler in case the worker does not get back to us with a search result
+  const searchTimeout = () => {
+    // ensure the corresponding message gets shown
+    search_timeout.classList.remove('d-none')
+    updateState(MainState.Error)
+  }
+
   // this is our handler for running the search:
   const doSearch = (rawWhat: string, fromInputNotUrl :boolean) => {
     console.debug(`doSearch for '${rawWhat}' (fromInputNotUrl=${fromInputNotUrl}, state=${MainState[state]})`)
@@ -268,7 +274,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     // request the search from our worker thread
     updateState(MainState.Searching)
-    timerId = window.setTimeout(() => updateState(MainState.Error), SEARCH_TIMEOUT_MS)
+    timerId = window.setTimeout(searchTimeout, SEARCH_TIMEOUT_MS)
     const m :MainMessageType = { type: 'search', what: what }
     worker.postMessage(m)
   }
@@ -278,7 +284,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     event.preventDefault()
     if ( state !== MainState.Ready ) return
     updateState(MainState.Searching)
-    timerId = window.setTimeout(() => updateState(MainState.Error), SEARCH_TIMEOUT_MS)
+    timerId = window.setTimeout(searchTimeout, SEARCH_TIMEOUT_MS)
     const m :MainMessageType = { type: 'get-rand' }
     worker.postMessage(m)
   })
@@ -297,6 +303,14 @@ window.addEventListener('DOMContentLoaded', async () => {
   initScrollTop()
   initFlags()
   initPopups()
+
+  // handler for dictionary load failures
+  const dictLoadFail = (message :string) => {
+    error_log.innerText = navigator.userAgent + '\n' + GIT_ID + '\n' + message
+    dict_load_fail.classList.remove('d-none')
+    dict_status.innerText = 'Dictionary load failure! See error message above.'
+    updateState(MainState.Error)
+  }
 
   // STATE MACHINE DOCUMENTATION is in States.md - keep in sync with code!
 
@@ -340,10 +354,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         if ( state !== MainState.AwaitingDict )
           console.warn(`Unexpected worker state ${WorkerState[event.data.state]} in state ${MainState[state]}`)
         // error, display the corresponding message box
-        error_log.innerText = navigator.userAgent + '\n' + GIT_ID + '\n' + event.data.error
-        dict_load_fail.classList.remove('d-none')
-        dict_status.innerText = 'Dictionary load failure! See error message above.'
-        updateState(MainState.Error)
+        dictLoadFail(new String(event.data.error).toString())
       }
     }
     // -------------------------{ dict-prog }-------------------------
@@ -361,7 +372,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         search_progress.setAttribute('value', event.data.percent.toString())
         search_progress.classList.toggle('d-none', event.data.percent>=100)
         clearTimeout(timerId)
-        timerId = window.setTimeout(() => updateState(MainState.Error), SEARCH_TIMEOUT_MS)
+        timerId = window.setTimeout(searchTimeout, SEARCH_TIMEOUT_MS)
       } //else console.warn(`Unexpected search progress in state ${MainState[state]}`)
     }
     // -------------------------{ dict-upd }-------------------------
@@ -406,10 +417,8 @@ window.addEventListener('DOMContentLoaded', async () => {
       timerId = window.setTimeout(timeoutHandler, INIT_TIMEOUT_MS)
       const m :MainMessageType = { type: 'status-req' }
       worker.postMessage(m)
-    } else {
-      error_log.innerText = navigator.userAgent + '\n' + GIT_ID + '\n' + 'Timed out waiting for response from worker.'
-      updateState(MainState.Error)
-    }
+    } else
+      dictLoadFail('Timed out waiting for response from worker.')
   }
   updateState(MainState.AwaitingDict)
   timerId = window.setTimeout(timeoutHandler, INIT_TIMEOUT_MS)
