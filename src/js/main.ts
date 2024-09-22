@@ -81,6 +81,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // variables to keep state
   let dictLinesLen = 0
+  let dictWasUpdated = false
   let timerId :number
   const searchCache = new LRUCache<string, [string, string[]]>(10)
 
@@ -99,6 +100,17 @@ window.addEventListener('DOMContentLoaded', async () => {
       // note the click handler must check the state too and ignore clicks when not Ready
       rand_entry_link.classList.add('busy-link')
     }
+    if ( newState === MainState.Ready )
+      dict_status.innerText = `Dictionary holds ${dictLinesLen} entries` + ( dictWasUpdated ? '(updated in background).' : '.' )
+    else if ( newState === MainState.AwaitingDict )
+      dict_status.innerText = 'The dictionary is loading, please wait...'
+    else if ( newState === MainState.Searching )
+      dict_status.innerText = `Searching ${dictLinesLen} entries, please wait...`
+    else if ( newState === MainState.Error )
+      dict_status.innerText = state === MainState.AwaitingDict ? 'Dictionary load failure! See error message above.'
+        : state === MainState.Searching ? 'Search timed out! See error message above.' : 'See error message above.'
+    else if ( newState === MainState.Init )
+      dict_status.innerText = 'Initializing, please wait...'
     // if transitioning to error state, make sure corresponding messages are shown
     // (though the code below should already be doing this, just play it safe)
     if ( newState === MainState.Error ) {
@@ -267,7 +279,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     const cached = searchCache.get(what)
     if ( cached !== undefined ) {
       const [cachedWhatPat, cachedMatches] = cached
-      console.debug(`Search for /${cachedWhatPat}/gi had ${cachedMatches.length} results in cache.`)
+      console.log(`Search for /${cachedWhatPat}/gi had ${cachedMatches.length} results in cache.`)
       gotSearchResults(what, cachedWhatPat, cachedMatches)
       return
     }
@@ -308,7 +320,6 @@ window.addEventListener('DOMContentLoaded', async () => {
   const dictLoadFail = (message :string) => {
     error_log.innerText = navigator.userAgent + '\n' + GIT_ID + '\n' + message
     dict_load_fail.classList.remove('d-none')
-    dict_status.innerText = 'Dictionary load failure! See error message above.'
     updateState(MainState.Error)
   }
 
@@ -327,7 +338,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       // ---------------[ LoadingDict ]---------------
       if (event.data.state === WorkerState.LoadingDict) {
         if ( state === MainState.AwaitingDict ) {
-          dict_status.innerText = 'The dictionary is loading, please wait...'
+          updateState(state)  // force update of the dictionary status message
           // We now know the dictionary is loading, and we don't know how often progress will be reported,
           // so we can't set a new timeout here.
         } else console.warn(`Unexpected worker state ${WorkerState[event.data.state]} in state ${MainState[state]}`)
@@ -335,7 +346,6 @@ window.addEventListener('DOMContentLoaded', async () => {
       // ---------------[ Ready ]---------------
       else if (event.data.state === WorkerState.Ready) {
         if ( state === MainState.AwaitingDict ) {
-          dict_status.innerText = `Dictionary holds ${dictLinesLen} entries.`
           updateState(MainState.Ready)
           // Install event listener for browser navigation updating the URL hash
           window.addEventListener('hashchange', searchFromUrl)
@@ -384,8 +394,10 @@ window.addEventListener('DOMContentLoaded', async () => {
         dict_upd_status.innerText = '(Updating in background...)'
       else {
         dict_upd_status.innerText = ''
-        if (event.data.status === 'done')
-          dict_status.innerText = `Dictionary holds ${dictLinesLen} entries (updated in background).`
+        if (event.data.status === 'done') {
+          dictWasUpdated = true
+          updateState(state)
+        }
       }
     }
     // -------------------------{ results }-------------------------

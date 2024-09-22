@@ -106,7 +106,7 @@ export function searchDict(dictLines :string[], what :string): [string, string[]
   // now that we've sorted, we can strip the scores out of the returned values
   const matches :string[] = scoredMatches.map(([line, _score]) => line)
 
-  console.debug(`Search for ${whatRe} found ${matches.length} matches in ${new Date().getTime()-searchStartMs}ms.`)
+  console.log(`Search for ${whatRe} found ${matches.length} matches in ${new Date().getTime()-searchStartMs}ms.`)
   // if we sent a progress report <100% previously, make sure to send a 100% one
   if (sentLt100Report) {
     const m :WorkerMessageType = { type: 'search-prog', percent: 100 }
