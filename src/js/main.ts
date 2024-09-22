@@ -48,6 +48,7 @@ if ('serviceWorker' in navigator) {
 } else console.warn('Service Workers are not supported')
 
 // variable for our state machine
+// STATE MACHINE DOCUMENTATION is in States.md - keep in sync with code!
 let state = MainState.Init
 
 // initialize the worker
@@ -188,6 +189,15 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   } // end of gotSearchResults
 
+  // handler for when we get the random entry back
+  const gotRandLine = (randLine :string) => {
+    clearResults()
+    const tbody = result2tbody(randLine)
+    result_table.appendChild(tbody)
+    addTitleTooltips(tbody.querySelectorAll('abbr'))
+    search_status.innerText = 'Showing a random entry.'
+  }
+
   // Starts a search using a value in the URL hash, if any
   const searchFromUrl = () => {
     // query overrides hash (see GitHub Issue #7: some links to the app use '?' instead of '#')
@@ -212,25 +222,11 @@ window.addEventListener('DOMContentLoaded', async () => {
     doSearch(what, false)
   }
 
-  // handler for when we get the random entry back
-  const gotRandLine = (randLine :string) => {
-    clearResults()
-    const tbody = result2tbody(randLine)
-    result_table.appendChild(tbody)
-    addTitleTooltips(tbody.querySelectorAll('abbr'))
-    search_status.innerText = 'Showing a random entry.'
-  }
-
   // this is our handler for running the search:
-  let prevWhat = 'Something the user is really unlikely to enter on their own by chance, so after initialization the first search is always performed.'
-  const doSearch = (raw_what: string, fromInputNotUrl :boolean) => {
+  const doSearch = (rawWhat: string, fromInputNotUrl :boolean) => {
     if ( state !== MainState.Ready ) return
 
-    const what = cleanSearchTerm(raw_what)
-    // updating the hash always forces a search:
-    // (for example, this is important if the hash was changed during the dictionary load for some reason)
-    if ( fromInputNotUrl && what===prevWhat ) return
-    prevWhat = what
+    const what = cleanSearchTerm(rawWhat)
 
     // update page title with search term
     document.title = what.length ? `${orig_title_text}: ${what}` : orig_title_text
@@ -244,7 +240,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     const cached = searchCache.get(what)
     if ( cached !== undefined ) {
       const [cachedWhatPat, cachedMatches] = cached
-      console.debug(`Search for /${cachedWhatPat}/ had ${cachedMatches.length} results in cache.`)
+      console.debug(`Search for /${cachedWhatPat}/gi had ${cachedMatches.length} results in cache.`)
       gotSearchResults(what, cachedWhatPat, cachedMatches)
       return
     }
@@ -277,6 +273,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   initScrollTop()
   initFlags()
   initPopups()
+
+  // STATE MACHINE DOCUMENTATION is in States.md - keep in sync with code!
 
   // set up the handler for messages we get from the worker
   worker.addEventListener('message', event => {

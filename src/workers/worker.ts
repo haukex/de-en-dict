@@ -40,6 +40,8 @@ const sendMyState = () => {
   postMessage(m)
 }
 
+// STATE MACHINE DOCUMENTATION is in States.md - keep in sync with code!
+
 self.addEventListener('message', event => {
   if (!isMainMessage(event.data)) return
   // the main thread asked to know our status
