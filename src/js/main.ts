@@ -86,7 +86,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // updates the state and UI correspondingly
   const updateState = (newState :MainState) => {
-    console.debug(`State ${MainState[state]} to ${MainState[newState]}`)
+    console.debug(`updateState ${MainState[state]} to ${MainState[newState]}`)
     // enable/disable UI components depending on state
     if ( newState === MainState.Ready ) {
       rand_entry_link.classList.remove('busy-link')
@@ -103,10 +103,12 @@ window.addEventListener('DOMContentLoaded', async () => {
       if ( state === MainState.AwaitingDict )
         dict_load_fail.classList.remove('d-none')
       else if ( state === MainState.Searching )
+        //TODO: The timeout error was not showing? (see other To-Do's)
         search_timeout.classList.remove('d-none')
     }
     search_progress.classList.add('d-none')
     state = newState
+    console.debug(`updateState done, state=${MainState[state]}`)
   }
   // call this immediately (note the input box should already be disabled in HTML, but there are other things to update)
   updateState(state)
