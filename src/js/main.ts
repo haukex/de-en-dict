@@ -86,6 +86,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // updates the state and UI correspondingly
   const updateState = (newState :MainState) => {
+    console.debug(`State ${MainState[state]} to ${MainState[newState]}`)
     // enable/disable UI components depending on state
     if ( newState === MainState.Ready ) {
       rand_entry_link.classList.remove('busy-link')
@@ -130,12 +131,16 @@ window.addEventListener('DOMContentLoaded', async () => {
     clearResults()
     // check if there were any matches
     no_results.classList.toggle('d-none', !!matches.length)
-    if (!matches.length) return
+    if (!matches.length) {
+      console.debug(`Search for '${origWhat}' had no matches, nothing to render`)
+      return
+    }
 
     // function for rendering matches, which we set up here, then call below
     let displayedMatches = 0  // holds the state between invocations of this function:
     const renderMatches = (start :number, end :number) => {
       // start inclusive, end exclusive
+      console.debug(`Rendering matches ${start} to ${end}-1 of ${matches.length} (displayed=${displayedMatches})`)
 
       // loop over the chunk of lines to be displayed
       matches.slice(start, end).forEach((matchLine) => {
@@ -217,12 +222,15 @@ window.addEventListener('DOMContentLoaded', async () => {
         console.warn('ignoring bad window.location.hash',error)
       }
     }
+    console.debug(`Search from URL for '${what}'`)
     search_term.value = what
     doSearch(what, false)
   }
 
   // this is our handler for running the search:
   const doSearch = (rawWhat: string, fromInputNotUrl :boolean) => {
+    console.debug(`doSearch for '${rawWhat}' (fromInputNotUrl=${fromInputNotUrl}, state=${MainState[state]})`)
+    //TODO: In Chrome and Edge, the following state guard is not working?! (Enter key causes two searches, both of which see state===Ready for some reason!?)
     if ( state !== MainState.Ready ) return
 
     const what = cleanSearchTerm(rawWhat)
@@ -239,6 +247,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     // short-circuit empty search
     if (!what.length) {
+      console.debug('Empty search term: clearing results, not searching')
       // the following is what gotSearchResults() does when it has no matches
       clearResults()
       no_results.classList.remove('d-none')
@@ -271,12 +280,16 @@ window.addEventListener('DOMContentLoaded', async () => {
     worker.postMessage(m)
   })
 
-  // Helper to run the search from the input field
-  const searchFromInput = () => doSearch(search_term.value, true)
-
   // Install event listener for input field changes
-  search_term.addEventListener('change', searchFromInput)
-  initInputFieldKeys(search_term, searchFromInput)
+  //TODO: In Chrome and Edge, hitting Enter causes both of these to fire?! (temporary workaround in keyboard.ts)
+  search_term.addEventListener('change', () => {
+    console.debug(`Search from input field change event for '${search_term.value}'`)
+    doSearch(search_term.value, true)
+  })
+  initInputFieldKeys(search_term, () => {
+    console.debug(`Search from keyboard Enter event for '${search_term.value}'`)
+    doSearch(search_term.value, true)
+  })
 
   // initialize various things
   initScrollTop()

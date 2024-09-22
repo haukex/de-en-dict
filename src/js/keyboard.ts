@@ -21,33 +21,35 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+//TODO: As a workaround for Edge and Chrome, I've commented out the Enter key stuff...
+
 /** Adds keyboard handlers to the search field. */
-export function initInputFieldKeys(elem :HTMLInputElement, onEnter :()=>void) {
+export function initInputFieldKeys(elem :HTMLInputElement, _onEnter :()=>void) {
   elem.addEventListener('keyup', event => {
     // Escape key clears input
     if (event.key=='Escape') {
       elem.value = ''
     }
     // Enter key triggers search
-    else if (event.key=='Enter') {
+    /*else if (event.key=='Enter') {
       event.preventDefault()
       event.stopPropagation()
       onEnter()
-    }
+    }*/
   })
   /* 'Enter' is handled in keyup above, but we still need to prevent all of its default
    * behavior here so it doesn't fire the "change" event and cause the search to run twice. */
-  elem.addEventListener('keydown', event => {
-    if (event.key=='Enter') {
+  elem.addEventListener('keydown', _event => {
+    /*if (event.key=='Enter') {
       event.preventDefault()
       event.stopPropagation()
-    }
+    }*/
   })
   // keypress is deprecated, we'll include it anyway for now
-  elem.addEventListener('keypress', event => {
-    if (event.key=='Enter') {
+  elem.addEventListener('keypress', _event => {
+    /*if (event.key=='Enter') {
       event.preventDefault()
       event.stopPropagation()
-    }
+    }*/
   })
 }
