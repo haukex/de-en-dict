@@ -230,9 +230,19 @@ window.addEventListener('DOMContentLoaded', async () => {
     // update page title with search term
     document.title = what.length ? `${orig_title_text}: ${what}` : orig_title_text
     if (fromInputNotUrl) {  // the term came from the input box, not hash, so update the hash
-      const newHash = `#q=${encodeURIComponent(what)}`
+      const newHash = what.length ? `#q=${encodeURIComponent(what)}` : ''
+      const loc = new URL(''+window.location)
+      loc.hash = newHash
       if ( window.location.hash !== newHash )
-        window.history.pushState(null, '', newHash)
+        window.history.pushState(null, '', loc)
+    }
+
+    // short-circuit empty search
+    if (!what.length) {
+      // the following is what gotSearchResults() does when it has no matches
+      clearResults()
+      no_results.classList.remove('d-none')
+      return
     }
 
     // before going to dict, check our cache
@@ -301,7 +311,12 @@ window.addEventListener('DOMContentLoaded', async () => {
           // Install event listener for browser navigation updating the URL hash
           window.addEventListener('hashchange', searchFromUrl)
           // Trigger a search upon loading (the input field was disabled until now)
-          searchFromUrl()  // transitions to `Searching`!
+          searchFromUrl()  // may transition to `Searching`!
+          // TypeScript doesn't realize that `state` may have changed here.
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-expect-error
+          if ( state === MainState.Ready )
+            search_term.focus()
         } else if ( state !== MainState.Ready )
           console.warn(`Unexpected worker state ${WorkerState[event.data.state]} in state ${MainState[state]}`)
       }
