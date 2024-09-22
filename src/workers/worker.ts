@@ -29,8 +29,6 @@ import {WorkerMessageType, isMainMessage, WorkerState, assert} from '../js/commo
 import {searchDict} from './dict-search'
 import {loadDict} from './dict-load'
 
-if (module.hot) module.hot.accept()  // for the parcel development environment
-
 let state :WorkerState = WorkerState.LoadingDict
 const dictLines :string[] = []
 let dictError :Error|unknown = null

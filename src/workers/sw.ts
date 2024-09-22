@@ -33,8 +33,6 @@ declare var self: ServiceWorkerGlobalScope
 import {manifest, version} from '@parcel/service-worker'
 import {DB_URL, DB_VER_URL, DB_CACHE_NAME} from './consts'
 
-if (module.hot) module.hot.accept()  // for the parcel development environment
-
 /* The name of the cache, dependent on the current version, so that when the version changes,
  * the previous cache is discarded and resources are fetched again. */
 const APP_CACHE_NAME = `DeEnDict-${version}`
