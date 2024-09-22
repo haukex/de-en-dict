@@ -90,10 +90,12 @@ window.addEventListener('DOMContentLoaded', async () => {
     // enable/disable UI components depending on state
     if ( newState === MainState.Ready ) {
       rand_entry_link.classList.remove('busy-link')
-      search_term.removeAttribute('disabled')
+      search_term.removeAttribute('readonly')
     }
     else {
-      search_term.setAttribute('disabled','disabled')
+      /* DON'T use `disabled`, because in the case where this code is going to the state `Searching` due to a search,
+       * setting that attribute causes a recursive `change` event and search to be fired here! (Chrome and Edge) */
+      search_term.setAttribute('readonly','readonly')
       // note the click handler must check the state too and ignore clicks when not Ready
       rand_entry_link.classList.add('busy-link')
     }
@@ -108,9 +110,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
     search_progress.classList.add('d-none')
     state = newState
-    console.debug(`updateState done, state=${MainState[state]}`)
+    //console.debug(`updateState done, state=${MainState[state]}`)
   }
-  // call this immediately (note the input box should already be disabled in HTML, but there are other things to update)
+  // call this immediately (note the input box should already be readonly in HTML, but there are other things to update)
   updateState(state)
 
   // utility function to clear the results table
@@ -232,7 +234,6 @@ window.addEventListener('DOMContentLoaded', async () => {
   // this is our handler for running the search:
   const doSearch = (rawWhat: string, fromInputNotUrl :boolean) => {
     console.debug(`doSearch for '${rawWhat}' (fromInputNotUrl=${fromInputNotUrl}, state=${MainState[state]})`)
-    //TODO: In Chrome and Edge, the following state guard is not working?! (Enter key causes two searches, both of which see state===Ready for some reason!?)
     if ( state !== MainState.Ready ) return
 
     const what = cleanSearchTerm(rawWhat)
@@ -283,7 +284,6 @@ window.addEventListener('DOMContentLoaded', async () => {
   })
 
   // Install event listener for input field changes
-  //TODO: In Chrome and Edge, hitting Enter causes both of these to fire?! (temporary workaround in keyboard.ts)
   search_term.addEventListener('change', () => {
     console.debug(`Search from input field change event for '${search_term.value}'`)
     doSearch(search_term.value, true)
@@ -325,7 +325,7 @@ window.addEventListener('DOMContentLoaded', async () => {
           updateState(MainState.Ready)
           // Install event listener for browser navigation updating the URL hash
           window.addEventListener('hashchange', searchFromUrl)
-          // Trigger a search upon loading (the input field was disabled until now)
+          // Trigger a search upon loading (the input field was readonly until now, so we know the user didn't enter anything there)
           searchFromUrl()  // may transition to `Searching`!
           // TypeScript doesn't realize that `state` may have changed here.
           // eslint-disable-next-line @typescript-eslint/ban-ts-comment
