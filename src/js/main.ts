@@ -90,7 +90,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     if ( newState === MainState.Ready ) {
       rand_entry_link.classList.remove('busy-link')
       search_term.removeAttribute('disabled')
-      search_term.focus()
     }
     else {
       search_term.setAttribute('disabled','disabled')
@@ -355,6 +354,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         window.clearTimeout(timerId)
         gotSearchResults(event.data.what, event.data.whatPat, event.data.matches)
         updateState(MainState.Ready)
+        search_term.focus()
       } else console.error(`Unexpected search results in state ${MainState[state]}`)
     }
     // -------------------------{ rand-line }-------------------------
