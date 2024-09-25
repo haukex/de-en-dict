@@ -101,7 +101,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       rand_entry_link.classList.add('busy-link')
     }
     if ( newState === MainState.Ready )
-      dict_status.innerText = `Dictionary holds ${dictLinesLen} entries` + ( dictWasUpdated ? '(updated in background).' : '.' )
+      dict_status.innerText = `Dictionary holds ${dictLinesLen} entries` + ( dictWasUpdated ? ' (updated in background).' : '.' )
     else if ( newState === MainState.AwaitingDict )
       dict_status.innerText = 'The dictionary is loading, please wait...'
     else if ( newState === MainState.Searching )
