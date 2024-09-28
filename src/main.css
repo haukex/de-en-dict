@@ -116,6 +116,11 @@ a.busy-link {
   width: 50%;
   font-size: 1rem;  /* Default would be 1.15rem from body */
 }
+@media only screen and (max-width: 720px) {
+  #result-table td {
+    hyphens: auto;
+  }
+}
 #result-table tr {
   background-color: var(--bg);  /* override simple.css */
 }
