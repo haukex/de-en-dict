@@ -302,11 +302,18 @@ window.addEventListener('DOMContentLoaded', async () => {
   })
 
   // Install event listener for input field changes
+  /* After the user enters something in the search box and presses Enter, a `change` event will happen
+     when the focus leaves the search box, so we need to prevent that here. */
+  let prevSearchTerm = 'something the user is unlikely to enter ⨕⨴⨵∭𝕱'
   search_term.addEventListener('change', () => {
+    if (search_term.value === prevSearchTerm) return
+    prevSearchTerm = search_term.value
     console.debug(`Search from input field change event for '${search_term.value}'`)
     doSearch(search_term.value, true)
   })
   initInputFieldKeys(search_term, () => {
+    if (search_term.value === prevSearchTerm) return
+    prevSearchTerm = search_term.value
     console.debug(`Search from keyboard Enter event for '${search_term.value}'`)
     doSearch(search_term.value, true)
   })
