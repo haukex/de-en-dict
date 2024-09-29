@@ -24,7 +24,7 @@
 import {assert, isWorkerMessage, MainState, MainMessageType, WorkerState} from './common'
 import {initPopups, addTitleTooltips, closeAllPopups} from './popups'
 import {wrapTextNodeMatches, cleanSearchTerm} from './utils'
-import {initInputFieldKeys} from './keyboard'
+import {initInputFieldKeys} from './searchbox'
 import {initScrollTop} from './scroll-top'
 import {result2tbody} from './render'
 import {initFlags} from './flags'
@@ -358,7 +358,7 @@ window.addEventListener('DOMContentLoaded', async () => {
           window.addEventListener('hashchange', searchFromUrl)
           // Trigger a search upon loading (the input field was readonly until now, so we know the user didn't enter anything there)
           searchFromUrl()  // may transition to `Searching`!
-          // TypeScript doesn't realize that `state` may have changed here.
+          // TypeScript doesn't realize that `state` will have changed here.
           // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-expect-error
           if ( state === MainState.Ready )
