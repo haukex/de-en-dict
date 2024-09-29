@@ -23,7 +23,7 @@
 
 import escapeStringRegexp from 'escape-string-regexp'
 import {assert} from '../js/common'
-//import {default as alphabet} from './alphabet.json'
+import {default as alphabet} from './alphabet.json'
 
 /**
  * The following is the list of character equivalencies.
@@ -106,34 +106,30 @@ const EQUIV :[string[], string[]][] = [
   [ ['(c)', '(C)'],           ['©']      ],
 ]
 
-interface IStringSetHash {
-  [details: string] : Set<string>;
-}
-interface IStringHash {
-  [details: string]: string;
-}
-
 // this code builds the set of patterns to match and each of their replacements
-const _pat_dict :IStringSetHash = {}
+const _pat_dict :Map<string, Set<string>> = new Map()
 for (const [l,r] of EQUIV) {
-  assert(l && r)
+  assert(l.length)
   for (const k of l) {
+    assert(k.length)
     for (const v of (r.length ? [k].concat(r) : l) ) {
-      if (!(k in _pat_dict))
-        _pat_dict[k] = new Set()
-      assert(_pat_dict[k] instanceof Set)
-      _pat_dict[k].add(v)
+      assert(v.length)
+      const s :Set<string> = _pat_dict.get(k) ?? new Set()
+      s.add(v)
+      _pat_dict.set(k, s)
     }
   }
 }
-const _pats = Object.keys(_pat_dict).sort().sort((a,b) => b.length-a.length)
-const EQUIV_PAT = new RegExp( '(' + _pats.map(escapeStringRegexp).join('|') + ')', 'g')
-const EQUIV_REPL :IStringHash = {}
+const _pats = Array.from(_pat_dict.keys()).sort().sort((a,b) => b.length-a.length)
+const EQUIV_PAT = new RegExp( '(' + _pats.map(escapeStringRegexp).join('|') + '|\\*)', 'g')
+const EQUIV_REPL :Map<string, string> = new Map()
 for (const pat of _pats) {
-  const s = _pat_dict[pat]
+  assert(pat.length)
+  const s = _pat_dict.get(pat)
   assert(s)
   const repl = Array.from(s.values()).sort().sort((a,b) => b.length-a.length)
-  EQUIV_REPL[pat] = (
+  assert(repl.length)
+  EQUIV_REPL.set(pat,
     repl.length == 1
       ? escapeStringRegexp(repl[0] as string)
       : repl.every(r=>r.length==1)
@@ -142,8 +138,9 @@ for (const pat of _pats) {
   )
 }
 //console.debug(EQUIV_PAT, EQUIV_REPL)
-// make sure * isn't in dict because it may get special treatment as a wildcard:
-assert(!Object.hasOwn(EQUIV_REPL, '*'))
+// make sure * isn't in dict because it gets special treatment as a wildcard:
+assert(!EQUIV_REPL.has('*'))
+const WORD_RE = new RegExp(alphabet.re.word)
 
 /**
  * This function takes a search word and turns it into a string suitable for use in a regular expression.
@@ -156,20 +153,31 @@ assert(!Object.hasOwn(EQUIV_REPL, '*'))
  * **Internal Note:** Our caller expects us to return a pattern **WITHOUT** anchors or capturing groups!
  */
 export function makeSearchPattern(what :string) : [string, string] {
-  let pat = ''
-  let withEquiv = ''
-  const parts = what.split(EQUIV_PAT)
-  // loop over by index instead of `for(const part of parts)` because I anticipate I'll need to look ahead/behind in `parts`
+  // tuples of: 0. orig string, 1. escaped string, 2. with replacements
+  let prevItem :string|undefined = undefined
+  const parts :[string, string, string][] = what.split(EQUIV_PAT).filter(s => s.length)
+    .flatMap(v=>{  // strip duplicate '*'
+      const rv = prevItem==='*' && v==='*' ? [] : [v]
+      prevItem = v
+      return rv
+    })
+    .map(v=>{
+      const esc = escapeStringRegexp(v)
+      return [ v, esc, EQUIV_REPL.get(v)??esc ]
+    })
+  // loop over by index instead of `for(const part of parts)` because I need to look ahead/behind in `parts`
   for ( let i=0; i<parts.length; i++ ) {
-    const part = parts[i] as string
-    if (part in EQUIV_REPL) {
-      pat += escapeStringRegexp(part)
-      withEquiv += EQUIV_REPL[part]  // special chars already escaped
-    }
-    else {
-      pat += escapeStringRegexp(part)
-      withEquiv += escapeStringRegexp(part)
+    const part = parts[i]
+    assert(part)
+    if (part[0] === '*') {  // wildcard
+      const prevWord = !!( i>0 && parts[i-1]?.[0]?.at(-1)?.match(WORD_RE) )
+      const nextWord = !!( i+1<parts.length && parts[i+1]?.[0]?.[0]?.match(WORD_RE) )
+      //TODO: If the goal is to allow things like 'durchbruch*' to mean '\bdurchbruch.*', I'll need to inject that \b ...
+      console.debug(`prevWord=${prevWord} nextWord=${nextWord}`)  //TODO: debug, remove
+      part[1] = '.*?'
+      part[2] = '.*?'
     }
   }
-  return [pat, withEquiv]
+  console.debug(parts)  //TODO: Debug, remove
+  return [ parts.map(v=>v[1]).join(''), parts.map(v=>v[2]).join('') ]
 }
