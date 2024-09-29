@@ -432,7 +432,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   let loadDictRetries = 0
   const timeoutHandler = () => {
     // try resending the request a few times
-    if ( state === MainState.AwaitingDict && ++loadDictRetries<3 ) {
+    if ( state === MainState.AwaitingDict && ++loadDictRetries<4 ) {
       timerId = window.setTimeout(timeoutHandler, INIT_TIMEOUT_MS)
       const m :MainMessageType = { type: 'status-req' }
       worker.postMessage(m)
@@ -440,7 +440,5 @@ window.addEventListener('DOMContentLoaded', async () => {
       dictLoadFail('Timed out waiting for response from worker.')
   }
   updateState(MainState.AwaitingDict)
-  timerId = window.setTimeout(timeoutHandler, INIT_TIMEOUT_MS)
-  const m :MainMessageType = { type: 'status-req' }
-  worker.postMessage(m)
+  timeoutHandler()  // reuse the timeout handler's code to set up the initial timeout
 })
