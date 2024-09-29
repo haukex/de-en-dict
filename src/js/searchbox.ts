@@ -22,29 +22,41 @@
  */
 
 /** Adds keyboard handlers to the search field. */
-export function initInputFieldKeys(elem :HTMLInputElement, onEnter :()=>void) {
-  elem.addEventListener('keyup', event => {
+export function initSearchBoxChange(search_box :HTMLInputElement, onChange :()=>void) {
+  /* After the user enters something in the search box and presses Enter, a `change` event will happen
+     when the focus leaves the search box, so we need to prevent that here. */
+  let prevSearchTerm = 'something the user is unlikely to enter ⨕⨴⨵∭𝕱'
+  search_box.addEventListener('change', () => {
+    if (search_box.value === prevSearchTerm) return
+    prevSearchTerm = search_box.value
+    console.debug(`Search from input field change event for '${search_box.value}'`)
+    onChange()
+  })
+  search_box.addEventListener('keyup', event => {
     // Escape key clears input
     if (event.key=='Escape') {
-      elem.value = ''
+      search_box.value = ''
     }
     // Enter key triggers search
     else if (event.key=='Enter') {
       event.preventDefault()
       event.stopPropagation()
-      onEnter()
+      if (search_box.value === prevSearchTerm) return
+      prevSearchTerm = search_box.value
+      console.debug(`Search from keyboard Enter event for '${search_box.value}'`)
+      onChange()
     }
   })
   /* 'Enter' is handled in keyup above, but we still need to prevent all of its default
    * behavior here so it doesn't fire the "change" event and cause the search to run twice. */
-  elem.addEventListener('keydown', event => {
+  search_box.addEventListener('keydown', event => {
     if (event.key=='Enter') {
       event.preventDefault()
       event.stopPropagation()
     }
   })
   // keypress is deprecated, we'll include it anyway for now
-  elem.addEventListener('keypress', event => {
+  search_box.addEventListener('keypress', event => {
     if (event.key=='Enter') {
       event.preventDefault()
       event.stopPropagation()
