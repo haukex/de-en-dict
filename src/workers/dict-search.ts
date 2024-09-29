@@ -58,14 +58,14 @@ export function searchDict(dictLines :string[], what :string): [string, string[]
     '(?:^|::\\s*|\\|\\s*)',   // +or term is at beginning of a sub-entry (after "|")
     '::\\s*to\\s+',           // term is an English verb (":: to sprint")
     '\\b' ]                   // term is at the beginning of a word
-    .flatMap((re)=>[re+whatPat, re+whatPatStricter]) // apply all of the above to the search pattern and its "stricter version"
-    .flatMap((re)=>[re, // for all of the above:
+    .flatMap(re=>[re+whatPat, re+whatPatStricter]) // apply all of the above to the search pattern and its "stricter version"
+    .flatMap(re=>[re, // for all of the above:
       re+'\\b', re+'\\b',     // term is at the end of a word - in combination with the above, this means whole words, so double points
       // term is followed by braces/brackets/parens followed by the end of that entry, sub-entry, or list item
       // https://regex101.com/r/7tBMul
       re+'(?:\\s*\\{[^}|]*\\}|\\s*\\[[^\\]|]*\\]|\\s*\\([^)|]*\\))*\\s*(?:$|::|\\||;)'])
     // create case-sensitive and case-insensitive regex versions of all of the above
-    .flatMap((re)=>[new RegExp(re), new RegExp(re, 'i')])
+    .flatMap(re=>[new RegExp(re), new RegExp(re, 'i')])
   //console.debug(scoreRes)
 
   const searchStartMs = new Date().getTime()

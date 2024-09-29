@@ -67,7 +67,7 @@ self.addEventListener('install', e => e.waitUntil(install()))
 // handler for the Service Worker "activate" event (typically used for cache cleaning)
 async function activate() {
   // determine which caches can be deleted
-  const cachesToDelete = (await caches.keys()).filter((key) => key !== APP_CACHE_NAME && key !== DB_CACHE_NAME)
+  const cachesToDelete = (await caches.keys()).filter(key => key !== APP_CACHE_NAME && key !== DB_CACHE_NAME)
   if (cachesToDelete.length) {
     // and delete those caches
     await Promise.all(cachesToDelete.map(key => caches.delete(key)))

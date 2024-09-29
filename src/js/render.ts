@@ -75,7 +75,7 @@ export function result2tbody (dictLine :string) {
       td.setAttribute('lang', li?'en':'de')  // note this is also used by the selection popup
       td.innerText = ent.trim()
       // we want to display annotations in different formatting
-      wrapTextNodeMatches(td, ANNOTATION_PAT, (match) => {
+      wrapTextNodeMatches(td, ANNOTATION_PAT, match => {
         if (Object.hasOwn(abbreviations, match)) {
           const abb = abbreviations[match as keyof typeof abbreviations]
           const e = document.createElement('abbr')
@@ -90,7 +90,7 @@ export function result2tbody (dictLine :string) {
         return e
       })
       // words in angle brackets are common misspellings or other cross-references that should be hidden from view
-      wrapTextNodeMatches(td, '<.+?>', (match) => {
+      wrapTextNodeMatches(td, '<.+?>', match => {
         const e = document.createElement('span')
         e.classList.add('hidden')
         e.innerText = match

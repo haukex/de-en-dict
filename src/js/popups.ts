@@ -59,7 +59,7 @@ function closeSelectionTools() {
 function initTitleTooltips() {
   const title_tooltip = document.getElementById('title-tooltip')
   assert(title_tooltip)
-  document.addEventListener('click', (event) => {
+  document.addEventListener('click', event => {
     // clicking anywhere but the tooltip or the element that opened it closes it
     if ( !( title_tooltip.contains(event.target as Node) || titleTooltipSource && titleTooltipSource.contains(event.target as Node) ) )
       closeTitleTooltip()
@@ -71,10 +71,10 @@ export function addTitleTooltips(elements :NodeListOf<HTMLElement>) {
   // important: don't call this until the element is actually part of the document, otherwise event listeners won't register
   const title_tooltip = document.getElementById('title-tooltip')
   assert(title_tooltip)
-  elements.forEach((el) => {
+  elements.forEach( el => {
     const title = el.getAttribute('title')
     if (!title) return
-    el.addEventListener('click', (event) => {
+    el.addEventListener('click', event => {
       if (event.detail>1 ) return  // not on double clicks (those would select the text)
       closeAllPopups()
       title_tooltip.innerText = title

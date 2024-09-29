@@ -135,7 +135,7 @@ export async function loadDict(target :string[]): Promise<void> {
       : resp.body
     // decode the body, split the text into lines, trim the lines, remove blank lines and comments
     const dictLines = (await gunzipUTF8(rs))
-      .split(/\r?\n|\r(?!\n)/g).map((line) => line.trim()).filter((line) => line.length && !line.startsWith('#'))
+      .split(/\r?\n|\r(?!\n)/g).map(line => line.trim()).filter(line => line.length && !line.startsWith('#'))
     if (dictLines.length <= 1)
       throw new Error(`Dictionary data was empty? (${dictLines.length} lines)`)
     // then copy over the lines into the target array

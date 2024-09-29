@@ -25,7 +25,7 @@ export function walkTextNodes(node :Node, callback :(txt:Text)=>Node) {
   if (node.nodeType==Node.TEXT_NODE)
     node.parentNode?.replaceChild(callback(node as Text), node)
   else  // text nodes shouldn't have children, but play it safe anyway
-    node.childNodes.forEach((child) => walkTextNodes(child, callback))
+    node.childNodes.forEach(child => walkTextNodes(child, callback))
 }
 
 /** This function walks the DOM tree, looking for matches of a regular expression in all
@@ -43,7 +43,7 @@ export function wrapTextNodeMatches(node :Node, searchPat :string, wrapper :(mat
   const splitRe = RegExp('('+searchPat+')','g'+flags)
   const matchRe = RegExp('^(?:'+searchPat+')$',flags)
   node.normalize()
-  walkTextNodes(node, (txt) => {
+  walkTextNodes(node, txt => {
     if ( txt.data.search(splitRe)<0 )
       return txt
     const df = document.createDocumentFragment()

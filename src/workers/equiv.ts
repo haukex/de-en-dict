@@ -136,7 +136,7 @@ for (const pat of _pats) {
   EQUIV_REPL[pat] = (
     repl.length == 1
       ? escapeStringRegexp(repl[0] as string)
-      : repl.every((r)=>r.length==1)
+      : repl.every(r=>r.length==1)
         ? '[' + repl.map(escapeStringRegexp).join('') + ']'
         : '(?:' + repl.map(escapeStringRegexp).join('|') + ')'
   )

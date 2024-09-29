@@ -41,8 +41,8 @@ const LARGE_CHUNK_SZ = 200
 // register the Service Worker (if possible)
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register(new URL('../workers/sw.ts', import.meta.url), {type: 'module', scope: '/'}).then(
-    (registration) => console.debug('SW register ok', registration),
-    (error) => console.error('Service Worker registration failed', error),
+    registration => console.debug('SW register ok', registration),
+    error => console.error('Service Worker registration failed', error),
   )
   navigator.serviceWorker.addEventListener('message', event => console.debug('SW:', event.data))
 } else console.warn('Service Workers are not supported')
@@ -129,7 +129,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   // utility function to clear the results table
   const clearResults = () => {
     // remove all existing results
-    document.querySelectorAll('tbody.result').forEach((elem) => elem.remove())
+    document.querySelectorAll('tbody.result').forEach(elem => elem.remove())
     // ensure all popups get hidden (apparently needed in some browsers?)
     closeAllPopups()
     // clear status
@@ -158,12 +158,12 @@ window.addEventListener('DOMContentLoaded', async () => {
       console.debug(`Rendering matches ${start} to ${end}-1 of ${matches.length} (displayed=${displayedMatches})`)
 
       // loop over the chunk of lines to be displayed
-      matches.slice(start, end).forEach((matchLine) => {
+      matches.slice(start, end).forEach( matchLine => {
         try {  // especially result2tbody may throw errors
           const tbody = result2tbody(matchLine)
           // highlight the search term in the match
-          tbody.querySelectorAll('td').forEach((td) => {
-            wrapTextNodeMatches(td, whatPat, (match) => {
+          tbody.querySelectorAll('td').forEach( td => {
+            wrapTextNodeMatches(td, whatPat, match => {
               const e = document.createElement('strong')
               e.innerText = match
               return e
