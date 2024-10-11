@@ -217,8 +217,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     search_status.innerText = 'Showing a random entry.'
   }
 
-  // Starts a search using a value in the URL hash, if any
-  const searchFromUrl = () => {
+  // Get search term from URL and copy it to the search box
+  const hashToSearchTerm = () => {
     // query overrides hash (see GitHub Issue #7: some links to the app use '?' instead of '#')
     if ( window.location.search.length > 1 ) {
       const loc = new URL(''+window.location)
@@ -237,9 +237,14 @@ window.addEventListener('DOMContentLoaded', async () => {
         console.warn('ignoring bad window.location.hash',error)
       }
     }
-    console.debug(`Search from URL for '${what}'`)
     search_term.value = what
-    doSearch(what, false)
+  }
+
+  // Starts a search using a value in the URL hash, if any
+  const searchFromUrl = () => {
+    hashToSearchTerm()
+    console.debug(`Search from URL for '${search_term.value}'`)
+    doSearch(search_term.value, false)
   }
 
   // handler in case the worker does not get back to us with a search result
@@ -308,6 +313,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   initScrollTop()
   initFlags()
   initPopups()
+  hashToSearchTerm()  // just updates the text box, actual search is later
 
   // handler for dictionary load failures
   const dictLoadFail = (message :string) => {
