@@ -62,7 +62,7 @@ Thanks ❤️
 - [@darmuent (Helmut)](https://github.com/darmuent), for a
   [correction](https://github.com/haukex/de-en-dict/issues/27)
 - [@christophfriedrich (Christoph Friedrich)](https://github.com/christophfriedrich)
-  for [suggesting better dictionary loading behavior](https://github.com/haukex/de-en-dict/issues/31)
+  for [several suggestions](https://github.com/haukex/de-en-dict/issues?q=author%3Achristophfriedrich)
 - Several (anonymous) people who sent bug reports and suggestions,
   and several people who emailed me expressing their thanks!
 
