@@ -75,17 +75,25 @@ async function gunzipUTF8(stream :ReadableStream<Uint8Array>): Promise<string> {
 }
 
 /** Determines whether the dictionary version on the server has changed,
- * by fetching a relatively small file and seeing if it has changed. */
-async function doesDictNeedUpdate(): Promise<boolean> {
-  let dictNeedsUpdate = false
+ * by fetching a relatively small file and seeing if it has changed.
+ *
+ * If this function returns `null`, no update is needed, but if an update
+ * is needed, then the caller must call the returned function when it is
+ * done doing its work, or not call it if its work fails. */
+async function doesDictNeedUpdate(): Promise<null|(()=>void)> {
+  let dictNeedsUpdate :null|(()=>void) = null  // return value
   try {
     // get the small text file from the network
     // (note service worker is special-cased to not intercept this URL so it won't be cached)
     const dictVerResp = await fetch(DB_VER_URL)
     if (dictVerResp.ok) {
+      // this function, to be called by our callers, saves the current version of the file for the next comparison
+      const commit = async () => {
+        (await caches.open(DB_CACHE_NAME)).put(DB_VER_URL, dictVerResp)
+        console.debug('Saved the new dict version information.')
+      }
       // next, check if we have a copy of the file in the cache
-      const cache = await caches.open(DB_CACHE_NAME)
-      const dictVerCache = await cache.match(DB_VER_URL)
+      const dictVerCache = await (await caches.open(DB_CACHE_NAME)).match(DB_VER_URL)
       if (dictVerCache) { // we have a copy of the file in the cache
         // and then compare whether the two files are the same
         // (clone because Response body can only be read once per request)
@@ -94,7 +102,7 @@ async function doesDictNeedUpdate(): Promise<boolean> {
         else {
           // otherwise, the file on the server has changed, so the dictionary needs to be updated too
           console.debug('The dict version information has changed.')
-          dictNeedsUpdate = true
+          dictNeedsUpdate = commit
         }
       }
       /* Otherwise, we don't have a copy of the file in the cache, which probably means that
@@ -102,10 +110,8 @@ async function doesDictNeedUpdate(): Promise<boolean> {
        * But it could also indicate an inconsistent state of the cache, so it makes sense to report that an update is needed. */
       else {
         console.debug('The dict version information is not in our cache.')
-        dictNeedsUpdate = true
+        dictNeedsUpdate = commit
       }
-      // save the current version of the file for the next comparison
-      cache.put(DB_VER_URL, dictVerResp)
     }
     else
       // we couldn't get the file, which isn't a big problem, we'll try again next time
@@ -168,7 +174,8 @@ export async function loadDict(target :string[]): Promise<void> {
      * but see also the various discussions at https://github.com/WICG/netinfo/issues?q=metered
      * and the relaunch attempt at https://github.com/tomayac/netinfo/blob/relaunch/README.md */
     setTimeout(async () => {
-      if (await doesDictNeedUpdate()) {
+      const commit = await doesDictNeedUpdate()
+      if (commit) {
         console.debug('Dictionary needs update, starting background update.')
         const m :WorkerMessageType = { type: 'dict-upd', status: 'loading', dictLinesLen: target.length }
         postMessage(m)
@@ -177,6 +184,7 @@ export async function loadDict(target :string[]): Promise<void> {
           await getDictFromNet(false)
           const m :WorkerMessageType = { type: 'dict-upd', status: 'done', dictLinesLen: target.length }
           postMessage(m)
+          commit()
         }
         catch (error) { console.warn('Failed to get dictionary update.', error) }
       }
@@ -187,10 +195,12 @@ export async function loadDict(target :string[]): Promise<void> {
   }
   else {
     console.debug('The dictionary data is not in the cache, fetching it now.')
-    // We can also assume we don't have the version information in the cache either, so fetch that in the background.
-    // (the only goal is fetching the version info from the network, so we don't care about the return value)
-    setTimeout(doesDictNeedUpdate, 500)
-    // This may throw an error, so call it last.
+    // This may throw an error, and if that happens, we don't want/need to get+save the dictionary version info either.
     await getDictFromNet(true)
+    // We can also assume we don't have the version information in the cache either, so fetch that in the background.
+    setTimeout(async () => {
+      const commit = await doesDictNeedUpdate()
+      if (commit) commit()
+    }, 500)
   }
 }
