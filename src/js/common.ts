@@ -48,7 +48,7 @@ export enum WorkerState {
 /// Messages from the worker
 export type WorkerMessageType =
     { type: 'dict-prog', percent :number }
-  | { type: 'dict-upd', status :'loading'|'done', dictLinesLen :number }
+  | { type: 'dict-upd', status :'loading'|'done'|'error', dictLinesLen :number }
   | { type: 'worker-status', state :WorkerState, dictLinesLen :number, error ?:Error|unknown }
   | { type: 'search-prog', percent :number }
   | { type: 'results', what :string, whatPat :string, matches :string[] }

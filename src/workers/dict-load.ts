@@ -186,7 +186,11 @@ export async function loadDict(target :string[]): Promise<void> {
           postMessage(m)
           commit()
         }
-        catch (error) { console.warn('Failed to get dictionary update.', error) }
+        catch (error) {
+          console.warn('Failed to get dictionary update.', error)
+          const m :WorkerMessageType = { type: 'dict-upd', status: 'error', dictLinesLen: target.length }
+          postMessage(m)
+        }
       }
       else console.debug('Dictionary doesn\'t appear to need an update.')
     }, 500)

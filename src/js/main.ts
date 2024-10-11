@@ -391,6 +391,8 @@ window.addEventListener('DOMContentLoaded', async () => {
       dictLinesLen = event.data.dictLinesLen
       if (event.data.status === 'loading')
         dict_upd_status.innerText = '(Updating in background...)'
+      else if (event.data.status === 'error')
+        dict_upd_status.innerText = '(Background dictionary update failed. Try reloading?)'
       else {
         dict_upd_status.innerText = ''
         if (event.data.status === 'done') {
