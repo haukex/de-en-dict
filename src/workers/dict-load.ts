@@ -160,10 +160,9 @@ export async function loadDict(target :string[]): Promise<void> {
     if (dictFromNet.ok && dictFromNet.body) console.debug(msg)
     else throw new Error(msg)
     // (clone because Response body can only be read once per request)
-    const dictForCache = dictFromNet.clone()
-    await response2lines(dictFromNet, progCb)  // update the target with this response
+    await response2lines(dictFromNet.clone(), progCb)  // update the target with this response
     // don't store the response in cache until we know it was processed without error
-    cache.put(DB_URL, dictForCache)  // save the response to the cache
+    cache.put(DB_URL, dictFromNet)  // save the response to the cache
   }
 
   // Check if the dictionary is in the cache.
