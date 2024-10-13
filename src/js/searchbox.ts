@@ -26,12 +26,13 @@ export function initSearchBoxChange(search_box :HTMLInputElement, onChange :()=>
   /* After the user enters something in the search box and presses Enter, a `change` event will happen
      when the focus leaves the search box, so we need to prevent that here. */
   let prevSearchTerm = 'something the user is unlikely to enter ⨕⨴⨵∭𝕱'
-  search_box.addEventListener('change', () => {
+  const doIt = (src :string) => {
     if (search_box.value === prevSearchTerm) return
     prevSearchTerm = search_box.value
-    console.debug(`Search from input field change event for '${search_box.value}'`)
+    console.debug(`Search from ${src} event for '${search_box.value}'`)
     onChange()
-  })
+  }
+  search_box.addEventListener('change', () => doIt('input field change'))
   search_box.addEventListener('keyup', event => {
     // Escape key clears input
     if (event.key=='Escape') {
@@ -41,10 +42,7 @@ export function initSearchBoxChange(search_box :HTMLInputElement, onChange :()=>
     else if (event.key=='Enter') {
       event.preventDefault()
       event.stopPropagation()
-      if (search_box.value === prevSearchTerm) return
-      prevSearchTerm = search_box.value
-      console.debug(`Search from keyboard Enter event for '${search_box.value}'`)
-      onChange()
+      doIt('keyboard Enter')
     }
   })
   /* 'Enter' is handled in keyup above, but we still need to prevent all of its default
