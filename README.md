@@ -16,10 +16,14 @@ Troubleshooting
 
 1. Please make sure you're using the *latest version* of a modern browser with modern JavaScript support,
   such as Firefox, Chrome, Edge, or Safari (but please note the latter requires a *current* version of macOS).
-2. To make sure you're seeing the latest version of the page/app, please try clearing your browser's cache
+   - If you are using any browser plug-ins that may block JavaScript (e.g. NoScript, JShelter, LibreJS, ...),
+     then make sure to whitelist `dict.zero-g.net`.
+3. To make sure you're seeing the latest version of the page/app, please try clearing your browser's cache
   as well as all saved data for the site "zero-g.net".
-3. Try accessing this link: <https://ftp.tu-chemnitz.de/pub/Local/urz/ding/de-en-devel/>, if you have trouble
+4. Try accessing this link: <https://ftp.tu-chemnitz.de/pub/Local/urz/ding/de-en-devel/>, if you have trouble
   doing so, then the dictionary server may be offline or possibly blocked by a firewall from your location.
+   - If you are using any browser plug-ins that block requests to "third-party" sites, then make sure to
+     allow access to `ftp.tu-chemnitz.de`, or whitelist `dict.zero-g.net`.
 
 Technical Overview
 ------------------
@@ -35,6 +39,7 @@ JS Cache API to limit the load on the origin server as much as possible. Install
 possible by a corresponding JS Service Worker that caches the app. The entered search term is
 turned into a regular expression, which is used to search the dictionary data, and results are
 sorted by a score determined by a set of regular expressions and rendered into an HTML table.
+The dictionary loading and search is handled in the background by a Web Worker.
 
 Development Environment
 -----------------------
