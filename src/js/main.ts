@@ -21,7 +21,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-import {assert, isWorkerMessage, MainState, MainMessageType, WorkerState} from './common'
+import {assert, isWorkerMessage, MainState, MainMessageType, WorkerState, IDictStats} from './common'
 import {initPopups, addTitleTooltips, closeAllPopups} from './popups'
 import {wrapTextNodeMatches, cleanSearchTerm} from './utils'
 import {initSearchBoxChange} from './searchbox'
@@ -80,7 +80,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   const orig_title_text = document.title
 
   // variables to keep state
-  let dictLinesLen = 0
+  let dictStats :IDictStats = { lines: 0, entries: 0 }
   let dictWasUpdated = false
   let timerId :number
   const searchCache = new LRUCache<string, [string, string[]]>(10)
@@ -101,11 +101,12 @@ window.addEventListener('DOMContentLoaded', async () => {
       rand_entry_link.classList.add('busy-link')
     }
     if ( newState === MainState.Ready )
-      dict_status.innerText = `Dictionary holds ${dictLinesLen} entries` + ( dictWasUpdated ? ' (updated in background).' : '.' )
+      dict_status.innerText = `Dictionary holds ${dictStats.entries} entries in ${dictStats.lines} lines`
+        + ( dictWasUpdated ? ' (updated in background).' : '.' )
     else if ( newState === MainState.AwaitingDict )
       dict_status.innerText = 'The dictionary is loading, please wait...'
     else if ( newState === MainState.Searching )
-      dict_status.innerText = `Searching ${dictLinesLen} entries, please wait...`
+      dict_status.innerText = `Searching ${dictStats.entries} entries, please wait...`
     else if ( newState === MainState.Error )
       dict_status.innerText = state === MainState.AwaitingDict ? 'Dictionary load failure! See error message above.'
         : state === MainState.Searching ? 'Search timed out! See error message above.' : 'See error message above.'
@@ -329,7 +330,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (!isWorkerMessage(event.data)) return
     // -------------------------{ worker-status }-------------------------
     if ( event.data.type === 'worker-status' ) {
-      dictLinesLen = event.data.dictLinesLen
+      dictStats = event.data.dictStats
       if (event.data.state !== WorkerState.LoadingDict)
         dict_prog_div.classList.add('d-none')
       if ( state === MainState.AwaitingDict )
@@ -388,7 +389,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     else if ( event.data.type === 'dict-upd' ) {
       // we received the information that the dictionary was asynchronously updated
       // since all we're doing is updating some texts, it doesn't matter what state we're in
-      dictLinesLen = event.data.dictLinesLen
+      dictStats = event.data.dictStats
       if (event.data.status === 'loading')
         dict_upd_status.innerText = '(Updating in background...)'
       else if (event.data.status === 'error')

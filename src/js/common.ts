@@ -45,11 +45,16 @@ export enum WorkerState {
   Ready,
 }
 
+export interface IDictStats {
+  lines :number
+  entries :number
+}
+
 /// Messages from the worker
 export type WorkerMessageType =
     { type: 'dict-prog', percent :number }
-  | { type: 'dict-upd', status :'loading'|'done'|'error', dictLinesLen :number }
-  | { type: 'worker-status', state :WorkerState, dictLinesLen :number, error ?:Error|unknown }
+  | { type: 'dict-upd', status :'loading'|'done'|'error', dictStats :IDictStats }
+  | { type: 'worker-status', state :WorkerState, dictStats :IDictStats, error ?:Error|unknown }
   | { type: 'search-prog', percent :number }
   | { type: 'results', what :string, whatPat :string, matches :string[] }
   | { type: 'rand-line', line :string }
@@ -69,4 +74,20 @@ export function isWorkerMessage(obj :any): obj is WorkerMessageType {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isMainMessage(obj :any): obj is MainMessageType {
   return 'type' in obj && ['status-req','search','get-rand'].includes(obj.type)
+}
+
+interface ITransPair { de: string, en: string }
+
+export function splitDictLine(dictLine :string) :ITransPair[] {
+  // note the following formatting is validated by `dict-check.pl`
+  // split the dictionary lines into "German :: English"
+  const trans = dictLine.split(/::/)
+  if (trans.length!=2)
+    throw new Error(`unexpected database format on line ${dictLine}`)
+  // split each entry on "|"s, should have the same number of entries on each side
+  const des = (trans[0] as string).split(/\|/)
+  const ens = (trans[1] as string).split(/\|/)
+  if (des.length!=ens.length)
+    throw new Error(`unexpected database format on line ${dictLine}`)
+  return des.map((de, i) => ({ 'de': de, 'en': ens[i] as string }) )
 }

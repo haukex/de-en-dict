@@ -21,8 +21,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+import {IDictStats, WorkerMessageType, assert, splitDictLine} from '../js/common'
 import {DB_URL, DB_VER_URL, DB_CACHE_NAME} from './consts'
-import {WorkerMessageType, assert} from '../js/common'
 
 class ProgressTransformer extends TransformStream<Uint8Array, Uint8Array> {
   constructor(totalBytes :number, callback :(percent :number)=>void, intervalMs :number = 100, initialDelayMs :number = 500,
@@ -128,7 +128,7 @@ async function doesDictNeedUpdate(cache :Cache): Promise<null|(()=>void)> {
  * **IMPORTANT:** This means that it may modify the `target` array twice, once before the
  * function returns, and once when the updated dictionary data is loaded.
  */
-export async function loadDict(target :string[]): Promise<void> {
+export async function loadDict(target :string[], dictStats :IDictStats): Promise<void> {
   /* Note: Firefox was exhibiting some strange crashes (GH issue #32),
    * and it seems like either one or both of the following things fixed
    * it, so make sure not to change these:
@@ -153,10 +153,16 @@ export async function loadDict(target :string[]): Promise<void> {
       .split(/\r?\n|\r(?!\n)/g).map(line => line.trim()).filter(line => line.length && !line.startsWith('#'))
     if (dictLines.length <= 1)
       throw new Error(`Dictionary data was empty? (${dictLines.length} lines)`)
-    // then copy over the lines into the target array
+    // then copy over the lines into the target array (and count entries)
+    let entries = 0
     target.length = 0  // clear the target line array
-    dictLines.forEach(el => target.push(el))
-    console.debug(`Decoded ${dictLines.length} dictionary lines.`)
+    dictLines.forEach(el => {
+      entries += splitDictLine(el).length
+      target.push(el)
+    })
+    dictStats.lines = dictLines.length
+    dictStats.entries = entries
+    console.debug(`Decoded ${dictLines.length} dictionary lines with ${entries} entries.`)
   }
 
   // Helper function to fetch dictionary from network (no cache) and update cache and target.
@@ -185,18 +191,18 @@ export async function loadDict(target :string[]): Promise<void> {
       const commit = await doesDictNeedUpdate(cache)
       if (commit) {
         console.debug('Dictionary needs update, starting background update.')
-        const m :WorkerMessageType = { type: 'dict-upd', status: 'loading', dictLinesLen: target.length }
+        const m :WorkerMessageType = { type: 'dict-upd', status: 'loading', dictStats: dictStats }
         postMessage(m)
         try {
           // Note this will "hot swap" the dictionary data into the array holding the lines.
           await getDictFromNet(false)
-          const m :WorkerMessageType = { type: 'dict-upd', status: 'done', dictLinesLen: target.length }
+          const m :WorkerMessageType = { type: 'dict-upd', status: 'done', dictStats: dictStats }
           postMessage(m)
           commit()
         }
         catch (error) {
           console.warn('Failed to get dictionary update.', error)
-          const m :WorkerMessageType = { type: 'dict-upd', status: 'error', dictLinesLen: target.length }
+          const m :WorkerMessageType = { type: 'dict-upd', status: 'error', dictStats: dictStats }
           postMessage(m)
         }
       }

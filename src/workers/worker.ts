@@ -25,16 +25,17 @@
 // eslint-disable-next-line no-var
 declare var self: DedicatedWorkerGlobalScope
 
-import {WorkerMessageType, isMainMessage, WorkerState, assert} from '../js/common'
+import {WorkerMessageType, isMainMessage, WorkerState, assert, IDictStats} from '../js/common'
 import {searchDict} from './dict-search'
 import {loadDict} from './dict-load'
 
 let state :WorkerState = WorkerState.LoadingDict
+const dictStats :IDictStats = { lines: 0, entries: 0 }
 const dictLines :string[] = []
 let dictError :Error|unknown = null
 
 const sendMyState = () => {
-  const m :WorkerMessageType = { type: 'worker-status', state: state, dictLinesLen: dictLines.length, error: dictError }
+  const m :WorkerMessageType = { type: 'worker-status', state: state, dictStats: dictStats, error: dictError }
   postMessage(m)
 }
 
@@ -66,7 +67,7 @@ self.addEventListener('message', event => {
 })
 
 // loadDict sends its own progress reports
-loadDict(dictLines)
+loadDict(dictLines, dictStats)
   .then(() => {
     state = WorkerState.Ready
   }, error => {

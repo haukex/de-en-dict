@@ -21,9 +21,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+import {ANNOTATION_PAT, splitDictLine} from './common'
 import {default as abbreviations} from './abbreviations.json'
 import {wrapTextNodeMatches} from './utils'
-import {ANNOTATION_PAT} from './common'
 
 // a couple of user-settable variables
 const FEEDBACK_URL = 'mailto:beolingus@tu-chemnitz.de'  // as requested by Frank Richter
@@ -37,15 +37,7 @@ const ENABLE_FEEDBACK = true
 
 // function to turn a dictionary line into a rendered <tbody>
 export function result2tbody (dictLine :string) {
-  // split the dictionary lines into "German :: English"
-  const trans = dictLine.split(/::/)
-  if (trans.length!=2)
-    throw new Error(`unexpected database format on line ${dictLine}`)
-  // split each entry on "|"s, should have the same number of entries on each side
-  const des = (trans[0] as string).split(/\|/)
-  const ens = (trans[1] as string).split(/\|/)
-  if (des.length!=ens.length)
-    throw new Error(`unexpected database format on line ${dictLine}`)
+  const trans = splitDictLine(dictLine)
 
   // generate "mailto:" link with predefined subject and body (used below)
   const fbHref = FEEDBACK_URL
@@ -67,10 +59,10 @@ export function result2tbody (dictLine :string) {
   tbody.setAttribute('data-feedback-href', fbHref)  // for later use by the popup code
 
   // generate the HTML for each (sub-)result
-  des.forEach((de, i) => {
+  trans.forEach((trn, i) => {
     // generate the <tr> with the two <td> children
     const tr = document.createElement('tr');
-    [de, ens[i] as string].forEach((ent, li) => {
+    [trn.de, trn.en].forEach((ent, li) => {
       const td = document.createElement('td')
       td.setAttribute('lang', li?'en':'de')  // note this is also used by the selection popup
       td.innerText = ent.trim()
