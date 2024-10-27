@@ -30,7 +30,7 @@ import {searchDict} from './dict-search'
 import {loadDict} from './dict-load'
 
 let state :WorkerState = WorkerState.LoadingDict
-const dictStats :IDictStats = { lines: 0, entries: 0 }
+const dictStats :IDictStats = { lines: 0, entries: 0, oneToOne: 0 }
 const dictLines :string[] = []
 let dictError :Error|unknown = null
 

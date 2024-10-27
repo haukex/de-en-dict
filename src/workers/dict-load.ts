@@ -148,9 +148,25 @@ export async function loadDict(target :string[], dictStats :IDictStats): Promise
         postMessage(m)
       }))
       : resp.body
-    // decode the body, split the text into lines, trim the lines, remove blank lines and comments
-    const dictLines = (await gunzipUTF8(rs))
-      .split(/\r?\n|\r(?!\n)/g).map(line => line.trim()).filter(line => line.length && !line.startsWith('#'))
+    // decode the body and split the text into lines
+    const dictLinesRaw = (await gunzipUTF8(rs)).split(/\r?\n|\r(?!\n)/g)
+    // search the beginning of the dict for the stats comment
+    let statsEntries :number|null = null
+    let statsLines :number|null = null
+    let stats1to1 :number|null = null
+    dictLinesRaw.slice(0, 50).some(line => {
+      /* Regex to parse the stats line in the dictionary comments, generated as follows (Perl):
+       * "Stats: $count entries ($trans_main main + " . ($trans_add+$trans_add2) . " additional, $mult 1:1 translations)\n" */
+      const match = line.match(/^\s*#\s*Stats: (\d+) entries \((\d+) main \+ (\d+) additional, (\d+) 1:1 translations\)\s*$/)
+      if ( match ) {
+        statsEntries = parseInt( match[1] as string )
+        statsLines = parseInt( match[2] as string )
+        stats1to1 = parseInt( match[4] as string )
+      }
+      return !!match  // this should cause Array.some to short-circuit
+    })
+    // trim the lines and remove blank lines and comments
+    const dictLines = dictLinesRaw.map(line => line.trim()).filter(line => line.length && !line.startsWith('#'))
     if (dictLines.length <= 1)
       throw new Error(`Dictionary data was empty? (${dictLines.length} lines)`)
     // then copy over the lines into the target array (and count entries)
@@ -163,6 +179,14 @@ export async function loadDict(target :string[], dictStats :IDictStats): Promise
     dictStats.lines = dictLines.length
     dictStats.entries = entries
     console.debug(`Decoded ${dictLines.length} dictionary lines with ${entries} entries.`)
+    if ( statsEntries!=entries )
+      console.warn(`Stats line reports ${statsEntries} entries, but I counted ${entries} - not trusting Stats line`)
+    else if ( statsLines!=dictLines.length )
+      console.warn(`Stats line reports ${statsLines} lines, but I have ${dictLines.length} - not trusting Stats line`)
+    else if (stats1to1) {
+      console.debug(`Stats line reports ${stats1to1} 1:1 translations.`)
+      dictStats.oneToOne = stats1to1
+    }
   }
 
   // Helper function to fetch dictionary from network (no cache) and update cache and target.

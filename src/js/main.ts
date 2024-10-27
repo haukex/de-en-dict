@@ -80,7 +80,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   const orig_title_text = document.title
 
   // variables to keep state
-  let dictStats :IDictStats = { lines: 0, entries: 0 }
+  let dictStats :IDictStats = { lines: 0, entries: 0, oneToOne: 0 }
   let dictWasUpdated = false
   let timerId :number
   const searchCache = new LRUCache<string, [string, string[]]>(10)
@@ -102,6 +102,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
     if ( newState === MainState.Ready )
       dict_status.innerText = `Dictionary holds ${dictStats.entries} entries in ${dictStats.lines} lines`
+        + ( dictStats.oneToOne ? ` (${dictStats.oneToOne} 1:1 translations)` : '' )
         + ( dictWasUpdated ? ' (updated in background).' : '.' )
     else if ( newState === MainState.AwaitingDict )
       dict_status.innerText = 'The dictionary is loading, please wait...'

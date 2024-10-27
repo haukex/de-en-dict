@@ -48,6 +48,7 @@ export enum WorkerState {
 export interface IDictStats {
   lines :number
   entries :number
+  oneToOne :number
 }
 
 /// Messages from the worker
