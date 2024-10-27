@@ -45,11 +45,29 @@
       for potential troubleshooting steps.
     </div>
 
-    <p>
-      <!-- Note it's important the input box is readonly by default! -->
-      <input type="text" id="search-term" placeholder="🔍 Search" readonly>
+    <form id="search-form">
+      <!-- Note it's important everything is disabled/readonly by default! -->
+      <!-- Note the name="q" is for Firefox's "Add a Keyword for this Search" feature -->
+      <input type="text" id="search-term" name="q" placeholder="🔍 Search" readonly>
       <progress id="search-progress" max="100" class="d-none"></progress>
-    </p>
+      <details id="adv-search">
+        <summary>Advanced Search</summary>
+        <label for="search-regex">Regular Expression
+          (<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Cheatsheet" target="_blank">Quick Reference</a>)</label>
+        <div id="adv-search-box">
+          <input type="text" id="search-regex" placeholder="🔍 Regular Expression" readonly>
+          <button id="reset-regex" disabled>↺ Reset</button>
+        </div>
+        <div id="adv-search-limits">
+          <div>Limit results to:</div>
+          <label><input type="checkbox" id="limit-noun" checked disabled> Nouns</label>
+          <label><input type="checkbox" id="limit-verb" checked disabled> Verbs</label>
+          <label><input type="checkbox" id="limit-adj" checked disabled> Adjectives</label>
+          <div id="adv-search-limits-spacer"></div>
+          <button id="btn-adv-search" disabled>🔍 Search</button>
+        </div>
+      </details>
+    </form>
     <figure><!-- for horiz scroll (simple.css) -->
       <table id="result-table">
         <thead>

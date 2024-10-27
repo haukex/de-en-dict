@@ -24,8 +24,8 @@
 import {assert, isWorkerMessage, MainState, MainMessageType, WorkerState, IDictStats} from './common'
 import {initPopups, addTitleTooltips, closeAllPopups} from './popups'
 import {wrapTextNodeMatches, cleanSearchTerm} from './utils'
-import {initSearchBoxChange} from './searchbox'
 import {initScrollTop} from './scroll-top'
+import {SearchForm} from './search-form'
 import {result2tbody} from './render'
 import {initFlags} from './flags'
 import {LRUCache} from './lru'
@@ -61,7 +61,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     throw new Error(`DOMContentLoaded in state ${MainState[state]}`)
 
   // get all of the HTML elements from the page that we need
-  const search_term = document.getElementById('search-term')
   const search_progress = document.getElementById('search-progress')
   const search_timeout = document.getElementById('search-timeout')
   const result_table = document.getElementById('result-table')
@@ -75,9 +74,11 @@ window.addEventListener('DOMContentLoaded', async () => {
   const rand_entry_link = document.getElementById('rand-entry-link')
   const dict_load_fail = document.getElementById('dict-load-fail')
   const error_log = document.getElementById('error-log')
-  assert( search_term instanceof HTMLInputElement && result_table && dict_status && dict_upd_status && search_status && no_results
+  assert( result_table && dict_status && dict_upd_status && search_status && no_results
     && more_buttons && dict_prog_div && dict_progress && search_progress && search_timeout && rand_entry_link && dict_load_fail && error_log )
   const orig_title_text = document.title
+
+  const searchForm = new SearchForm()
 
   // variables to keep state
   let dictStats :IDictStats = { lines: 0, entries: 0, oneToOne: 0 }
@@ -91,12 +92,10 @@ window.addEventListener('DOMContentLoaded', async () => {
     // enable/disable UI components depending on state
     if ( newState === MainState.Ready ) {
       rand_entry_link.classList.remove('busy-link')
-      search_term.removeAttribute('readonly')
+      searchForm.disabled = false
     }
     else {
-      /* DON'T use `disabled`, because in the case where this code is going to the state `Searching` due to a search,
-       * setting that attribute causes a recursive `change` event and search to be fired here! (Chrome and Edge) */
-      search_term.setAttribute('readonly','readonly')
+      searchForm.disabled = true
       // note the click handler must check the state too and ignore clicks when not Ready
       rand_entry_link.classList.add('busy-link')
     }
@@ -125,7 +124,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     state = newState
     //console.debug(`updateState done, state=${MainState[state]}`)
   }
-  // call this immediately (note the input box should already be readonly in HTML, but there are other things to update)
+  // call this immediately (note the search form should already be disabled in HTML, but there are other things to update)
   updateState(state)
 
   // utility function to clear the results table
@@ -239,14 +238,14 @@ window.addEventListener('DOMContentLoaded', async () => {
         console.warn('ignoring bad window.location.hash',error)
       }
     }
-    search_term.value = what
+    searchForm.value = what
   }
 
   // Starts a search using a value in the URL hash, if any
   const searchFromUrl = () => {
     hashToSearchTerm()
-    console.debug(`Search from URL for '${search_term.value}'`)
-    doSearch(search_term.value, false)
+    console.debug(`Search from URL for '${searchForm.value}'`)
+    doSearch(searchForm.value, false)
   }
 
   // handler in case the worker does not get back to us with a search result
@@ -309,13 +308,13 @@ window.addEventListener('DOMContentLoaded', async () => {
   })
 
   // Initialize event listener for input field changes
-  initSearchBoxChange(search_term, () => doSearch(search_term.value, true))
+  searchForm.doSearch = what => doSearch(what, true)
 
   // initialize various things
   initScrollTop()
   initFlags()
   initPopups()
-  hashToSearchTerm()  // just updates the text box, actual search is later
+  hashToSearchTerm()  // just updates the text box (GH issue #36), actual search is later
 
   // handler for dictionary load failures
   const dictLoadFail = (message :string) => {
@@ -356,7 +355,7 @@ window.addEventListener('DOMContentLoaded', async () => {
           // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-expect-error
           if ( state === MainState.Ready )
-            search_term.focus()
+            searchForm.focus()
         } else if ( state !== MainState.Ready )
           console.warn(`Unexpected worker state ${WorkerState[event.data.state]} in state ${MainState[state]}`)
       }
@@ -410,7 +409,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         window.clearTimeout(timerId)
         gotSearchResults(event.data.what, event.data.whatPat, event.data.matches)
         updateState(MainState.Ready)
-        search_term.focus()
+        searchForm.focus()
       } else console.error(`Unexpected search results in state ${MainState[state]}`)
     }
     // -------------------------{ rand-line }-------------------------
