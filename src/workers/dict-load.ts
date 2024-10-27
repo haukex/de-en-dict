@@ -129,6 +129,13 @@ async function doesDictNeedUpdate(cache :Cache): Promise<null|(()=>void)> {
  * function returns, and once when the updated dictionary data is loaded.
  */
 export async function loadDict(target :string[]): Promise<void> {
+  /* Note: Firefox was exhibiting some strange crashes (GH issue #32),
+   * and it seems like either one or both of the following things fixed
+   * it, so make sure not to change these:
+   * 1. cache.put() the original request, not its .clone(), only use the
+   *    latter for immediate processing.
+   * 2. Only use caches.open() once and then use that object, as follows
+   */
   const cache = await caches.open(DB_CACHE_NAME)
 
   // Helper function to copy response data to target line array.
