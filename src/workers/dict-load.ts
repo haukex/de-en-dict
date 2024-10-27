@@ -80,7 +80,7 @@ async function gunzipUTF8(stream :ReadableStream<Uint8Array>): Promise<string> {
  * If this function returns `null`, no update is needed, but if an update
  * is needed, then the caller must call the returned function when it is
  * done doing its work, or not call it if its work fails. */
-async function doesDictNeedUpdate(): Promise<null|(()=>void)> {
+async function doesDictNeedUpdate(cache :Cache): Promise<null|(()=>void)> {
   let dictNeedsUpdate :null|(()=>void) = null  // return value
   try {
     // get the small text file from the network
@@ -89,11 +89,11 @@ async function doesDictNeedUpdate(): Promise<null|(()=>void)> {
     if (dictVerResp.ok) {
       // this function, to be called by our callers, saves the current version of the file for the next comparison
       const commit = async () => {
-        (await caches.open(DB_CACHE_NAME)).put(DB_VER_URL, dictVerResp)
+        cache.put(DB_VER_URL, dictVerResp)
         console.debug('Saved the new dict version information.')
       }
       // next, check if we have a copy of the file in the cache
-      const dictVerCache = await (await caches.open(DB_CACHE_NAME)).match(DB_VER_URL)
+      const dictVerCache = await cache.match(DB_VER_URL)
       if (dictVerCache) { // we have a copy of the file in the cache
         // and then compare whether the two files are the same
         // (clone because Response body can only be read once per request)
@@ -129,6 +129,8 @@ async function doesDictNeedUpdate(): Promise<null|(()=>void)> {
  * function returns, and once when the updated dictionary data is loaded.
  */
 export async function loadDict(target :string[]): Promise<void> {
+  const cache = await caches.open(DB_CACHE_NAME)
+
   // Helper function to copy response data to target line array.
   const response2lines = async (resp :Response, progCb :boolean): Promise<void> => {
     assert(resp.body)
@@ -158,14 +160,13 @@ export async function loadDict(target :string[]): Promise<void> {
     if (dictFromNet.ok && dictFromNet.body) console.debug(msg)
     else throw new Error(msg)
     // (clone because Response body can only be read once per request)
-    const dictForCache = dictFromNet.clone()
-    await response2lines(dictFromNet, progCb);  // update the target with this response
+    await response2lines(dictFromNet.clone(), progCb)  // update the target with this response
     // don't store the response in cache until we know it was processed without error
-    (await caches.open(DB_CACHE_NAME)).put(DB_URL, dictForCache)  // save the response to the cache
+    cache.put(DB_URL, dictFromNet)  // save the response to the cache
   }
 
   // Check if the dictionary is in the cache.
-  const dictFromCache = await (await caches.open(DB_CACHE_NAME)).match(DB_URL)
+  const dictFromCache = await cache.match(DB_URL)
   if (dictFromCache) {
     console.debug('The dictionary data is in the cache, using that first, and will check for update in background.')
     // Schedule the dictionary update check for background execution.
@@ -174,7 +175,7 @@ export async function loadDict(target :string[]): Promise<void> {
      * but see also the various discussions at https://github.com/WICG/netinfo/issues?q=metered
      * and the relaunch attempt at https://github.com/tomayac/netinfo/blob/relaunch/README.md */
     setTimeout(async () => {
-      const commit = await doesDictNeedUpdate()
+      const commit = await doesDictNeedUpdate(cache)
       if (commit) {
         console.debug('Dictionary needs update, starting background update.')
         const m :WorkerMessageType = { type: 'dict-upd', status: 'loading', dictLinesLen: target.length }
@@ -203,7 +204,7 @@ export async function loadDict(target :string[]): Promise<void> {
     await getDictFromNet(true)
     // We can also assume we don't have the version information in the cache either, so fetch that in the background.
     setTimeout(async () => {
-      const commit = await doesDictNeedUpdate()
+      const commit = await doesDictNeedUpdate(cache)
       if (commit) commit()
     }, 500)
   }

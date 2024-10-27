@@ -86,7 +86,7 @@ self.addEventListener('fetch', event => {
   if (event.request.url.toLowerCase().startsWith('http') && event.request.url!==DB_URL && event.request.url!==DB_VER_URL) {
     console.debug('SW fetch: Intercepting', event.request)
     sendMsg(`fetch: Intercepting ${event.request.method} ${event.request.url}`)
-    event.respondWith(cacheFirst(caches, APP_CACHE_NAME, event.request))
+    event.respondWith(cacheFirst(event.request))
   }
   else {
     console.debug('SW fetch: NOT Intercepting', event.request)
@@ -96,15 +96,15 @@ self.addEventListener('fetch', event => {
 
 /* This function checks for the existence of a request URL in the specified cache,
  * returning it if it is found, otherwise it goes out to the network and stores the result in the cache. */
-async function cacheFirst(storage :CacheStorage, cacheName :string, request :Request) {
+async function cacheFirst(request :Request) {
   try {
-    const cache = await storage.open(cacheName)
+    const cache = await caches.open(APP_CACHE_NAME)
     const responseFromCache = await cache.match(request)
     if (responseFromCache) {
-      console.debug(`cache HIT ${cacheName} ${request.method} ${request.url}`)
+      console.debug(`cache HIT ${APP_CACHE_NAME} ${request.method} ${request.url}`)
       return responseFromCache
     } // else
-    console.debug(`cache MISS ${cacheName} ${request.method} ${request.url}`)
+    console.debug(`cache MISS ${APP_CACHE_NAME} ${request.method} ${request.url}`)
     const responseFromNetwork = await fetch(request)
     await cache.put(request, responseFromNetwork.clone())
     return responseFromNetwork
