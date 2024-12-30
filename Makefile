@@ -18,6 +18,8 @@ clean:
 .PHONY: installdeps
 installdeps:
 	npm ci
+	git config set --local filter.git_commit.clean "\$$PWD/git_commit_filter.pl clean"
+	git config set --local filter.git_commit.smudge "\$$PWD/git_commit_filter.pl smudge"
 
 # This upgrades dependencies to their latest version.
 # Run `npm outdated` or `npx ncu` to just see a report without modifying versions.

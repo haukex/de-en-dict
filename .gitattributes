@@ -1,1 +1,2 @@
-/src/js/main.ts   ident
+/src/js/main.ts     filter=git_commit
+/src/workers/sw.ts  filter=git_commit
