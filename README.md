@@ -68,6 +68,8 @@ Thanks ❤️
   [correction](https://github.com/haukex/de-en-dict/issues/27)
 - [@christophfriedrich (Christoph Friedrich)](https://github.com/christophfriedrich)
   for [several suggestions](https://github.com/haukex/de-en-dict/issues?q=author%3Achristophfriedrich)
+- [@rmetzler (Richard Metzler)](https://github.com/rmetzler)
+  for [suggesting OpenSearch support](https://github.com/haukex/de-en-dict/issues/39)
 - Several (anonymous) people who sent bug reports and suggestions,
   and several people who emailed me expressing their thanks!
 

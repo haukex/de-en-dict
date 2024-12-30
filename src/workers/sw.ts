@@ -28,6 +28,10 @@
 // eslint-disable-next-line no-var
 declare var self: ServiceWorkerGlobalScope
 
+const GIT_COMMIT_RAW = '$Commit$'  // is updated by git filters
+const GIT_COMMIT = GIT_COMMIT_RAW.indexOf(' ')<0 || GIT_COMMIT_RAW.lastIndexOf(' ')<0 || GIT_COMMIT_RAW.lastIndexOf(' ')<=GIT_COMMIT_RAW.indexOf(' ')
+  ? '?' : GIT_COMMIT_RAW.substring(GIT_COMMIT_RAW.indexOf(' ')+1, GIT_COMMIT_RAW.lastIndexOf(' '))
+
 // manifest is a list of the static resources that belong to the webapp
 // version is a hash calculated by parcel for the static resources
 import {manifest, version} from '@parcel/service-worker'
@@ -35,7 +39,7 @@ import {DB_URL, DB_VER_URL, DB_CACHE_NAME} from './consts'
 
 /* The name of the cache, dependent on the current version, so that when the version changes,
  * the previous cache is discarded and resources are fetched again. */
-const APP_CACHE_NAME = `DeEnDict-${version}`
+const APP_CACHE_NAME = `DeEnDict-${version}-${GIT_COMMIT}`
 
 /** Send a message to the main window, where the event handler will log it as a debug message.
  * This is needed because in Firefox, Service Worker console.log messages don't end up in the main console.
@@ -75,8 +79,8 @@ async function activate() {
   }
   // activate this Service Worker on existing pages
   await self.clients.claim()
-  console.debug('SW activated')
-  sendMsg(`activate done (version ${version})`)
+  console.debug('SW activated, cache',APP_CACHE_NAME)
+  sendMsg(`activate done, cache ${APP_CACHE_NAME}`)
 }
 self.addEventListener('activate', e => e.waitUntil(activate()))
 

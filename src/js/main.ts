@@ -32,7 +32,7 @@ import {LRUCache} from './lru'
 
 if (module.hot) module.hot.accept()  // for the parcel development environment
 
-const GIT_ID = '$Id$'
+const GIT_COMMIT_RAW = '$Commit$'  // is updated by git filters
 const INIT_TIMEOUT_MS = 2000
 const SEARCH_TIMEOUT_MS = 2000
 const SMALL_CHUNK_SZ = 50
@@ -318,7 +318,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // handler for dictionary load failures
   const dictLoadFail = (message :string) => {
-    error_log.innerText = navigator.userAgent + '\n' + GIT_ID + '\n' + message
+    error_log.innerText = navigator.userAgent + '\n' + GIT_COMMIT_RAW + '\n' + message
     dict_load_fail.classList.remove('d-none')
     updateState(MainState.Error)
   }
