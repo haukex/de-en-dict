@@ -3,7 +3,7 @@
 all: dist/index.html
 
 dist/index.html: lint src/index.html src/*/*.ts package*.json src/*/tsconfig.json .parcelrc
-	npx parcel build
+	npx parcel build --public-url=https://dict.zero-g.net/
 
 .PHONY: lint
 lint:

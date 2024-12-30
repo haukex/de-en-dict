@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/">
+  <ShortName>De-En-Dict</ShortName>
+  <Description>German-English Dictionary</Description>
+  <Url type="text/html" template="https://dict.zero-g.net/#q={searchTerms}"/>
+</OpenSearchDescription>
