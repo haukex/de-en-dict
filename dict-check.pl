@@ -138,17 +138,21 @@ my %ALPHABET = ( re => {
             'LATIN SMALL LETTER C WITH CEDILLA',
             'LATIN CAPITAL LETTER S WITH CARON',
             'LATIN SMALL LETTER A WITH RING ABOVE',
+            'LATIN SMALL LETTER L WITH STROKE',
             'LATIN SMALL LETTER AE',
             'GREEK SMALL LETTER ALPHA',
             'GREEK SMALL LETTER LAMDA',
             'GREEK CAPITAL LETTER OMEGA',
         ),
         # ##### ##### Digits ##### #####
-        # Note subscript digits happen to be in sequence in Unicode (U+2080 - U+2089), but superscripts aren't!
         '0-9',
-        "\N{SUBSCRIPT ZERO}-\N{SUBSCRIPT NINE}",
-        "\N{SUPERSCRIPT TWO}",
-        "\N{SUPERSCRIPT THREE}",
+        # Note subscript digits happen to be in sequence in Unicode, but superscripts aren't!
+        "\N{SUBSCRIPT ZERO}-\N{SUBSCRIPT NINE}",      # U+2080 - U+2089
+        "\N{SUPERSCRIPT ZERO}",                       # U+2070
+        "\N{SUPERSCRIPT ONE}",                        # U+00B9
+        "\N{SUPERSCRIPT TWO}",                        # U+00B2
+        "\N{SUPERSCRIPT THREE}",                      # U+00B3
+        "\N{SUPERSCRIPT FOUR}-\N{SUPERSCRIPT NINE}",  # U+2074 - U+2079
     ],
     special => [
         # ##### ##### Special Characters ##### #####
@@ -164,9 +168,12 @@ my %ALPHABET = ( re => {
             'MICRO SIGN',
             'VULGAR FRACTION ONE HALF',
             'MULTIPLICATION SIGN',
+            'DOT OPERATOR',
             'EURO SIGN',
             'POUND SIGN',
             'REGISTERED SIGN',
+            'SUPERSCRIPT MINUS',
+            'MODIFIER LETTER REVERSED COMMA',
         )
     ],
 } );
@@ -186,11 +193,10 @@ my $LINE_GRAMMAR = qr{
 
             # ##### ##### Special Sequences ##### #####
             # characters we would otherwise treat specially
-            | (?> / \x20 \( \x20 / )     # "left parenthesis / ( /"
-            | (?> / [ ) [\] <> {} ] / )  # "left square bracket /[/" etc.
-            | (?> \( [<>] \) )           # "greater-than sign (>)" etc.
-            | (?> [<>] \x20* [0-9] )     # greater/less than a number
-            | (?> /:-\)/ )               # "Smiley"
+            | (?> / [ () [\] <> {} ] / )    # "left square bracket /[/" etc.
+            | (?> \( [<>] \) )              # "greater-than sign (>)" etc.
+            | (?> [<>] \x20* [0-9] (?!-) )  # greater/less than a number (special case "four column design <4-column>")
+            | (?> /:-\)/ )                  # "Smiley"
             # special characters occurring only once
             | (?> / [ \\ \N{ACUTE ACCENT} ] / )
             | (?> \( [ @ \N{CENT SIGN} \N{YEN SIGN} \N{COPYRIGHT SIGN} ] \) )
@@ -259,13 +265,14 @@ my $fail_cnt = 0;
 while (my $line = <$fh>) {
     chomp($line);  # remove trailing newline
     next if $line=~/^\s*#/ || $line!~/\S/;  # skip comments and blank lines
+    $line =~ s/\Q{f} [auch {pl}]/{f, auch pl}/;  # special case: adjust b/c brackets don't normally contain braces
+    $line =~ s/hydro\K\xAD(?=magnetics)/-/;      # special case: fix a soft hyphen
     if ( $line =~ $LINE_GRAMMAR ) {  # parse the line
         my ($de, $en) = ($+{LEFT}, $+{RIGHT});
         my @des = split m/\|/, $de;
         my @ens = split m/\|/, $en;
         @des == @ens or die "Did not get the same number of sub-entries in ".pp($line)."\n";
         #say pp \@des, \@ens;  # debugging, helps visualize runaway regex
-        # use the same regex as JS uses to get "annotations":
     }
     else {
         warn "Failed to parse ".pp($line)."\n";
