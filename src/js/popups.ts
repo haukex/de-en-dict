@@ -101,8 +101,7 @@ function initSelectionTools() {
   const result_table = document.getElementById('result-table')
   assert( sel_tools && sel_tools_search && sel_tools_feedback && sel_tools_speak && sel_tools_close && result_table )
 
-  let utterance = new SpeechSynthesisUtterance('This is an example of speech synthesis.')
-  utterance.lang = 'en'
+  let utterance :SpeechSynthesisUtterance
   sel_tools_speak.addEventListener('click', event => {
     event.preventDefault()
     if (!canSpeak) return  // this shouldn't happen
