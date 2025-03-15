@@ -24,8 +24,11 @@ export class LRUCache<K,V> {
     // refresh key
     if (this.cache.has(key)) this.cache.delete(key)
     // evict oldest
-    else if (this.cache.size >= this.max)
-      this.cache.delete( this.cache.keys().next().value )
+    else if (this.cache.size >= this.max) {
+      // we know the cache will have at least one key here, but TypeScript doesn't
+      const v = this.cache.keys().next().value
+      if (v!==undefined) this.cache.delete(v)
+    }
     this.cache.set(key, val)
   }
 }
