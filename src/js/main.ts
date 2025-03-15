@@ -256,12 +256,22 @@ window.addEventListener('DOMContentLoaded', async () => {
     updateState(MainState.Error)
   }
 
+  let prevSearchTerm :string
   // this is our handler for running the search:
   const doSearch = (rawWhat: string, fromInputNotUrl :boolean) => {
-    console.debug(`doSearch for '${rawWhat}' (fromInputNotUrl=${fromInputNotUrl}, state=${MainState[state]})`)
-    if ( state !== MainState.Ready ) return
+    if ( state !== MainState.Ready ) {
+      console.info(`ignoring doSearch for '${rawWhat}' in state ${MainState[state]}  (fromInputNotUrl=${fromInputNotUrl})`)
+      return
+    }
 
     const what = cleanSearchTerm(rawWhat)
+    console.debug(`doSearch for raw='${rawWhat}' cleaned='${what}' (fromInputNotUrl=${fromInputNotUrl}, state=${MainState[state]})`)
+
+    if ( what === prevSearchTerm ) {
+      console.debug(`ignoring doSearch for '${what}', duplicate search`)
+      return
+    }
+    prevSearchTerm = what
 
     // update page title with search term
     document.title = what.length ? `${orig_title_text}: ${what}` : orig_title_text
