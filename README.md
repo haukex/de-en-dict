@@ -79,9 +79,9 @@ Author, Copyright, and License
 ------------------------------
 
 Dictionary data from [dict.tu-chemnitz.de](https://dict.tu-chemnitz.de) is
-Copyright © 1995-2024 [Frank Richter](https://www-user.tu-chemnitz.de/~fri/).
+Copyright © 1995-2025 [Frank Richter](https://www-user.tu-chemnitz.de/~fri/).
 
-This page/app is Copyright © 2024 [Hauke Dämpfling](https://www.zero-g.net/).
+This page/app is Copyright © 2024-2025 [Hauke Dämpfling](https://www.zero-g.net/).
 
 This project is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -112,7 +112,7 @@ This project makes use of the following libraries:
   [MIT License](https://github.com/floating-ui/floating-ui/blob/master/LICENSE).
 - Some content (abbreviation list) is taken from
   [Beolingus Deutsch-Englisch Lexikon-Plug-in](https://tekl.de/lexikon-plug-ins/beolingus-deutsch-englisch-lexikon-plugin),
-  Copyright © 2024 Wolfgang Kreutz and TU Chemnitz,
+  Copyright © 2025 Wolfgang Kreutz and TU Chemnitz,
   [GNU GPL 3.0+](https://github.com/Tekl/beolingus-deutsch-englisch/blob/master/LICENSE).
 - An LRU class was adapted from
   [this StackOverflow answer](https://stackoverflow.com/a/46432113)

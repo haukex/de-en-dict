@@ -2,7 +2,7 @@
  * German-English Dictionary
  * =========================
  *
- * Copyright © 2024 Hauke Dämpfling, haukex@zero-g.net
+ * Copyright © 2024-2025 Hauke Dämpfling, haukex@zero-g.net
  *
  * Source code: https://github.com/haukex/de-en-dict
  *
@@ -103,7 +103,7 @@ const EQUIV :[string[], string[]][] = [
   [ ['8'],                    ['₈','⁸']  ],
   [ ['9'],                    ['₉','⁹']  ],
   [ ['1/2'],                  ['½']      ],
-  [ ['x'],                    ['×']      ],
+  [ ['x'],                    ['×','ₓ']  ],
   [ ['(R)'],                  ['®']      ],
   [ ['(c)', '(C)'],           ['©']      ],
 ]

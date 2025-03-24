@@ -27,7 +27,7 @@ nested, and so on).
 
 =head2 Author, Copyright, and License
 
-Copyright © 2024 Hauke Dämpfling (haukex@zero-g.net)
+Copyright © 2024-2025 Hauke Dämpfling (haukex@zero-g.net)
 
 This project is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -143,6 +143,7 @@ my %ALPHABET = ( re => {
             'GREEK SMALL LETTER ALPHA',
             'GREEK SMALL LETTER LAMDA',
             'GREEK CAPITAL LETTER OMEGA',
+            'LATIN SUBSCRIPT SMALL LETTER X',
         ),
         # ##### ##### Digits ##### #####
         '0-9',
@@ -287,3 +288,4 @@ say join ', ', grep {!$$abbr{$_}} sort keys %seen_brackets, grep {/^{prp;/||!/;/
 #TODO Later: Items from this annotation report could be added to abbreviations.json.
 
 die "$fail_cnt failures\n" if $fail_cnt;
+say "No failures";
